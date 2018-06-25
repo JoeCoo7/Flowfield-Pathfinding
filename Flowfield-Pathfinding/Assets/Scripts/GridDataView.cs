@@ -28,24 +28,23 @@ public class GridDataView : MonoBehaviour
 		m_computeShader.SetTexture(m_computeMain, "Result", m_texture);
 		m_computeShader.SetInt("Stride", m_size);
 		m_computeBuffer = new ComputeBuffer(m_size * m_size, 4 * 3);
+
 		var rs = World.Active.GetOrCreateManager<RenderSystem>();
 		rs.Render = new NativeArray<RenderData>(m_size * m_size, Allocator.Persistent);
-		var entityManager = World.Active.GetOrCreateManager<EntityManager>();
-		var entities = new NativeArray<Entity>(m_size * m_size, Allocator.Persistent);
-		var arch = entityManager.CreateArchetype(typeof(TileCost));
-		entityManager.CreateEntity(arch, entities);
 
-		for (int ii = 0; ii < entities.Length; ii++)
-		{
-			int2 coord = new int2(ii % m_size, ii / m_size);
-			float2 per = new float2(coord.x, coord.y) / m_size;
-			var n = Mathf.PerlinNoise(per.x * m_noiseScale, per.y * m_noiseScale) + .15f;
-			float c = (n * 255);
-			float f = ((259 * (c + 255)) / (255 * (259 - c)));
-			c = (f * (c - 128) + 128);
-			entityManager.SetComponentData(entities[ii], new TileCost() { value = (byte)math.clamp(c, 0, 255) });
-		}
-		entities.Dispose();
+
+		GridUtilties.CreateGrid(m_size, m_size, 8, GridFunc);
+	}
+
+	byte GridFunc(int ii)
+	{
+		int2 coord = new int2(ii % m_size, ii / m_size);
+		float2 per = new float2(coord.x, coord.y) / m_size;
+		var n = Mathf.PerlinNoise(per.x * m_noiseScale, per.y * m_noiseScale) + .15f;
+		float c = (n * 255);
+		float f = ((259 * (c + 255)) / (255 * (259 - c)));
+		c = (f * (c - 128) + 128);
+		return (byte)math.clamp(c, 0, 255);
 	}
 
 	// Update is called once per frame
