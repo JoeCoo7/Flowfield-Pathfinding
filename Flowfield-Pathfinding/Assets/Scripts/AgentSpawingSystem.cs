@@ -12,12 +12,14 @@ using Random = UnityEngine.Random;
 public class AgentSpawingSystem : ComponentSystem
 {
 	public static EntityArchetype s_AgentType;
-	private const int MAX_UNITS_PER_CLICK = 1000;
-	private const float DIST_SIZEX = 100;
-	private const float DIST_SIZEY = 100;
-	private const int MAX_TRIES = 30; // Maximum number of attempts before marking a sample as inactive.
-	private const float CELL_SIZE = 1f;
 
+	struct Data
+	{
+		[ReadOnly]
+		public SharedComponentDataArray<GridSettings> Grid;
+	}
+
+	[Inject] Data m_Data;
 	private Rect m_DistributionRect;
 	private int m_DistHeight;
 	private int m_DistWidth;
@@ -30,7 +32,7 @@ public class AgentSpawingSystem : ComponentSystem
 	static void Initialize()
 	{
 		var entityManager = World.Active.GetOrCreateManager<EntityManager>();
-		s_AgentType = entityManager.CreateArchetype(typeof(Position), typeof(Rotation), typeof(TransformMatrix), typeof(MeshInstanceRenderer));
+		s_AgentType = entityManager.CreateArchetype(typeof(GridSettings), typeof(Position), typeof(Rotation), typeof(TransformMatrix), typeof(MeshInstanceRenderer), typeof(TileDirection), typeof(AgentData));
 	}
 
 	//-----------------------------------------------------------------------------
@@ -38,15 +40,16 @@ public class AgentSpawingSystem : ComponentSystem
 	{
 		if (!Input.GetMouseButtonDown(StandardInput.LEFT_MOUSE_BUTTON)) return;
 		if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity)) return;
+		var initData = InitializationData.Instance;
 		
 		m_activeSamples = new NativeList<float2>(Allocator.Temp);
-		m_DistHeight = (int)math.floor(DIST_SIZEX / CELL_SIZE);
-		m_DistWidth = (int)math.floor(DIST_SIZEY / CELL_SIZE);
+		m_DistHeight = (int)math.floor(initData.m_unitDistSize.x / initData.m_unitDistCellSize);
+		m_DistWidth = (int)math.floor(initData.m_unitDistSize.y / initData.m_unitDistCellSize);
 		m_Grid = new NativeArray<float2>(m_DistWidth * m_DistHeight, Allocator.Temp);
 		
-		for (int index = 0; index < MAX_UNITS_PER_CLICK; index++)
+		for (int index = 0; index < initData.m_unitDistNumPerClick; index++)
 		{
-			InitSampler(new float2(hit.point.x, hit.point.z), DIST_SIZEX, DIST_SIZEY, CELL_SIZE);
+			InitSampler();
 			float2? pos = Sample();
 			if (pos != null)
 				CreateAgent(new Vector3(pos.Value.x + hit.point.x, 0, pos.Value.y + hit.point.z));
@@ -61,6 +64,9 @@ public class AgentSpawingSystem : ComponentSystem
 	{
 		PostUpdateCommands.CreateEntity(s_AgentType);
 		PostUpdateCommands.SetComponent(new Position() {Value = _pos});
+		PostUpdateCommands.SetSharedComponent(m_Data.Grid[0]);
+		PostUpdateCommands.SetComponent(new Position() { Value = _pos});
+		PostUpdateCommands.SetComponent(new AgentData() { velocity = new float3(0, 0, 0) });
 		PostUpdateCommands.SetComponent(new Rotation());
 		PostUpdateCommands.SetComponent(new TransformMatrix());
 		PostUpdateCommands.SetSharedComponent(new MeshInstanceRenderer()
@@ -71,26 +77,27 @@ public class AgentSpawingSystem : ComponentSystem
 	}
 
 	//-----------------------------------------------------------------------------
-	public void InitSampler(float2 pos, float width, float height, float radius)
+	public void InitSampler()
 	{
-		m_DistributionRect = new Rect(0, 0, width, height);
-		m_RadiusSquared = radius * radius;
+		var initData = InitializationData.Instance;
+		m_DistributionRect = new Rect(0, 0, initData.m_unitDistSize.x, initData.m_unitDistSize.y);
+		m_RadiusSquared = initData.m_cellSize * initData.m_cellSize;
 	}
 
 	//-----------------------------------------------------------------------------
 	public float2? Sample()
 	{
 		// First sample is choosen randomly
-		AddSample(new float2(Random.value * m_DistributionRect.width, Random.value * m_DistributionRect.height));
-
+		var initData = InitializationData.Instance;
+		AddSample(new float2(Random.value * m_DistributionRect.width, Random.value * m_DistributionRect.height), initData.m_unitDistCellSize);
 		while (m_activeSamples.Length > 0)
 		{
 			// Pick a random active sample
 			int i = (int) Random.value * m_activeSamples.Length;
 			float2 sample = m_activeSamples[i];
 
-			// Try `k` random candidates between [radius, 2 * radius] from that sample.
-			for (int j = 0; j < MAX_TRIES; ++j)
+			// Try random candidates between [radius, 2 * radius] from that sample.
+			for (int j = 0; j < initData.m_unitDistMaxTries; ++j)
 			{
 
 				float angle = 2 * Mathf.PI * Random.value;
@@ -99,8 +106,8 @@ public class AgentSpawingSystem : ComponentSystem
 				float2 candidate = sample + randomNumber * new float2(math.cos(angle), math.sin(angle));
 
 				// Accept candidates if it's inside the rect and farther than 2 * radius to any existing sample.
-				if (m_DistributionRect.Contains(candidate) && IsFarEnough(candidate))
-					return AddSample(candidate);
+				if (m_DistributionRect.Contains(candidate) && IsFarEnough(candidate, initData.m_unitDistCellSize))
+					return AddSample(candidate, initData.m_unitDistCellSize);
 			}
 
 			// If we couldn't find a valid candidate after k attempts, remove this sample from the active samples queue
@@ -114,13 +121,14 @@ public class AgentSpawingSystem : ComponentSystem
 	// Note: we use the zero vector to denote an unfilled cell in the grid. This means that if we were
 	// to randomly pick (0, 0) as a sample, it would be ignored for the purposes of proximity-testing
 	// and we might end up with another sample too close from (0, 0). This is a very minor issue.
-	private bool IsFarEnough(float2 sample)
+	private bool IsFarEnough(float2 sample, float cellSize)
 	{
-		GridPos pos = new GridPos(sample, CELL_SIZE);
-		int xmin = Mathf.Max(pos.x - 2, 0);
-		int ymin = Mathf.Max(pos.y - 2, 0);
-		int xmax = Mathf.Min(pos.x + 2, m_DistWidth - 1);
-		int ymax = Mathf.Min(pos.y + 2, m_DistHeight - 1);
+		var posX = (int)(sample.x / cellSize);
+		var posY = (int)(sample.y / cellSize);
+		int xmin = Mathf.Max(posX - 2, 0);
+		int ymin = Mathf.Max(posY - 2, 0);
+		int xmax = Mathf.Min(posX + 2, m_DistWidth - 1);
+		int ymax = Mathf.Min(posY + 2, m_DistHeight - 1);
 		for (int y = ymin; y <= ymax; y++) 
 		{
 			for (int x = xmin; x <= xmax; x++) 
@@ -137,26 +145,12 @@ public class AgentSpawingSystem : ComponentSystem
 		return true;
 	}
 	//-----------------------------------------------------------------------------
-	
-	/// Adds the sample to the active samples queue and the grid before returning it
-	private Vector2 AddSample(float2 sample)
+	private Vector2 AddSample(float2 sample, float cellSize)
 	{
 		m_activeSamples.Add(sample);
-		GridPos pos = new GridPos(sample, CELL_SIZE);
-		m_Grid[pos.y * m_DistWidth + pos.x] = sample;
+		var x = (int)(sample.x / cellSize);
+		var y = (int)(sample.y / cellSize);
+		m_Grid[y * m_DistWidth + x] = sample;
 		return sample;
 	}
-
-	/// Helper struct to calculate the x and y indices of a sample in the grid
-	private struct GridPos
-	{
-		public int x;
-		public int y;
-		public GridPos(float2 sample, float cellSize)
-		{
-			x = (int)(sample.x / cellSize);
-			y = (int)(sample.y / cellSize);
-		}
-	}	
-	
 }

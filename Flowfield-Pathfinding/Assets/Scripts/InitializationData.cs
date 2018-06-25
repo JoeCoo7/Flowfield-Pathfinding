@@ -34,6 +34,12 @@ public class InitializationData : ScriptableObject
 	public GridSettings m_grid;
 	public Mesh AgentMesh;
 	public Material AgentMaterial;
+	public float2 m_unitDistSize = new float2(30, 30);
+	public int m_unitDistMaxTries = 30;
+	public int m_unitDistCellSize = 1;
+	public int m_unitDistNumPerClick = 100;
+	
+	
 	static public InitializationData Instance;
 
 	public void Initalize()
