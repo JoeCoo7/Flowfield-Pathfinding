@@ -7,12 +7,16 @@
       <e p="Assets" t="Include">
         <e p="compute.compute" t="Include" />
         <e p="Scripts" t="Include">
+          <e p="AgentSpawingSystem.cs" t="Include" />
+          <e p="AgentSystem.cs" t="Include" />
           <e p="Camera" t="Include">
             <e p="CameraFacingBillboard.cs" t="Include" />
             <e p="RTSCamera.cs" t="Include" />
             <e p="RTSCameraSettings.cs" t="Include" />
           </e>
           <e p="GridDataView.cs" t="Include" />
+          <e p="GridUtilities.cs" t="Include" />
+          <e p="InitializationData.cs" t="Include" />
           <e p="lib" t="Include">
             <e p="Camera" t="Include">
               <e p="CameraExtensions.cs" t="Include" />
@@ -24,6 +28,7 @@
             <e p="MathLib.cs" t="Include" />
             <e p="Utils.cs" t="Include" />
           </e>
+          <e p="Main.cs" t="Include" />
           <e p="RenderSystem.cs" t="Include" />
           <e p="TileSystem.cs" t="Include" />
         </e>

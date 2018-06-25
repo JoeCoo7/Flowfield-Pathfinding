@@ -1,5 +1,4 @@
-﻿using Unity.Entities;
-using Unity.Mathematics;
+﻿using Unity.Mathematics;
 using UnityEngine;
 
 public class InitializationData : ScriptableObject
@@ -8,7 +7,7 @@ public class InitializationData : ScriptableObject
 	[UnityEditor.MenuItem("Pathfinding/Create Initialization Asset")]
 	static void Create()
 	{
-		var obj = ScriptableObject.CreateInstance<InitializationData>();
+		var obj = CreateInstance<InitializationData>();
 		UnityEditor.AssetDatabase.CreateAsset(obj, "Assets/InitData.asset");
 		UnityEditor.AssetDatabase.Refresh();
 	}
@@ -16,7 +15,7 @@ public class InitializationData : ScriptableObject
 	[UnityEditor.MenuItem("Pathfinding/Create Grid View")]
 	static void CreateGridView()
 	{
-		var view = GameObject.Instantiate(Instance.m_gridPrefab).GetComponent<GridDataView>();
+		var view = Instantiate(Instance.m_gridPrefab).GetComponent<GridDataView>();
 		view.Init(Instance);
 	}
 
@@ -28,6 +27,8 @@ public class InitializationData : ScriptableObject
 	public float m_noiseScale = 3;
 	public GameObject m_gridPrefab;
 	public GameObject m_cameraObject;
+	public Mesh AgentMesh;
+	public Material AgentMaterial;
 
 	static public InitializationData Instance;
 
