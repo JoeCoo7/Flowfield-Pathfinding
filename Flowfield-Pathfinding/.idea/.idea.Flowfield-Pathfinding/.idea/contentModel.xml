@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="C:\Users\JoeCool\.Rider2018.1\system\resharper-host\Local\Transient\ReSharperHost\v12\SolutionCaches\_Flowfield-Pathfinding.167461676.00" t="ExcludeRecursive" />
+    <e p="D:\GameDev\Flowfield-Pathfinding\Flowfield-Pathfinding" t="IncludeRecursive">
+      <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
+      <e p="Assets" t="Include">
+        <e p="compute.compute" t="Include" />
+        <e p="Scripts" t="Include">
+          <e p="Camera" t="Include">
+            <e p="CameraFacingBillboard.cs" t="Include" />
+            <e p="RTSCamera.cs" t="Include" />
+            <e p="RTSCameraSettings.cs" t="Include" />
+          </e>
+          <e p="GridDataView.cs" t="Include" />
+          <e p="lib" t="Include">
+            <e p="Camera" t="Include">
+              <e p="CameraExtensions.cs" t="Include" />
+            </e>
+            <e p="Input" t="Include">
+              <e p="DoubleClickDetector.cs" t="Include" />
+              <e p="StandardInput.cs" t="Include" />
+            </e>
+            <e p="MathLib.cs" t="Include" />
+            <e p="Utils.cs" t="Include" />
+          </e>
+          <e p="RenderSystem.cs" t="Include" />
+          <e p="TileSystem.cs" t="Include" />
+        </e>
+      </e>
+      <e p="Flowfield-Pathfinding.sln" t="IncludeFlat" />
+      <e p="Library" t="ExcludeRecursive" />
+      <e p="obj" t="ExcludeRecursive" />
+      <e p="packages" t="ExcludeRecursive" />
+      <e p="Temp" t="ExcludeRecursive">
+        <e p="bin" t="ExcludeRecursive" />
+      </e>
+    </e>
+  </component>
+</project>
