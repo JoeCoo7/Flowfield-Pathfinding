@@ -11,9 +11,10 @@ using Unity.Jobs;
 [System.Serializable]
 public struct GridSettings : ISharedComponentData
 {
-	public int width;
-	public int height;
-	public int blockSize;
+	public float2 worldSize;
+	public int2 cellCount;
+	public int2 cellsPerBlock;
+	public int2 blockCount;
 }
 
 public struct TileCost : IComponentData

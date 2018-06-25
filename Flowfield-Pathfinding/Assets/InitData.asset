@@ -11,11 +11,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2613051fc61152c4fbcce528d29d3e25, type: 3}
   m_Name: InitData
   m_EditorClassIdentifier: 
-  m_width: 32
-  m_height: 32
-  m_blockSize: 8
-  m_noiseScale: 3
+  m_worldWidth: 512
+  m_worldHeight: 512
+  m_cellSize: 4
+  m_cellsPerBlock: 8
+  m_noiseScale: 10
   m_gridPrefab: {fileID: 1095766587170428, guid: 244779e4b985c974abdcabc2aee9fa20,
     type: 2}
   m_cameraObject: {fileID: 1083118766984968, guid: a7b79582ae1595442a40029858f7555d,
     type: 2}
+  AgentMesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+  AgentMaterial: {fileID: 2100000, guid: d7743bd95fc0f9d4d9cdcd412a5ba84f, type: 2}
