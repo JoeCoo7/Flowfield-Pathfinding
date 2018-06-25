@@ -17,6 +17,8 @@ public class RenderSystem : JobComponentSystem
 	struct Data
 	{
 		[ReadOnly]
+		public SharedComponentDataArray<GridSettings> Grid;
+		[ReadOnly]
 		public ComponentDataArray<TileCost> Cost;
 		public EntityArray Entity;
 		public int Length;
@@ -28,26 +30,27 @@ public class RenderSystem : JobComponentSystem
 	public NativeArray<RenderData> Render;
 	protected override JobHandle OnUpdate(JobHandle inputDeps)
 	{
-		lastJob.Complete();
 		return (lastJob = new Job()
 		{
 			Cost = m_Data.Cost,
 			Render = Render,
-			Stride = Stride
+			Grid = m_Data.Grid[0]
 		}.Schedule(m_Data.Length, Stride, inputDeps));
 	}
 
 	[Unity.Burst.BurstCompile]
 	struct Job : IJobParallelFor
 	{
-		public int Stride;
 		[ReadOnly]
 		public ComponentDataArray<TileCost> Cost;
 		public NativeArray<RenderData> Render;
+		public GridSettings Grid;
 
 		public void Execute(int i)
 		{
-			Render[i] = new RenderData() { color = Cost[i].value / 255f };
+			var bi = GridUtilties.Grid2Index(Grid, new int2(i % Grid.cellCount.x, i / Grid.cellCount.x));
+
+			Render[i] = new RenderData() { color = Cost[bi].value / 255f };
 		}
 
 	}
