@@ -40,15 +40,19 @@ public static class GridUtilties
 		int2 localCoord = new int2(localIndex % blockSize.x, localIndex / blockSize.x);
 		return blockCoord * blockSize + localCoord;
 	}
-
-	public static T Neighbor<T>(GridSettings grid, NativeArray<T> data, int2 xz, int dx, int dz) where T : struct, IComponentData
+	public static T Neighbor<T>(GridSettings grid, NativeArray<T> data, int2 cell, int2 offset) where T : struct
 	{
-		return data[Grid2Index(grid, xz + new int2(dx, dz))];
+		return data[Grid2Index(grid, cell + offset)];
 	}
 
-	public static T Neighbor<T>(GridSettings grid, ComponentDataArray<T> data, int2 xz, int dx, int dz) where T : struct, IComponentData
+	public static T Neighbor<T>(GridSettings grid, NativeArray<T> data, int2 cell, int dx, int dz) where T : struct
 	{
-		return data[Grid2Index(grid, xz + new int2(dx, dz))];
+		return data[Grid2Index(grid, cell + new int2(dx, dz))];
+	}
+
+	public static T Neighbor<T>(GridSettings grid, ComponentDataArray<T> data, int2 cell, int dx, int dz) where T : struct, IComponentData
+	{
+		return data[Grid2Index(grid, cell + new int2(dx, dz))];
 	}
 
 	public static GridSettings CreateGrid(float worldWidth, float worldHeight, float gridSize, int cellsPerBlock, Func<GridSettings, int, byte> func)
