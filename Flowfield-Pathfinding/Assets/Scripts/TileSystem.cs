@@ -9,9 +9,9 @@ using Unity.Mathematics;
 [System.Serializable]
 public struct GridSettings : ISharedComponentData
 {
-	public int width;
-	public int height;
-	public int2 blockSize;
+	public float2 worldSize;
+	public int2 cellCount;
+	public int2 cellsPerBlock;
 	public int2 blockCount;
 }
 

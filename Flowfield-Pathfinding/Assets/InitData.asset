@@ -11,9 +11,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2613051fc61152c4fbcce528d29d3e25, type: 3}
   m_Name: InitData
   m_EditorClassIdentifier: 
-  m_width: 32
-  m_height: 32
-  m_blockSize: 8
+  m_worldWidth: 1024
+  m_worldHeight: 1024
+  m_cellSize: 4
+  m_cellsPerBlock: 8
   m_noiseScale: 3
   m_gridPrefab: {fileID: 1095766587170428, guid: 244779e4b985c974abdcabc2aee9fa20,
     type: 2}

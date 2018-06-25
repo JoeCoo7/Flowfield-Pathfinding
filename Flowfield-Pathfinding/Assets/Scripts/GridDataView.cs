@@ -17,8 +17,10 @@ public class GridDataView : MonoBehaviour
 
 	public void Init(InitializationData init)
 	{
-		m_width = init.m_width;
-		m_height = init.m_height;
+		var entityManager = World.Active.GetOrCreateManager<EntityManager>();
+		
+		m_width = init.m_grid.cellCount.x;
+		m_height = init.m_grid.cellCount.y;
 
 		m_texture = new RenderTexture(m_width, m_height, 0);
 		m_texture.enableRandomWrite = true;
