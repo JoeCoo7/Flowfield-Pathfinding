@@ -7,7 +7,6 @@ using Unity.Jobs;
 [System.Serializable]
 public struct AgentData : IComponentData
 {
-	public float2 position;
 	public float2 velocity;
 }
 

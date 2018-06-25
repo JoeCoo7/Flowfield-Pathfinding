@@ -7,18 +7,20 @@ using Unity.Mathematics;
 
 public class GridDataView : MonoBehaviour
 {
-	public int m_size = 32;
 	public Material m_material;
 	RenderTexture m_texture;
 	ComputeBuffer m_computeBuffer;
 	public ComputeShader m_computeShader;
-	public float m_noiseScale = 3;
-	public float m_contrast = 2;
 	int m_computeMain;
-	// Use this for initialization
-	void Start ()
+	int m_width;
+	int m_height;
+
+	public void Init(InitializationData init)
 	{
-		m_texture = new RenderTexture(m_size, m_size, 0);
+		m_width = init.m_width;
+		m_height = init.m_height;
+
+		m_texture = new RenderTexture(m_width, m_height, 0);
 		m_texture.enableRandomWrite = true;
 		m_texture.filterMode = FilterMode.Point;
 		m_texture.Create();
@@ -26,31 +28,12 @@ public class GridDataView : MonoBehaviour
 
 		m_computeMain = m_computeShader.FindKernel("CSMain");
 		m_computeShader.SetTexture(m_computeMain, "Result", m_texture);
-		m_computeShader.SetInt("Stride", m_size);
-		m_computeBuffer = new ComputeBuffer(m_size * m_size, 4 * 3);
+		m_computeShader.SetInt("Stride", m_width);
+		m_computeBuffer = new ComputeBuffer(m_width * m_height, 4 * 3);
 
 		var rs = World.Active.GetOrCreateManager<RenderSystem>();
-		rs.Render = new NativeArray<RenderData>(m_size * m_size, Allocator.Persistent);
+		rs.Render = new NativeArray<RenderData>(m_width * m_height, Allocator.Persistent);
 
-
-		GridUtilties.CreateGrid(m_size, m_size, 8, GridFunc);
-	}
-
-	byte GridFunc(int ii)
-	{
-		int2 coord = new int2(ii % m_size, ii / m_size);
-		float2 per = new float2(coord.x, coord.y) / m_size;
-		var n = Mathf.PerlinNoise(per.x * m_noiseScale, per.y * m_noiseScale) + .15f;
-		float c = (n * 255);
-		float f = ((259 * (c + 255)) / (255 * (259 - c)));
-		c = (f * (c - 128) + 128);
-		return (byte)math.clamp(c, 0, 255);
-	}
-
-	// Update is called once per frame
-	void Update ()
-	{
-		
 	}
 
 	private void LateUpdate()
@@ -60,7 +43,7 @@ public class GridDataView : MonoBehaviour
 
 		m_computeBuffer.SetData(rs.Render);
 		m_computeShader.SetBuffer(m_computeMain, "colors", m_computeBuffer);
-		m_computeShader.Dispatch(m_computeMain, m_size / 8, m_size / 8, 1);
+		m_computeShader.Dispatch(m_computeMain, m_width / 8,  m_height / 8, 1);
 	}
 
 }
