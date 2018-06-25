@@ -1,4 +1,4 @@
-﻿using Unity.Mathematics;
+using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -80,4 +80,29 @@ public static class GridUtilties
 		entities.Dispose();
 		return grid;
 	}
+
+	public static readonly int2[] Offset = new[] {
+		new int2(0, -1),    // N,
+        new int2(0, 1),     // S,
+        new int2(1, 0),     // E,
+        new int2(-1, 0),    // W,
+        new int2(1, -1),    // NE,
+        new int2(1, 1),     // SE,
+        new int2(-1, -1),   // NW,
+        new int2(-1, 1),    // SW,
+    };
+
+	public enum Direction
+	{
+		N,
+		S,
+		E,
+		W,
+		NE,
+		SE,
+		NW,
+		SW,
+		MAX
+	}
+
 }
