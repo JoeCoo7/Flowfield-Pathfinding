@@ -44,9 +44,8 @@ public class InitializationData : ScriptableObject
 		CreateGridView();
 	}
 
-	byte GridFunc(GridSettings grid, int ii)
+	byte GridFunc(GridSettings grid, int2 coord)
 	{
-		int2 coord = new int2(ii % grid.cellCount.x, ii / grid.cellCount.x);
 		float2 per = new float2(coord.x, coord.y) / grid.cellCount.x;
 		var n = Mathf.PerlinNoise(per.x * m_noiseScale, per.y * m_noiseScale) + .15f;
 		float c = (n * 255);

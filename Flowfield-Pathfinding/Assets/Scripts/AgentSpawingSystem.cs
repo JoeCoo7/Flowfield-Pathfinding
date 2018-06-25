@@ -22,7 +22,7 @@ public class AgentSpawingSystem : ComponentSystem
 	static void Initialize()
 	{
 		var entityManager = World.Active.GetOrCreateManager<EntityManager>();
-		s_AgentType = entityManager.CreateArchetype(typeof(GridSettings), typeof(Position), typeof(Rotation), typeof(TransformMatrix), typeof(MeshInstanceRenderer), typeof(TileDirection), typeof(AgentData));
+		s_AgentType = entityManager.CreateArchetype(typeof(FlowFieldData), typeof(GridSettings), typeof(Position), typeof(Rotation), typeof(TransformMatrix), typeof(MeshInstanceRenderer), typeof(TileDirection), typeof(AgentData));
 	}
 	
 	protected override void OnUpdate()
@@ -37,6 +37,8 @@ public class AgentSpawingSystem : ComponentSystem
 		}
 	}
 
+//	public void SetFlowField(
+
 	private void CreateAgent(float3 _pos)
 	{
 		PostUpdateCommands.CreateEntity(s_AgentType);
@@ -45,6 +47,7 @@ public class AgentSpawingSystem : ComponentSystem
 		PostUpdateCommands.SetComponent(new AgentData() { velocity = new float3(0, 0, 0) });
 		PostUpdateCommands.SetComponent(new Rotation());
 		PostUpdateCommands.SetComponent(new TransformMatrix());
+		PostUpdateCommands.SetSharedComponent(new FlowFieldData());
 		PostUpdateCommands.SetSharedComponent(new MeshInstanceRenderer() { mesh = InitializationData.Instance.AgentMesh, material = InitializationData.Instance.AgentMaterial });
 	}
 /*

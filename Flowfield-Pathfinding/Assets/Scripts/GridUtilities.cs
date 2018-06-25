@@ -55,7 +55,7 @@ public static class GridUtilties
 		return data[Grid2Index(grid, cell + new int2(dx, dz))];
 	}
 
-	public static GridSettings CreateGrid(float worldWidth, float worldHeight, float gridSize, int cellsPerBlock, Func<GridSettings, int, byte> func)
+	public static GridSettings CreateGrid(float worldWidth, float worldHeight, float gridSize, int cellsPerBlock, Func<GridSettings, int2, byte> func)
 	{
 		var width = (int)(worldWidth / gridSize);
 		var height = (int)(worldHeight / gridSize);
@@ -70,18 +70,32 @@ public static class GridUtilties
 
 		var entityManager = World.Active.GetOrCreateManager<EntityManager>();
 		var entities = new NativeArray<Entity>(width * height, Allocator.Persistent);
-		var arch = entityManager.CreateArchetype(typeof(GridSettings), typeof(TileCost), typeof(TileDirection), typeof(TileCollision));
+		var arch = entityManager.CreateArchetype(typeof(GridSettings), typeof(TileCost));
 		entityManager.CreateEntity(arch, entities);
-
 		for (int ii = 0; ii < entities.Length; ii++)
 		{
 			var e = entities[ii];
+			int2 coord = GridUtilties.Index2Grid(grid, ii); //new int2(ii % grid.cellCount.x, ii / grid.cellCount.x);
+
 			entityManager.SetSharedComponentData(e, grid);
-			entityManager.SetComponentData(e, new TileCost() { value = func(grid, ii) });
-			entityManager.SetComponentData(e, new TileDirection() { value = 0 });
-			entityManager.SetComponentData(e, new TileCollision() { value = 0 });
+			entityManager.SetComponentData(e, new TileCost() { value = func(grid, coord) });
 		}
 		entities.Dispose();
+		/*
+		var costs = new byte[entities.Length];
+		var flowComponent = new FlowFieldData();
+		flowComponent.value = new NativeArray<float3>(costs.Length, Allocator.Persistent);
+		entityManager.SetSharedComponentData(e, flowComponent);
+		for (int ii = 0; ii < flowComponent.value.Length; ii++)
+		{
+			int2 coord = GridUtilties.Index2Grid(grid, ii);
+			float2 per = new float2(coord.x, coord.y) / grid.cellCount.x;
+
+			var n = UnityEngine.Mathf.PerlinNoise(per.x * 10, per.y * 10) + .15f;
+
+			flowComponent.value[ii] = new float3(n, 0, -n);
+		}
+		*/
 		return grid;
 	}
 

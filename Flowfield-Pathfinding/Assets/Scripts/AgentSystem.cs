@@ -11,6 +11,13 @@ public struct AgentData : IComponentData
 	public float3 velocity;
 }
 
+[System.Serializable]
+public struct FlowFieldData : ISharedComponentData
+{
+	public NativeArray<float3> value;
+}
+
+
 public class AgentSystem : JobComponentSystem
 {
 	struct Data
@@ -18,7 +25,7 @@ public class AgentSystem : JobComponentSystem
 		[ReadOnly]
 		public SharedComponentDataArray<GridSettings> Grid;
 		[ReadOnly]
-		public ComponentDataArray<TileDirection> Field;
+		public SharedComponentDataArray<FlowFieldData> Field;
 		public ComponentDataArray<AgentData> Agents;
 		public ComponentDataArray<Position> Positions;
 		public EntityArray Entity;
@@ -44,7 +51,7 @@ public class AgentSystem : JobComponentSystem
 	struct Job : IJobParallelFor
 	{
 		[ReadOnly]
-		public ComponentDataArray<TileDirection> Field;
+		public SharedComponentDataArray<FlowFieldData> Field;
 		public ComponentDataArray<AgentData> Agents;
 		public ComponentDataArray<Position> Positions;
 		public GridSettings Grid;
@@ -56,7 +63,7 @@ public class AgentSystem : JobComponentSystem
 			var pos = Positions[i];
 			var agent = Agents[i];
 			var tileIndex = GridUtilties.WorldToIndex(Grid, pos.Value);
-			var force = Field[tileIndex].value;
+			var force = Field[i].value[tileIndex];
 			force += new float3(1, 0, 1);
 			//steering behavior goes here..
 			var mag = math.length(force);
