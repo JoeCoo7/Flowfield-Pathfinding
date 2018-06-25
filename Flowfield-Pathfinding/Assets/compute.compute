@@ -1,0 +1,13 @@
+﻿#pragma kernel CSMain
+RWTexture2D<float4> Result;
+StructuredBuffer<float3> colors;
+int Stride;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	
+	float3 c = colors[id.x + id.y *  Stride];
+	
+	Result[id.xy] = float4(c.x, c.y, c.z, 1);
+}
