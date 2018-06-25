@@ -9,5 +9,5 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	
 	float3 c = colors[id.x + id.y *  Stride];
 	
-	Result[id.xy] = float4(c.x, c.y, c.z, 1);
+    Result[id.xy] = float4(c.x, c.y, c.z, 1);
 }
