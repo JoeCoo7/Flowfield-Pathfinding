@@ -7,6 +7,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Burst;
 using Unity.Jobs;
+using RSGLib;
 
 [System.Serializable]
 public struct GridSettings : ISharedComponentData
@@ -32,6 +33,11 @@ public struct TileCollision : IComponentData
     public byte value;
 }
 
+public struct TilePosition : IComponentData
+{
+    public int2 value;
+}
+
 public class TileSystem : ComponentSystem
 {
     public static EntityArchetype s_TileType;
@@ -42,14 +48,38 @@ public class TileSystem : ComponentSystem
     {
 		public SharedComponentDataArray<GridSettings> Grid;
 		public ComponentDataArray<TileCost> cost;
-        public ComponentDataArray<TileDirection> flowDirection;
         public ComponentDataArray<TileCollision> collisionDirection;
+        public ComponentDataArray<TilePosition> position;
         public readonly int length;
     }
 
     protected override void OnUpdate()
     {
+        SelectGoal();
+    }
 
+    void SelectGoal()
+    {
+        if (!Input.GetMouseButtonDown(StandardInput.LEFT_MOUSE_BUTTON))
+            return;
+
+        if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity))
+            return;
+
+        //var goal = GridUtilties.World2Grid(hit);
+
+        //var inputData = new ChunkInputData()
+        //{
+        //    size = new int2(1, 2),
+        //    goals = new NativeArray<int2>(1, Allocator.TempJob)
+        //};
+        //inputData.goals[0] = goal;
+        //inputData.costs = GetComponentGroup(typeof(TileCost));
+
+        //var job = new ComputeHeatmapChunkJob()
+        //{
+
+        //}
     }
 
     void Initialize()
@@ -67,7 +97,7 @@ public class TileSystem : ComponentSystem
 
     static void VisitNeighbor(NativeArray<int> heatmap, ref NativeQueue<int> openSet, int index, int newDistance)
     {
-        if (heatmap[index] == s_Unvisited || heatmap[index] > newDistance)
+        if (heatmap[index] != s_Obstacle && newDistance < heatmap[index])
         {
             heatmap[index] = newDistance;
             openSet.Enqueue(index);
@@ -76,7 +106,7 @@ public class TileSystem : ComponentSystem
 
     struct ChunkInputData
     {
-        public int2 size;
+        public GridSettings gridSettings;
         public NativeArray<int2> goals;
         public NativeArray<byte> costs;
     }
@@ -84,6 +114,19 @@ public class TileSystem : ComponentSystem
     struct ChunkOutputData
     {
         public NativeArray<int> heatmap;
+    }
+
+    [BurstCompile]
+    struct GetChunkDataJob : IJobParallelFor
+    {
+        public GridSettings gridSettings;
+        public ComponentDataArray<TileCost> tileCosts;
+        public ComponentDataArray<TilePosition> tilePositions;
+        public NativeArray<byte> costs;
+
+        public void Execute(int index)
+        {
+        }
     }
 
     [BurstCompile]
@@ -96,8 +139,8 @@ public class TileSystem : ComponentSystem
 
         public void Execute(int chunkData)
         {
-            var width = inputData[chunkData].size.x;
-            var height = inputData[chunkData].size.y;
+            var width = 0;// inputData[chunkData].size.x;
+            var height = 0;// inputData[chunkData].size.y;
             var costs = inputData[chunkData].costs;
             var heatmap = outputData[chunkData].heatmap;
 
