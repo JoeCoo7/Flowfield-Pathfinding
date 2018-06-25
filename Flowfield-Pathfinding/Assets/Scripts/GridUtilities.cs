@@ -6,14 +6,24 @@ using System;
 
 public static class GridUtilties
 {
+	public static int WorldToIndex(GridSettings grid, float3 pos)
+	{
+		return Grid2Index(grid, World2Grid(grid, pos));
+	}
+
+	public static int2 World2Grid(GridSettings grid, float3 pos)
+	{
+		return (int2)(new float2(pos.x, pos.z) / grid.cellCount);
+	}
+
 	//size is in blocks, c is absolute pos
-	public static int Grid2Index(GridSettings grid, int2 worldPos)
+	public static int Grid2Index(GridSettings grid, int2 cell)
 	{
 		var blockCount = grid.blockCount;
 		var blockSize = grid.cellsPerBlock;
-		worldPos = math.clamp(worldPos, new int2(0, 0), new int2(blockCount.x * blockSize.x - 1, blockCount.y * blockSize.y - 1));
-		int2 blockCoord = worldPos / blockSize;
-		int2 localCoord = worldPos - blockCoord * blockSize;
+		cell = math.clamp(cell, new int2(0, 0), new int2(blockCount.x * blockSize.x - 1, blockCount.y * blockSize.y - 1));
+		int2 blockCoord = cell / blockSize;
+		int2 localCoord = cell - blockCoord * blockSize;
 		int blockIndex = blockCoord.y * blockCount.x + blockCoord.x;
 		int localIndex = localCoord.y * blockSize.x + localCoord.x;
 		return blockIndex * (blockSize.x * blockSize.y) + localIndex;

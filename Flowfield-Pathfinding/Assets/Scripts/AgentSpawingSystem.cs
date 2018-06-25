@@ -1,20 +1,28 @@
 ﻿using RSGLib;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
+[UpdateBefore(typeof(AgentSystem))]
 public class AgentSpawingSystem : ComponentSystem
 {
 	public static EntityArchetype s_AgentType;
 	public const int MAX_UNITS_PER_CLICK = 1;
+	struct Data
+	{
+		[ReadOnly]
+		public SharedComponentDataArray<GridSettings> Grid;
+	}
+	[Inject] Data m_Data;
 
 	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
 	static void Initialize()
 	{
 		var entityManager = World.Active.GetOrCreateManager<EntityManager>();
-		s_AgentType = entityManager.CreateArchetype(typeof(Position), typeof(Rotation), typeof(TransformMatrix), typeof(MeshInstanceRenderer));
+		s_AgentType = entityManager.CreateArchetype(typeof(GridSettings), typeof(Position), typeof(Rotation), typeof(TransformMatrix), typeof(MeshInstanceRenderer), typeof(TileDirection), typeof(AgentData));
 	}
 	
 	protected override void OnUpdate()
@@ -32,7 +40,9 @@ public class AgentSpawingSystem : ComponentSystem
 	private void CreateAgent(float3 _pos)
 	{
 		PostUpdateCommands.CreateEntity(s_AgentType);
+		PostUpdateCommands.SetSharedComponent(InitializationData.Instance.m_grid);
 		PostUpdateCommands.SetComponent(new Position() { Value = _pos});
+		PostUpdateCommands.SetComponent(new AgentData() { velocity = new float3(0, 0, 0) });
 		PostUpdateCommands.SetComponent(new Rotation());
 		PostUpdateCommands.SetComponent(new TransformMatrix());
 		PostUpdateCommands.SetSharedComponent(new MeshInstanceRenderer() { mesh = InitializationData.Instance.AgentMesh, material = InitializationData.Instance.AgentMaterial });
