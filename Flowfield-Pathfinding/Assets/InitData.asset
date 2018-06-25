@@ -19,3 +19,5 @@ MonoBehaviour:
     type: 2}
   m_cameraObject: {fileID: 1083118766984968, guid: a7b79582ae1595442a40029858f7555d,
     type: 2}
+  AgentMesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+  AgentMaterial: {fileID: 2100000, guid: d7743bd95fc0f9d4d9cdcd412a5ba84f, type: 2}

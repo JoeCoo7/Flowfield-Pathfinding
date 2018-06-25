@@ -14,6 +14,7 @@
             <e p="RTSCamera.cs" t="Include" />
             <e p="RTSCameraSettings.cs" t="Include" />
           </e>
+          <e p="FlowFieldCache.cs" t="Include" />
           <e p="GridDataView.cs" t="Include" />
           <e p="GridUtilities.cs" t="Include" />
           <e p="InitializationData.cs" t="Include" />
