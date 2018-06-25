@@ -47,7 +47,7 @@ public class RenderSystem : JobComponentSystem
 
 		public void Execute(int i)
 		{
-			Render[i] = new RenderData() { color = Cost[i].cost / 255f };
+			Render[i] = new RenderData() { color = Cost[i].value / 255f };
 		}
 
 	}

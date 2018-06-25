@@ -43,7 +43,7 @@ public class GridDataView : MonoBehaviour
 			float c = (n * 255);
 			float f = ((259 * (c + 255)) / (255 * (259 - c)));
 			c = (f * (c - 128) + 128);
-			entityManager.SetComponentData(entities[ii], new TileCost() { cost = (byte)math.clamp(c, 0, 255) });
+			entityManager.SetComponentData(entities[ii], new TileCost() { value = (byte)math.clamp(c, 0, 255) });
 		}
 		entities.Dispose();
 	}
