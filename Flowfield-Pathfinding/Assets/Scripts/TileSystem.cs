@@ -25,12 +25,12 @@ public struct TileCost : IComponentData
 
 public struct TileDirection : IComponentData
 {
-    public byte value;
+    public float3 value;
 }
 
 public struct TileCollision : IComponentData
 {
-    public byte value;
+    public float3 value;
 }
 
 public struct TilePosition : IComponentData
