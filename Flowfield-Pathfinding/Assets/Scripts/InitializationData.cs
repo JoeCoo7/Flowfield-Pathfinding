@@ -34,10 +34,17 @@ public class InitializationData : ScriptableObject
 	public GridSettings m_grid;
 	public Mesh AgentMesh;
 	public Material AgentMaterial;
+	public float2 m_unitDistSize = new float2(30, 30);
+	public int m_unitDistMaxTries = 30;
+	public int m_unitDistCellSize = 1;
+	public int m_unitDistNumPerClick = 100;
+	
+	
 	static public InitializationData Instance;
 
 	public void Initalize()
 	{
+		
 		Instance = this;
 		Instantiate(m_cameraObject);
 		m_grid = GridUtilties.CreateGrid(m_worldWidth, m_worldHeight, m_cellSize, m_cellsPerBlock, GridFunc);

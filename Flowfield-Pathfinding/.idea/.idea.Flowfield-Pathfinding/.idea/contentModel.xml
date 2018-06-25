@@ -15,8 +15,10 @@
             <e p="RTSCameraSettings.cs" t="Include" />
           </e>
           <e p="FlowFieldCache.cs" t="Include" />
+          <e p="FlowFieldDirections.cs" t="Include" />
           <e p="GridDataView.cs" t="Include" />
           <e p="GridUtilities.cs" t="Include" />
+          <e p="HeatmapToFlowField.cs" t="Include" />
           <e p="InitializationData.cs" t="Include" />
           <e p="lib" t="Include">
             <e p="Camera" t="Include">
@@ -30,6 +32,7 @@
             <e p="Utils.cs" t="Include" />
           </e>
           <e p="Main.cs" t="Include" />
+          <e p="MathExt.cs" t="Include" />
           <e p="RenderSystem.cs" t="Include" />
           <e p="TileSystem.cs" t="Include" />
         </e>

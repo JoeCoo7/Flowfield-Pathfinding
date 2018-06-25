@@ -5,8 +5,10 @@ using UnityEngine;
 public class Main : MonoBehaviour
 {
 	public InitializationData m_InitData;
-	void Start ()
+
+	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+	static void Initialize()
 	{
-		m_InitData.Initalize();
+		GameObject.FindObjectOfType<Main>().m_InitData.Initalize();
 	}
 }

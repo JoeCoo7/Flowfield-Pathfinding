@@ -32,13 +32,22 @@ public class AgentSystem : JobComponentSystem
 		public int Length;
 	}
 	[Inject] Data m_Data;
+	[Inject] EndFrameBarrier m_Barrier;
+
+	void SetFlowField(int index, FlowFieldData ff)
+	{
+		//.AddSharedComponent(m_Data.Entity[index], ff);
+
+
+	}
 
 	protected override JobHandle OnUpdate(JobHandle inputDeps)
 	{
+
 		return new Job()
 		{
 			Agents = m_Data.Agents,
-			Field = m_Data.Field,
+			Field = m_Data.Field[0].value,
 			TimeDelta = Time.deltaTime,
 			Positions = m_Data.Positions,
 			MaxSpeed = 10,
@@ -51,7 +60,7 @@ public class AgentSystem : JobComponentSystem
 	struct Job : IJobParallelFor
 	{
 		[ReadOnly]
-		public SharedComponentDataArray<FlowFieldData> Field;
+		public NativeArray<float3> Field;
 		public ComponentDataArray<AgentData> Agents;
 		public ComponentDataArray<Position> Positions;
 		public GridSettings Grid;
@@ -62,9 +71,12 @@ public class AgentSystem : JobComponentSystem
 		{
 			var pos = Positions[i];
 			var agent = Agents[i];
+			var force = new float3(0, 0, 0);
+
 			var tileIndex = GridUtilties.WorldToIndex(Grid, pos.Value);
-			var force = Field[i].value[tileIndex];
-			force += new float3(1, 0, 1);
+			force += Field[tileIndex];
+
+			//force += new float3(1, 0, 1);
 			//steering behavior goes here..
 			var mag = math.length(force);
 			if(mag > MaxForce)

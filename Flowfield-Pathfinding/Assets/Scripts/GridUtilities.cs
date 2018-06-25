@@ -54,7 +54,7 @@ public static class GridUtilties
 	{
 		return data[Grid2Index(grid, cell + new int2(dx, dz))];
 	}
-
+	public static NativeArray<float3> m_initialFlow;
 	public static GridSettings CreateGrid(float worldWidth, float worldHeight, float gridSize, int cellsPerBlock, Func<GridSettings, int2, byte> func)
 	{
 		var width = (int)(worldWidth / gridSize);
@@ -72,30 +72,31 @@ public static class GridUtilties
 		var entities = new NativeArray<Entity>(width * height, Allocator.Persistent);
 		var arch = entityManager.CreateArchetype(typeof(GridSettings), typeof(TileCost));
 		entityManager.CreateEntity(arch, entities);
+		var costs = new byte[entities.Length];
+
 		for (int ii = 0; ii < entities.Length; ii++)
 		{
 			var e = entities[ii];
 			int2 coord = GridUtilties.Index2Grid(grid, ii); //new int2(ii % grid.cellCount.x, ii / grid.cellCount.x);
 
 			entityManager.SetSharedComponentData(e, grid);
-			entityManager.SetComponentData(e, new TileCost() { value = func(grid, coord) });
+			entityManager.SetComponentData(e, new TileCost() { value = (costs[ii] = func(grid, coord)) });
 		}
-		entities.Dispose();
-		/*
-		var costs = new byte[entities.Length];
-		var flowComponent = new FlowFieldData();
-		flowComponent.value = new NativeArray<float3>(costs.Length, Allocator.Persistent);
-		entityManager.SetSharedComponentData(e, flowComponent);
-		for (int ii = 0; ii < flowComponent.value.Length; ii++)
+		
+		
+		m_initialFlow = new NativeArray<float3>(costs.Length, Allocator.Persistent);
+		
+		for (int ii = 0; ii < m_initialFlow.Length; ii++)
 		{
 			int2 coord = GridUtilties.Index2Grid(grid, ii);
 			float2 per = new float2(coord.x, coord.y) / grid.cellCount.x;
 
 			var n = UnityEngine.Mathf.PerlinNoise(per.x * 10, per.y * 10) + .15f;
 
-			flowComponent.value[ii] = new float3(n, 0, -n);
+			m_initialFlow[ii] = new float3(n - .5f, 0, n - .5f);
 		}
-		*/
+		entities.Dispose();
+
 		return grid;
 	}
 
