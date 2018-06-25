@@ -11,7 +11,8 @@ public struct GridSettings : ISharedComponentData
 {
 	public int width;
 	public int height;
-	public int blockSize;
+	public int2 blockSize;
+	public int2 blockCount;
 }
 
 public struct TileCost : IComponentData
