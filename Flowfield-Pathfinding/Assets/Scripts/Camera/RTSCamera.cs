@@ -1,5 +1,4 @@
-﻿using DG.Tweening;
-using UnityEngine;
+﻿using UnityEngine;
 using WT.ECS;
 using Math = System.Math;
 
@@ -30,8 +29,6 @@ namespace WT
         private float m_followVeloctiyZ;
         private float m_currentShakeTime;
         private bool m_movingToTarget;
-        private Tween m_targetTween;
-        private Tween m_targetZoomTween;
         private bool m_followingTarget;
 
         private Vector3 m_lastPosition;
@@ -97,10 +94,10 @@ namespace WT
         //----------------------------------------------------------------------------------------
         private void OnDestroy()
         {
-            if(m_targetTween != null)
-                m_targetTween.Kill();
-            if(m_targetZoomTween != null)
-                m_targetZoomTween.Kill();
+//            if(m_targetTween != null)
+//                m_targetTween.Kill();
+//            if(m_targetZoomTween != null)
+//                m_targetZoomTween.Kill();
         }
 
         //----------------------------------------------------------------------------------------
@@ -253,26 +250,6 @@ namespace WT
         //----------------------------------------------------------------------------------------
         private void UpdateGotoTarget()
         {
-            if (!m_settings.NewTargetPosition)
-                return;
-
-            if (m_movingToTarget)
-            {
-                if (m_targetTween != null)
-                    m_targetTween.Kill();
-                if (m_targetZoomTween != null)
-                    m_targetZoomTween.Kill();
-            }
-
-            m_cameraChangeFlags |= POSITION_CHANGE_MOVETO;
-            if (m_settings.TargetPosMinimap)
-                m_cameraChangeFlags |= POSITION_CHANGE_MINIMAP;
-
-            m_movingToTarget = true;
-            m_settings.NewTargetPosition = false;
-            m_targetTween = DOTween.To(() => m_settings.Panning, _x => m_settings.Panning = _x, m_settings.TargetPosition, m_settings.MoveToTargetTime).SetEase(Ease.OutSine).OnComplete(() => m_movingToTarget = false);
-            if (m_settings.TargetZoom >= 0)
-                m_targetZoomTween = DOTween.To(() => m_zoom, _x => m_zoom = _x, m_settings.TargetZoom, m_settings.MoveToTargetTime).SetEase(Ease.OutSine);
         }
 
         //----------------------------------------------------------------------------------------
