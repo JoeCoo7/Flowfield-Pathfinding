@@ -11,11 +11,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2613051fc61152c4fbcce528d29d3e25, type: 3}
   m_Name: InitData
   m_EditorClassIdentifier: 
-  m_worldWidth: 1024
-  m_worldHeight: 1024
+  m_worldWidth: 512
+  m_worldHeight: 512
   m_cellSize: 4
   m_cellsPerBlock: 8
-  m_noiseScale: 3
+  m_noiseScale: 10
   m_gridPrefab: {fileID: 1095766587170428, guid: 244779e4b985c974abdcabc2aee9fa20,
     type: 2}
   m_cameraObject: {fileID: 1083118766984968, guid: a7b79582ae1595442a40029858f7555d,
