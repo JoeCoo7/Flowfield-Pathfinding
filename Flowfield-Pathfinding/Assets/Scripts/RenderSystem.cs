@@ -50,6 +50,7 @@ public class RenderSystem : JobComponentSystem
 			Cost = m_Data.Cost,
 			Render = Render,
 			Heat = m_Data2.Heat[0].Value.IsCreated ? m_Data2.Heat[0].Value : EmptyHeatMap,
+			HeatAlpha = (m_Data2.Heat[0].Value.IsCreated ? math.clamp(1 - (Time.realtimeSinceStartup - m_Data2.Heat[0].Time), 0, 1) : 0),
 			Flow = InitializationData.m_initialFlow,
 			Grid = m_Data.Grid[0],
 			HeatScale = 1f / m_Data.Grid[0].cellCount.x
@@ -67,6 +68,7 @@ public class RenderSystem : JobComponentSystem
 		public GridSettings Grid;
 		[ReadOnly]
 		public NativeArray<int> Heat;
+		public float HeatAlpha;
 		public float HeatScale;
 		public void Execute(int i)
 		{
@@ -76,13 +78,13 @@ public class RenderSystem : JobComponentSystem
 			{
 				flowColor = new float3(0, 0, 0);
 			}
-			else
+			else if(HeatAlpha > 0)
 			{
 				var h = Heat[bi] * HeatScale;
 				if (h < 1)
-					flowColor += (1 - h) * .5f;
+					flowColor += (1 - h) * (1 - h) * HeatAlpha;
 			}
-			Render[i] = new RenderData() { color = flowColor };// flowColor}; 
+			Render[i] = new RenderData() { color = flowColor };
 		}
 
 	}

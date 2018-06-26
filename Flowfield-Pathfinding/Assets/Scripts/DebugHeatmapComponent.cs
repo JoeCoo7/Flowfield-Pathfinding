@@ -9,6 +9,7 @@ namespace DebugHeatmap
     public struct Component : ISharedComponentData
     {
 		public NativeArray<int> Value;
+		public float Time;
 	}
 
 	struct Group
