@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_worldWidth: 512
   m_worldHeight: 512
-  m_cellSize: 2
+  m_cellSize: 1
   m_cellsPerBlock: 8
   m_noiseScale: 7
   m_noiseMultiplier: 4
@@ -31,5 +31,7 @@ MonoBehaviour:
   m_unitDistCellSize: 1
   m_unitDistNumPerClick: 100
   m_unitDistSpawningThreshold: 128
+  m_unitSeparationWeight: 100
+  m_unitFlowFieldWeight: 100
   m_unitMaxSpeed: 25
   m_unitMaxForce: 1000

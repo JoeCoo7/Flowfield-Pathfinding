@@ -14,8 +14,11 @@ public struct GridSettings : ISharedComponentData
     public int2 cellCount;
     public int2 cellsPerBlock;
     public int2 blockCount;
-    public float separationWeight;
-    public float alignmentWeight;
+    public float agentSeparationWeight;
+    public float agentAlignmentWeight;
+    public float agentTargetFlowfieldWeight;
+    public float agentTerrainFlowfieldWeight;
+    public float agentRadius;
 }
 
 public class TileSystem : JobComponentSystem
@@ -105,13 +108,13 @@ public class TileSystem : JobComponentSystem
 
         // Create all the jobs
         var initializeHandle = initializeJob.Schedule(this, 64, inputDeps);
-        var heatmapHandle = heatmapJob.Schedule(initializeHandle);
+        var heatmapHandle = (lastHeatmapJob = heatmapJob.Schedule(initializeHandle));
         var copyDebugHeatmapHandle = copyDebugHeatmapJob.Schedule(numTiles, 64, heatmapHandle);
         var flowFieldHandle = flowFieldJob.Schedule(numTiles, 64, copyDebugHeatmapHandle);
         var createResultHandle = createResultJob.Schedule(flowFieldHandle);
         return createResultHandle;
     }
-
+	public static JobHandle lastHeatmapJob;
     const int k_Obstacle = int.MaxValue;
 
     const int k_Unvisited = k_Obstacle - 1;
