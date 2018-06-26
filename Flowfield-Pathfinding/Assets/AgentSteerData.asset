@@ -11,13 +11,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cdd9d14d7a7498494735bc15f0b3818, type: 3}
   m_Name: AgentSteerData
   m_EditorClassIdentifier: 
-  MaxSpeed: 0
-  Acceleration: 0
-  TerrainFieldWeight: 0
-  TargetFieldWeight: 0
-  SeparationRadius: 0
-  SeparationWeight: 0
-  AlignmentWeight: 0
-  CohesionWeight: 0
-  NeighbourHashCellSize: 0
-  AlignmentHashCellSize: 0
+  MaxSpeed: 1
+  Acceleration: 1
+  TerrainFieldWeight: 1
+  TargetFieldWeight: 1
+  SeparationRadius: 1
+  SeparationWeight: 1
+  AlignmentWeight: 1
+  CohesionWeight: 1
+  NeighbourHashCellSize: 10
+  AlignmentHashCellSize: 5
