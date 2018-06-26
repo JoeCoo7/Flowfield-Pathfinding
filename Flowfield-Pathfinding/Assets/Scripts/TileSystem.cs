@@ -13,8 +13,11 @@ public struct GridSettings : ISharedComponentData
     public int2 cellCount;
     public int2 cellsPerBlock;
     public int2 blockCount;
-    public float separationWeight;
-    public float alignmentWeight;
+    public float agentSeparationWeight;
+    public float agentAlignmentWeight;
+    public float agentTargetFlowfieldWeight;
+    public float agentTerrainFlowfieldWeight;
+    public float agentRadius;
 }
 
 public class TileSystem : JobComponentSystem
