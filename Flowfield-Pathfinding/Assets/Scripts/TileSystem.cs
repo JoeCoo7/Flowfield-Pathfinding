@@ -3,6 +3,7 @@ using Unity.Entities;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Jobs;
+using Unity.Burst;
 using RSGLib;
 
 [System.Serializable]
@@ -110,7 +111,7 @@ public class TileSystem : JobComponentSystem
 
     const int k_Unvisited = k_Obstacle - 1;
 
-    //[BurstCompile]
+    [BurstCompile]
     struct InitializeHeatmapJob : IJobProcessComponentData<Tile.Cost, Tile.Position>
     {
         [ReadOnly]
@@ -126,7 +127,7 @@ public class TileSystem : JobComponentSystem
         }
     }
 
-    //[BurstCompile]
+    [BurstCompile]
     struct ComputeHeatmapJob : IJob
     {
         [ReadOnly]
