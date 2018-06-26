@@ -3,6 +3,7 @@ using Unity.Entities;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Jobs;
+using Unity.Burst;
 using RSGLib;
 
 [System.Serializable]
@@ -33,6 +34,8 @@ public class TileSystem : JobComponentSystem
     [Inject]
     Agent.Group.SelectedWithQuery m_SelectedWithQuery;
 
+    NativeArray<int2> m_Offsets;
+
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
         if (!Input.GetMouseButtonDown(StandardInput.RIGHT_MOUSE_BUTTON))
@@ -52,6 +55,12 @@ public class TileSystem : JobComponentSystem
         for (var i = 0; i < m_SelectedWithQuery.entity.Length; ++i)
             buffer.SetComponent(m_SelectedWithQuery.entity[i], query);
 
+        if (!m_Offsets.IsCreated)
+        {
+            m_Offsets = new NativeArray<int2>(GridUtilties.Offset.Length, Allocator.Persistent);
+            m_Offsets.CopyFrom(GridUtilties.Offset);
+        }
+
         // Create & Initialize heatmap
         var initializeJob = new InitializeHeatmapJob()
         {
@@ -64,7 +73,8 @@ public class TileSystem : JobComponentSystem
         {
             settings = gridSettings,
             goals = new NativeArray<int2>(1, Allocator.TempJob),
-            heatmap = initializeJob.heatmap
+            heatmap = initializeJob.heatmap,
+            offsets = m_Offsets
         };
         heatmapJob.goals[0] = GridUtilties.World2Grid(gridSettings, hit.point);
 
@@ -81,7 +91,8 @@ public class TileSystem : JobComponentSystem
         {
             settings = gridSettings,
             heatmap = heatmapJob.heatmap,
-            flowfield = new NativeArray<float3>(numTiles, Allocator.Persistent, NativeArrayOptions.UninitializedMemory)
+            flowfield = new NativeArray<float3>(numTiles, Allocator.Persistent, NativeArrayOptions.UninitializedMemory),
+            offsets = m_Offsets
         };
 
         var createResultJob = new CreateFlowFieldResultEntity
@@ -104,7 +115,7 @@ public class TileSystem : JobComponentSystem
 
     const int k_Unvisited = k_Obstacle - 1;
 
-    //[BurstCompile]
+    [BurstCompile]
     struct InitializeHeatmapJob : IJobProcessComponentData<Tile.Cost, Tile.Position>
     {
         [ReadOnly]
@@ -128,6 +139,9 @@ public class TileSystem : JobComponentSystem
 
         [ReadOnly, DeallocateOnJobCompletion]
         public NativeArray<int2> goals;
+
+        [ReadOnly]
+        public NativeArray<int2> offsets;
 
         //[ReadOnly]
         //public NativeArray<int> values;
@@ -155,7 +169,7 @@ public class TileSystem : JobComponentSystem
 
                 for (GridUtilties.Direction dir = GridUtilties.Direction.N; dir <= GridUtilties.Direction.W; ++dir)
                 {
-                    var neighborGrid = grid + GridUtilties.Offset[(int)dir];
+                    var neighborGrid = grid + offsets[(int)dir];
                     var neighborIndex = GridUtilties.Grid2Index(settings, neighborGrid);
 
                     if (heatmap[neighborIndex] != k_Obstacle && newDistance < heatmap[neighborIndex])

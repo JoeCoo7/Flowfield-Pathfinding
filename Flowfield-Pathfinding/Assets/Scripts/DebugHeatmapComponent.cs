@@ -32,6 +32,7 @@ namespace DebugHeatmap
         }
     }
 
+    [Unity.Burst.BurstCompile]
     public struct CopyHeatmapJob : IJobParallelFor
     {
         [ReadOnly]
