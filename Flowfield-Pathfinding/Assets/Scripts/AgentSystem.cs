@@ -59,15 +59,17 @@ public class AgentSystem : JobComponentSystem
 		var cellIndices = new NativeArray<int>(agentCount, Allocator.TempJob,NativeArrayOptions.UninitializedMemory);
 		var cellAlignment             = new NativeArray<Velocity>(agentCount, Allocator.TempJob,NativeArrayOptions.UninitializedMemory);
 		var cellSeparation            = new NativeArray<Position>(agentCount, Allocator.TempJob,NativeArrayOptions.UninitializedMemory);
-		var cellCount                 = new NativeArray<int>(agentCount, Allocator.TempJob,NativeArrayOptions.UninitializedMemory);
+		var cellCount = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+		var nearestNeighbor = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 		m_hashMap = new NativeMultiHashMap<int,int>(agentCount,Allocator.TempJob);
 
-		
+		var cellSize = 10;
+
 		var hashPositionsJob = new HashPositions
 		{
 			positions      = positions,
 			hashMap        = m_hashMap,
-			cellRadius     = 3
+			cellRadius     = cellSize
 		};
 		var hashPositionsJobHandle = hashPositionsJob.Schedule(agentCount, 64, inputDeps);
 
@@ -103,16 +105,28 @@ public class AgentSystem : JobComponentSystem
 		};
 		var mergeCellsJobHandle = mergeCellsJob.Schedule(m_hashMap,64,mergeCellsBarrierJobHandle);
 
+		var closestNeighborJob = new FindClosestNeighbor
+		{
+			cellHash = m_hashMap,
+			cellIndices = cellIndices,
+			positions = positions,
+			closestNeighbor = nearestNeighbor,
+			cellRadius = cellSize
+		};
+
+		var closestNeighborJobHandle = closestNeighborJob.Schedule(agentCount, 64, mergeCellsJobHandle);
+
 		var steerJob = new Steer
 		{
-			cellIndices               = cellIndices,
-			settings                  = settings,
-			cellAlignment             = cellAlignment,
-			cellSeparation            = cellSeparation,
-			cellCount                 = cellCount,
-			deltaTime                        = Time.deltaTime,
-			positions                 = positions,
-			velocities                 = velocities,
+			cellIndices = cellIndices,
+			settings = settings,
+			cellAlignment = cellAlignment,
+			cellCohesion = cellSeparation,
+			cellCount = cellCount,
+			deltaTime = Time.deltaTime,
+			closestNeighbor = nearestNeighbor,
+			positions = positions,
+			velocities = velocities,
 			targetFlowfield = m_agents.TargetFlowfield[0].Value,
 			terrainFlowfield = InitializationData.m_initialFlow,
 			maxSpeed = InitializationData.Instance.m_unitMaxSpeed
@@ -125,7 +139,7 @@ public class AgentSystem : JobComponentSystem
 			TimeDelta = Time.deltaTime,
 		};
 		
-		var steerJobHandle = steerJob.Schedule(agentCount, 64, mergeCellsJobHandle);
+		var steerJobHandle = steerJob.Schedule(agentCount, 64, closestNeighborJobHandle);
 		var speedJobHandel = speedJob.Schedule(agentCount, 64, steerJobHandle);
 		
 		return speedJobHandel;
@@ -174,6 +188,42 @@ public class AgentSystem : JobComponentSystem
 		}
 	}
 
+	[BurstCompile]
+	struct FindClosestNeighbor : IJobParallelFor
+	{
+		[ReadOnly]public NativeArray<int> cellIndices;
+		[ReadOnly] public ComponentDataArray<Position> positions;
+		[ReadOnly] public NativeMultiHashMap<int, int> cellHash;
+		public NativeArray<int> closestNeighbor;
+		public float cellRadius;
+		public void Execute(int index)
+		{
+			var myPosition = positions[index].Value;
+			var closestDistance = float.MaxValue;
+			var closestIndex = -1;
+			var hash = GridHash.Hash(myPosition, cellRadius);
+
+			if (cellHash.TryGetFirstValue(hash, out int item, out NativeMultiHashMapIterator<int> it))
+			{
+				do
+				{
+					if (item != index)
+					{
+						var neighborPosition = positions[item].Value;
+						var vecToNeighbor = neighborPosition - myPosition;
+						var neighborDistance = math.lengthSquared(vecToNeighbor);
+						if (neighborDistance < closestDistance)
+						{
+							closestIndex = item;
+							closestDistance = neighborDistance;
+						}
+					}
+
+				} while (cellHash.TryGetNextValue(out item, ref it));
+			}
+			closestNeighbor[index] = closestIndex;
+		}
+	}
 	
 	//-----------------------------------------------------------------------------
 	[BurstCompile]
@@ -182,17 +232,18 @@ public class AgentSystem : JobComponentSystem
 		[ReadOnly] public GridSettings settings;
 		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<int> cellIndices;
 		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<Velocity> cellAlignment;
-		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<Position> cellSeparation;
+		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<Position> cellCohesion;
 		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<int> cellCount;
 		[ReadOnly] public NativeArray<float3> targetFlowfield;
 		[ReadOnly] public NativeArray<float3> terrainFlowfield;
 		[ReadOnly] public ComponentDataArray<Position> positions;
 		[ReadOnly] public float maxSpeed;
-		
+		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<int> closestNeighbor;
+
 		public float deltaTime;
 		public ComponentDataArray<Velocity> velocities;
-		
-		
+
+
 		public void Execute(int index)
 		{
 			var velocity = velocities[index].Value;
@@ -200,22 +251,38 @@ public class AgentSystem : JobComponentSystem
 			var cellIndex = cellIndices[index];
 			var neighborCount = cellCount[cellIndex];
 			var alignment = cellAlignment[cellIndex].Value;
-			var separation = cellSeparation[cellIndex].Value;
+			var cohesion = cellCohesion[cellIndex].Value;
 
-			var alignmentResult = 0.5f * math_experimental.normalizeSafe((alignment/neighborCount)- velocity);
-			var separationResult = 0.5f * math_experimental.normalizeSafe((position * neighborCount) - separation);
-			//var gridIndex = GridUtilties.WorldToIndex(settings, position);
-			var terrainFlowFieldResult = 0; //1 * terrainFlowfield[gridIndex];
-			var targetFlowFieldResult = 0; //1 * targetFlowfield[gridIndex];
-			var normalVelocity = math_experimental.normalizeSafe(alignmentResult + separationResult + terrainFlowFieldResult + targetFlowFieldResult);
-			var nextVelocity = math_experimental.normalizeSafe(velocity + deltaTime*(normalVelocity-velocity));
+			var alignmentResult = 1 * math_experimental.normalizeSafe((alignment / neighborCount) - velocity);
+			var cohesionResult = 1 * math_experimental.normalizeSafe((position * neighborCount) - cohesion);
+			var separationResult = new float3(0, 0, 0);
+			if (closestNeighbor[index] >= 0)
+			{
+				var np = positions[closestNeighbor[index]].Value;
+				var nVec = position - np;
+				var nDist2 = math.lengthSquared(nVec);
+				if (nDist2 < 4)
+				{
+					var nDist = math.sqrt(nDist2);
+					var force = 1f - nDist * .5f;
+					separationResult = math.normalize(nVec) * force * 5;
+				}
+			}
+			var gridIndex = GridUtilties.WorldToIndex(settings, position);
+			var terrainFlowFieldResult = terrainFlowfield[gridIndex];
+			terrainFlowFieldResult.y = 0;
+			terrainFlowFieldResult *= terrainFlowFieldResult * terrainFlowFieldResult;
+			var targetFlowFieldResult = targetFlowfield[gridIndex];
+			targetFlowFieldResult.y = 0;
+			var normalVelocity = math_experimental.normalizeSafe( alignmentResult + cohesionResult);
+			var nextVelocity = math_experimental.normalizeSafe(velocity + deltaTime*(normalVelocity-velocity)) + separationResult + terrainFlowFieldResult + targetFlowFieldResult;
 			nextVelocity = new float3(nextVelocity.x, 0, nextVelocity.z);
 
 			var speed = math.length(nextVelocity);
 			if (speed > maxSpeed)
 				nextVelocity = math.normalize(nextVelocity) * maxSpeed;
 
-			velocities[index] = new Velocity {Value = nextVelocity};
+			velocities[index] = new Velocity { Value = nextVelocity};
 		}
 	}
 	
