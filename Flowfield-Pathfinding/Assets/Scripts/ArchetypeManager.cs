@@ -21,6 +21,8 @@ namespace Manager
                     ComponentType.Create<FlowField.Data>());
 
             Tile = entityManager.CreateArchetype(
+                    ComponentType.Create<Unity.Transforms.TransformMatrix>(),
+                    ComponentType.Create<Tile.TileMeshInstanceRenderer>(),
                     ComponentType.Create<Tile.Position>(),
                     ComponentType.Create<Tile.Cost>(),
                     ComponentType.Create<Tile.Collision>(),
@@ -51,11 +53,12 @@ namespace Manager
                 ComponentType.Create<DebugHeatmap.Component>());
         }
 
-        public static void SetupTile(EntityManager em, Entity e, int2 pos, byte cost, float3 col, GridSettings settings)
+        public static void SetupTile(EntityManager em, Entity e, Mesh mesh, Material mat, int2 pos, byte cost, float3 col, GridSettings settings)
         {
             em.SetComponentData(e, new Tile.Position { Value = pos });
             em.SetComponentData(e, new Tile.Cost { Value = cost });
             em.SetComponentData(e, new Tile.Collision { Value = col });
+            em.SetSharedComponentData(e, new Tile.TileMeshInstanceRenderer { mesh = mesh, material = mat });
             em.SetSharedComponentData(e, settings);
         }
 

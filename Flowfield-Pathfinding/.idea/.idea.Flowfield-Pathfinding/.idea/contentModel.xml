@@ -52,6 +52,7 @@
           <e p="MathExt.cs" t="Include" />
           <e p="MathUtility.cs" t="Include" />
           <e p="RenderSystem.cs" t="Include" />
+          <e p="TileMeshInstanceRendererSystem.cs" t="Include" />
           <e p="TileSystem.cs" t="Include" />
           <e p="UpdateAgentWithQuerySystem.cs" t="Include" />
         </e>

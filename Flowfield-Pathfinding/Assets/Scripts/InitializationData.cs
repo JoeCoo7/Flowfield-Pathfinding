@@ -34,6 +34,9 @@ public class InitializationData : ScriptableObject
 	public GameObject m_cameraObject;
 	[NonSerialized]
 	public GridSettings m_grid;
+    public Mesh TileDirectionMesh;
+    public Material TileDirectionMaterial;
+    public bool m_drawFlowField = false;
 	
 	static public InitializationData Instance;
 	static public NativeArray<float3> m_initialFlow;

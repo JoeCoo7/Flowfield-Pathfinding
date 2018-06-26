@@ -98,7 +98,7 @@ public static class GridUtilties
         {
             int2 pos = GridUtilties.Index2Grid(grid, ii);
             costs[ii] = func(grid, pos);
-            Manager.Archetype.SetupTile(entityManager, entities[ii], pos, costs[ii], new float3(), grid);
+            Manager.Archetype.SetupTile(entityManager, entities[ii], InitializationData.Instance.TileDirectionMesh, InitializationData.Instance.TileDirectionMaterial, pos, costs[ii], new float3(), grid);
         }
 
         initialFlow = new NativeArray<float3>(costs.Length, Allocator.Persistent);
