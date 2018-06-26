@@ -196,7 +196,7 @@ public class TileSystem : JobComponentSystem
                     var neighborGrid = grid + offsets[(int)dir];
                     var neighborIndex = GridUtilties.Grid2Index(settings, neighborGrid);
 
-                    if (heatmap[neighborIndex] != k_Obstacle && newDistance < heatmap[neighborIndex])
+                    if (neighborIndex != -1 && heatmap[neighborIndex] != k_Obstacle && newDistance < heatmap[neighborIndex])
                     {
                         heatmap[neighborIndex] = newDistance;
                         Enqueue(openSet, neighborIndex);

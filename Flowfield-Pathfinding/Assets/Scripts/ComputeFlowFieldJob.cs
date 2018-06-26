@@ -29,7 +29,11 @@ namespace FlowField
             for (GridUtilties.Direction dir = 0; dir < GridUtilties.Direction.MAX; ++dir)
             {
                 int2 dirOffset = offsets[(int)dir];
-                int neighborWeight = GridUtilties.Neighbor(settings, heatmap, grid, dirOffset);
+                int neigborIndex = GridUtilties.Grid2Index(settings, grid + dirOffset);
+                if (neigborIndex == -1)
+                    continue;
+
+                int neighborWeight = heatmap[neigborIndex];
                 if (weight <= neighborWeight)
                     continue;
 
