@@ -91,13 +91,20 @@ public class TileSystem : JobComponentSystem
             flowField = flowFieldJob.flowfield
         };
 
+        var updateFlowDirectionsJob = new UpdateFlowDirectionsJob
+        {
+            settings = gridSettings,
+            flowField = createResultJob.flowField
+        };
+
         // Create all the jobs
         var initializeHandle = initializeJob.Schedule(this, 64, inputDeps);
         var heatmapHandle = heatmapJob.Schedule(initializeHandle);
         var copyDebugHeatmapHandle = copyDebugHeatmapJob.Schedule(numTiles, 64, heatmapHandle);
         var flowFieldHandle = flowFieldJob.Schedule(numTiles, 64, copyDebugHeatmapHandle);
         var createResultHandle = createResultJob.Schedule(flowFieldHandle);
-        return createResultHandle;
+        var updateFlowDirectionsHandle = updateFlowDirectionsJob.Schedule(this, 64, createResultHandle);
+        return updateFlowDirectionsHandle;
     }
 
     const int k_Obstacle = int.MaxValue;
@@ -184,6 +191,31 @@ public class TileSystem : JobComponentSystem
         public void Execute()
         {
             Manager.Archetype.CreateFlowFieldResult(commandBuffer, handle, new FlowField.Data { Value = flowField });
+        }
+    }
+
+    struct UpdateFlowDirectionsJob : IJobProcessComponentData<Unity.Transforms.TransformMatrix, Tile.Position>
+    {
+        [ReadOnly]
+        public GridSettings settings;
+
+        [ReadOnly]
+        public NativeArray<float3> flowField;
+
+        [ReadOnly]
+        public Unity.Transforms.TransformMatrix originTransform;
+
+        public void Execute(ref Unity.Transforms.TransformMatrix transform, ref Tile.Position position)
+        {
+            var flowFieldIndex = GridUtilties.Grid2Index(settings, position.Value);
+            var flowDirection = flowField[flowFieldIndex];
+            var scale = new float3(0.2f, 0.2f, 0.8f);
+            transform.Value = 
+                math.mul(math.lookRotationToMatrix(
+                    new float3(position.Value.x - settings.worldSize.x/2.0f - 0.5f, 0.0f, position.Value.y - settings.worldSize.y/2.0f - 0.5f),
+                    flowDirection, new float3(0.0f, 1.0f, 0.0f)),
+                math.scale(scale));
+
         }
     }
 }
