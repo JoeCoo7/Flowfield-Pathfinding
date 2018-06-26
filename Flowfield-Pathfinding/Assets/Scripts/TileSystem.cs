@@ -106,20 +106,24 @@ public class TileSystem : JobComponentSystem
             flowField = flowFieldJob.flowfield
         };
 
-        var updateFlowDirectionsJob = new UpdateFlowDirectionsJob
-        {
-            settings = gridSettings,
-            flowField = createResultJob.flowField
-        };
-
         // Create all the jobs
         var initializeHandle = initializeJob.Schedule(this, 64, inputDeps);
         var heatmapHandle = (lastHeatmapJob = heatmapJob.Schedule(initializeHandle));
         var copyDebugHeatmapHandle = copyDebugHeatmapJob.Schedule(numTiles, 64, heatmapHandle);
         var flowFieldHandle = flowFieldJob.Schedule(numTiles, 64, copyDebugHeatmapHandle);
         var createResultHandle = createResultJob.Schedule(flowFieldHandle);
-        var updateFlowDirectionsHandle = updateFlowDirectionsJob.Schedule(this, 64, createResultHandle);
-        return updateFlowDirectionsHandle;
+        if (InitializationData.Instance.m_drawFlowField)
+        {
+            var updateFlowDirectionsJob = new UpdateFlowDirectionsJob
+            {
+                settings = gridSettings,
+                flowField = createResultJob.flowField
+            };
+            var updateFlowDirectionsHandle = updateFlowDirectionsJob.Schedule(this, 64, createResultHandle);
+            return updateFlowDirectionsHandle;
+        }
+        else
+            return createResultHandle;
     }
 	public static JobHandle lastHeatmapJob;
     const int k_Obstacle = int.MaxValue;
@@ -249,7 +253,6 @@ public class TileSystem : JobComponentSystem
                 math.lookRotationToMatrix(
                     new float3(position.Value.x - settings.worldSize.x/2.0f - 0.5f, 0.0f, position.Value.y - settings.worldSize.y/2.0f - 0.5f),
                     flowDirection, new float3(0.0f, 1.0f, 0.0f));
-
         }
     }
 }

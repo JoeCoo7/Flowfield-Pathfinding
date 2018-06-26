@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices.ComTypes;
-using Samples.Common;
+﻿using Samples.Common;
 using Unity.Burst;
 using UnityEngine;
 using Unity.Mathematics;
@@ -9,21 +8,17 @@ using Unity.Jobs;
 using Unity.Mathematics.Experimental;
 using Unity.Transforms;
 
-[System.Serializable]
-public struct Velocity : IComponentData
-{
-	public float3 Value;
-}
-
 public class AgentSystem : JobComponentSystem
 {
 	struct AgentData
 	{
 		[ReadOnly] public SharedComponentDataArray<GridSettings> GridSettings;
 		[ReadOnly] public SharedComponentDataArray<FlowField.Data> TargetFlowfield;
+		[ReadOnly] public SharedComponentDataArray<AgentSteerParams> AgentSteerParams;
 		public ComponentDataArray<Velocity> Velocities;
 		public ComponentDataArray<Position> Positions;
-		public EntityArray Entity;
+        public ComponentDataArray<Rotation> Rotations;
+        public EntityArray Entity;
 		public int Length;
 	}
 	
@@ -71,6 +66,7 @@ public class AgentSystem : JobComponentSystem
 
 		var settings = m_agents.GridSettings[0];
 		var positions = m_agents.Positions;
+        var rotations = m_agents.Rotations;
 		var velocities = m_agents.Velocities;
 		var agentCount = positions.Length;
 		var cellIndices = new NativeArray<int>(agentCount, Allocator.TempJob,NativeArrayOptions.UninitializedMemory);
@@ -167,13 +163,14 @@ public class AgentSystem : JobComponentSystem
 			velocities = velocities,
 			targetFlowfield = m_agents.TargetFlowfield[0].Value,
 			terrainFlowfield = InitializationData.m_initialFlow,
-			maxSpeed = InitializationData.Instance.m_unitMaxSpeed,
+			maxSpeed = m_agents.AgentSteerParams[0].MaxSpeed,
 		};
 
-		var speedJob = new PositionJob
-		{
-			Velocity = velocities,
-			Positions = positions,
+        var speedJob = new PositionRotationJob
+        {
+            Velocity = velocities,
+            Positions = positions,
+            Rotations = rotations,
 			TimeDelta = Time.deltaTime,
 		};
 
@@ -332,16 +329,21 @@ public class AgentSystem : JobComponentSystem
 	
 	//-----------------------------------------------------------------------------
 	[BurstCompile]
-	struct PositionJob : IJobParallelFor
+	struct PositionRotationJob : IJobParallelFor
 	{
 		[ReadOnly] public ComponentDataArray<Velocity> Velocity;
 		[ReadOnly]public float TimeDelta;
 		public ComponentDataArray<Position> Positions;
-		public void Execute(int i)
+        public ComponentDataArray<Rotation> Rotations;
+
+        public void Execute(int i)
 		{
 			var pos = Positions[i];
 			pos.Value += Velocity[i].Value * TimeDelta;
 			Positions[i] = pos;
+            var rot = Rotations[i];
+            rot.Value = math.lookRotationToQuaternion(Velocity[i].Value, new float3(0.0f, 1.0f, 0.0f));
+            Rotations[i] = rot;
 		}
 	}
 
