@@ -1,64 +1,71 @@
-﻿using Unity.Burst;
+﻿//using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 
 namespace FlowField
 {
-    // TODO: SetSharedComponent can't use BurstCompile
-    //[BurstCompile]
-    struct UpdateFlowFieldOnAgents : IJobParallelFor
+    public class FlowFieldQuerySystem : JobComponentSystem
     {
         public struct UnitsWithQuery
         {
-            public EntityArray entity;
+            [ReadOnly] public EntityArray entity;
             public ComponentDataArray<FlowField.Query> flowFieldQuery;
-            public SharedComponentDataArray<FlowField.Data> flowFieldData;
+            [ReadOnly] public SharedComponentDataArray<FlowField.Data> flowFieldData;
         }
-
-        [Inject]
-        public UnitsWithQuery units;
 
         public struct FlowFieldResults
         {
             public ComponentDataArray<Result> flowFieldResult;
-            public SharedComponentDataArray<FlowField.Data> flowFieldData;
+            [ReadOnly] public SharedComponentDataArray<FlowField.Data> flowFieldData;
         }
 
-        [ReadOnly, Inject]
-        public FlowFieldResults results;
-
-        [ReadOnly]
-        public EntityCommandBuffer commandBuffer;
-
-        public void Execute(int index)
+        //[BurstCompile]
+        struct UpdateFlowFieldOnAgents : IJob
         {
-            for (int i = 0; i < results.flowFieldData.Length; ++i)
-            {
-                if (units.flowFieldQuery[index].Handle != results.flowFieldResult[i].Handle)
-                    continue;
+            public UnitsWithQuery units;
 
-                // Update the data and buffer the remove component
-                // TODO: SetSharedComponent can't use BurstCompile
-                commandBuffer.SetSharedComponent(units.entity[index], results.flowFieldData[i]);
-                commandBuffer.RemoveComponent<FlowField.Query>(units.entity[index]);
-                break;
+            [ReadOnly]
+            public FlowFieldResults results;
+
+            public EntityCommandBuffer commandBuffer;
+
+            public void Execute()
+            {
+                for (int index = 0; index < units.flowFieldQuery.Length; ++index)
+                {
+                    for (int i = 0; i < results.flowFieldData.Length; ++i)
+                    {
+                        if (units.flowFieldQuery[index].Handle != results.flowFieldResult[i].Handle)
+                            continue;
+
+                        // Update the data and buffer the remove component
+                        commandBuffer.SetSharedComponent(units.entity[index], results.flowFieldData[i]);
+                        commandBuffer.RemoveComponent<FlowField.Query>(units.entity[index]);
+                        break;
+                    }
+                }
             }
         }
-    }
 
-    public class FlowFieldQuerySystem : JobComponentSystem
-    {
         [Inject]
         EndFrameBarrier m_EndFrameBarrier;
+
+        [Inject]
+        UnitsWithQuery m_Units;
+
+        [Inject]
+        FlowFieldResults m_Results;
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             var updateAgentsJob = new UpdateFlowFieldOnAgents
             {
+                units = m_Units,
+                results = m_Results,
                 commandBuffer = m_EndFrameBarrier.CreateCommandBuffer()
             };
-            return updateAgentsJob.Schedule(updateAgentsJob.units.entity.Length, 64, inputDeps);
+            return updateAgentsJob.Schedule(inputDeps);
         }
     }
 }

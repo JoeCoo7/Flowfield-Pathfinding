@@ -2,7 +2,7 @@
 using Unity.Entities;
 using Unity.Collections;
 using Unity.Mathematics;
-using Unity.Burst;
+//using Unity.Burst;
 using Unity.Jobs;
 using RSGLib;
 
@@ -123,20 +123,7 @@ public class TileSystem : JobComponentSystem
 
     const int k_Unvisited = k_Obstacle - 1;
 
-    static void VisitNeighbor(GridSettings gridSettings, NativeArray<int> heatmap,
-        NativeQueue<int> openSet, int2 grid, GridUtilties.Direction direction, int newDistance)
-    {
-        var neighborGrid = grid + GridUtilties.Offset[(int)direction];
-        var neighborIndex = GridUtilties.Grid2Index(gridSettings, neighborGrid);
-
-        if (heatmap[neighborIndex] != k_Obstacle && newDistance < heatmap[neighborIndex])
-        {
-            heatmap[neighborIndex] = newDistance;
-            openSet.Enqueue(neighborIndex);
-        }
-    }
-
-    [BurstCompile]
+    //[BurstCompile]
     struct InitializeHeatmapJob : IJobProcessComponentData<TileCost, TilePosition>
     {
         [ReadOnly]
@@ -152,7 +139,7 @@ public class TileSystem : JobComponentSystem
         }
     }
 
-    [BurstCompile]
+    //[BurstCompile]
     struct ComputeHeatmapJob : IJob
     {
         [ReadOnly]
@@ -163,7 +150,7 @@ public class TileSystem : JobComponentSystem
 
         //[ReadOnly]
         //public NativeArray<int> values;
-        
+
         public NativeArray<int> heatmap;
 
         public void Execute()
@@ -186,8 +173,15 @@ public class TileSystem : JobComponentSystem
                 var grid = GridUtilties.Index2Grid(settings, index);
 
                 for (GridUtilties.Direction dir = GridUtilties.Direction.N; dir <= GridUtilties.Direction.W; ++dir)
-                { 
-                    //VisitNeighbor(settings, heatmap, openSet, grid, dir, newDistance);
+                {
+                    var neighborGrid = grid + GridUtilties.Offset[(int)dir];
+                    var neighborIndex = GridUtilties.Grid2Index(settings, neighborGrid);
+
+                    if (heatmap[neighborIndex] != k_Obstacle && newDistance < heatmap[neighborIndex])
+                    {
+                        heatmap[neighborIndex] = newDistance;
+                        openSet.Enqueue(neighborIndex);
+                    }
                 }
             }
 
@@ -195,7 +189,7 @@ public class TileSystem : JobComponentSystem
         }
     }
 
-    [BurstCompile]
+    //[BurstCompile]
     struct CreateFlowFieldResultEntity : IJob
     {
         [ReadOnly]
