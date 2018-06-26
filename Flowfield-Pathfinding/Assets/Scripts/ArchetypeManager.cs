@@ -1,6 +1,7 @@
-﻿using Unity.Collections;
-using Unity.Entities;
+﻿using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Rendering;
+using Unity.Transforms;
 using UnityEngine;
 
 namespace Manager
@@ -8,13 +9,9 @@ namespace Manager
     public static class Archetype
     {
         public static EntityArchetype FlowFieldResult;
-
         public static EntityArchetype Tile;
-
         public static EntityArchetype Agent;
-
         public static EntityArchetype AgentWithQuery;
-
         public static EntityArchetype DebugHeatmapType;
 
         public static void Initialize(EntityManager entityManager)
@@ -30,19 +27,21 @@ namespace Manager
                     ComponentType.Create<GridSettings>());
 
             Agent = entityManager.CreateArchetype(
-                ComponentType.Create<Unity.Transforms.Position>(),
-                ComponentType.Create<Unity.Transforms.Rotation>(),
-                ComponentType.Create<Unity.Transforms.TransformMatrix>(),
-                ComponentType.Create<Unity.Rendering.MeshInstanceRenderer>(),
+                ComponentType.Create<AgentSteerParams>(),
+                ComponentType.Create<Position>(),
+                ComponentType.Create<Rotation>(),
+                ComponentType.Create<TransformMatrix>(),
+                ComponentType.Create<MeshInstanceRenderer>(),
                 ComponentType.Create<Velocity>(),
                 ComponentType.Create<GridSettings>(),
                 ComponentType.Create<FlowField.Data>());
 
             AgentWithQuery = entityManager.CreateArchetype(
-                ComponentType.Create<Unity.Transforms.Position>(),
-                ComponentType.Create<Unity.Transforms.Rotation>(),
-                ComponentType.Create<Unity.Transforms.TransformMatrix>(),
-                ComponentType.Create<Unity.Rendering.MeshInstanceRenderer>(),
+                ComponentType.Create<AgentSteerParams>(),
+                ComponentType.Create<Position>(),
+                ComponentType.Create<Rotation>(),
+                ComponentType.Create<TransformMatrix>(),
+                ComponentType.Create<MeshInstanceRenderer>(),
                 ComponentType.Create<Velocity>(),
                 ComponentType.Create<GridSettings>(),
                 ComponentType.Create<FlowField.Data>(),
@@ -60,11 +59,12 @@ namespace Manager
             em.SetSharedComponentData(e, settings);
         }
 
-        public static void CreateAgent(EntityCommandBuffer ecb, float3 pos, Mesh mesh, Material mat, GridSettings settings, FlowField.Data flowField)
+        public static void CreateAgent(EntityCommandBuffer ecb, float3 pos, Mesh mesh, Material mat, GridSettings settings, FlowField.Data flowField, AgentSteerParams steerData)
         {
             ecb.CreateEntity(Agent);
-            ecb.SetComponent(new Unity.Transforms.Position { Value = pos });
-            ecb.SetSharedComponent(new Unity.Rendering.MeshInstanceRenderer { mesh = mesh, material = mat });
+            ecb.SetComponent(new Position { Value = pos });
+            ecb.SetSharedComponent(new MeshInstanceRenderer { mesh = mesh, material = mat });
+            ecb.SetSharedComponent(steerData);
             ecb.SetSharedComponent(settings);
             ecb.SetSharedComponent(flowField);
         }

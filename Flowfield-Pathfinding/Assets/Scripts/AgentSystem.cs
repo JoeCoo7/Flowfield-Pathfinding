@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices.ComTypes;
-using Samples.Common;
+﻿using Samples.Common;
 using Unity.Burst;
 using UnityEngine;
 using Unity.Mathematics;
@@ -9,18 +8,13 @@ using Unity.Jobs;
 using Unity.Mathematics.Experimental;
 using Unity.Transforms;
 
-[System.Serializable]
-public struct Velocity : IComponentData
-{
-	public float3 Value;
-}
-
 public class AgentSystem : JobComponentSystem
 {
 	struct AgentData
 	{
 		[ReadOnly] public SharedComponentDataArray<GridSettings> GridSettings;
 		[ReadOnly] public SharedComponentDataArray<FlowField.Data> TargetFlowfield;
+		[ReadOnly] public SharedComponentDataArray<AgentSteerParams> AgentSteerParams;
 		public ComponentDataArray<Velocity> Velocities;
 		public ComponentDataArray<Position> Positions;
 		public EntityArray Entity;
@@ -45,7 +39,6 @@ public class AgentSystem : JobComponentSystem
 			hashMap.Add(hash, index);
 		}
 	}
-
 
 	protected override JobHandle OnUpdate(JobHandle inputDeps)
 	{
@@ -129,7 +122,7 @@ public class AgentSystem : JobComponentSystem
 			velocities = velocities,
 			targetFlowfield = m_agents.TargetFlowfield[0].Value,
 			terrainFlowfield = InitializationData.m_initialFlow,
-			maxSpeed = InitializationData.Instance.m_unitMaxSpeed
+			maxSpeed = m_agents.AgentSteerParams[0].MaxSpeed,
 		};
 
 		var speedJob = new PositionJob

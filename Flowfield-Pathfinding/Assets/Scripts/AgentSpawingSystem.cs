@@ -9,38 +9,46 @@ using Random = UnityEngine.Random;
 //-----------------------------------------------------------------------------
 public class AgentSpawingSystem : ComponentSystem
 {
-	
-	struct Data
+	struct AgentData
 	{
-		[ReadOnly]
-		public SharedComponentDataArray<GridSettings> GridSettings;
-
-        [ReadOnly]
-		public ComponentDataArray<Tile.Cost> TileCost;
+		[ReadOnly] public SharedComponentDataArray<GridSettings> GridSettings;
+        [ReadOnly] public ComponentDataArray<Tile.Cost> TileCost;
 	}
 
-	[Inject] Data m_Data;
+	[Inject] private AgentData m_agentData;
 	private Rect m_DistributionRect;
 	private int m_DistHeight;
 	private int m_DistWidth;
-	private float m_RadiusSquared; // radius squared
+	private float m_RadiusSquared; 
 	private NativeArray<float3> m_Grid;
 	private NativeList<float3> m_activeSamples;
 	static FlowField.Data m_flowField;
+	private AgentSpawnData m_SpawnData;
+	private AgentSteerParams m_steerParams;
+
+	protected override void OnCreateManager(int capacity)
+	{
+		base.OnCreateManager(capacity);
+	}
 
 	//-----------------------------------------------------------------------------
 	protected override void OnUpdate()
 	{
-		if (!Input.GetMouseButtonDown(StandardInput.LEFT_MOUSE_BUTTON)) return;
+		if (!Input.GetMouseButton(StandardInput.LEFT_MOUSE_BUTTON)) return;
 		if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity)) return;
-		var initData = InitializationData.Instance;
+
+		if (m_SpawnData == null)
+		{
+			m_SpawnData = AgentSpawnData.Instance;
+			CreateAgentSteerData();
+		}
 
 		m_activeSamples = new NativeList<float3>(Allocator.Temp);
-		m_DistHeight = (int)math.floor(initData.m_unitDistSize.x / initData.m_unitDistCellSize);
-		m_DistWidth = (int)math.floor(initData.m_unitDistSize.y / initData.m_unitDistCellSize);
+		m_DistHeight = (int)math.floor(m_SpawnData.AgentDistSize.x / m_SpawnData.AgentDistCellSize);
+		m_DistWidth = (int)math.floor(m_SpawnData.AgentDistSize.y / m_SpawnData.AgentDistCellSize);
 		m_Grid = new NativeArray<float3>(m_DistWidth * m_DistHeight, Allocator.Temp);
 
-		for (int index = 0; index < initData.m_unitDistNumPerClick; index++)
+		for (int index = 0; index < m_SpawnData.AgentDistNumPerClick; index++)
 		{
 			InitSampler();
 			float3? pos = Sample(hit.point);
@@ -52,21 +60,20 @@ public class AgentSpawingSystem : ComponentSystem
 		m_activeSamples.Dispose();
 	}
 
-
 	//-----------------------------------------------------------------------------
 	private void CreateAgent(float3 _pos)
 	{
 		if (!m_flowField.Value.IsCreated)
             m_flowField = new FlowField.Data() { Value = InitializationData.m_initialFlow };
 
-        Manager.Archetype.CreateAgent(PostUpdateCommands, _pos, InitializationData.Instance.AgentMesh, InitializationData.Instance.AgentMaterial, m_Data.GridSettings[0], m_flowField);
+        Manager.Archetype.CreateAgent(PostUpdateCommands, _pos, m_SpawnData.AgentMesh, m_SpawnData.AgentMaterial, m_agentData.GridSettings[0], m_flowField, m_steerParams);
 	}
 
 	//-----------------------------------------------------------------------------
 	public void InitSampler()
 	{
 		var initData = InitializationData.Instance;
-		m_DistributionRect = new Rect(0, 0, initData.m_unitDistSize.x, initData.m_unitDistSize.y);
+		m_DistributionRect = new Rect(0, 0, m_SpawnData.AgentDistSize.x, m_SpawnData.AgentDistSize.y);
 		m_RadiusSquared = initData.m_cellSize * initData.m_cellSize;
 	}
 
@@ -74,8 +81,7 @@ public class AgentSpawingSystem : ComponentSystem
 	public float3? Sample(float3 _hit)
 	{
 		// First sample is choosen randomly
-		var initData = InitializationData.Instance;
-		AddSample(new float3(Random.value * m_DistributionRect.width, 0, Random.value * m_DistributionRect.height), initData.m_unitDistCellSize);
+		AddSample(new float3(Random.value * m_DistributionRect.width, 0, Random.value * m_DistributionRect.height), m_SpawnData.AgentDistCellSize);
 		while (m_activeSamples.Length > 0)
 		{
 			// Pick a random active sample
@@ -83,7 +89,7 @@ public class AgentSpawingSystem : ComponentSystem
 			float3 sample = m_activeSamples[i];
 
 			// Try random candidates between [radius, 2 * radius] from that sample.
-			for (int j = 0; j < initData.m_unitDistMaxTries; ++j)
+			for (int j = 0; j < m_SpawnData.AgentDistMaxTries; ++j)
 			{
 				float angle = 2 * Mathf.PI * Random.value;
 				// See: http://stackoverflow.com/questions/9048095/create-random-number-within-an-annulus/9048443#9048443
@@ -91,14 +97,14 @@ public class AgentSpawingSystem : ComponentSystem
 				var candidate = sample + randomNumber * new float3(math.cos(angle), 0, math.sin(angle));
 
 				// Accept candidates if it's inside the rect and farther than 2 * radius to any existing sample.
-				if (m_DistributionRect.Contains(new float2(candidate.x, candidate.z)) && IsFarEnough(candidate, initData.m_unitDistCellSize))
+				if (m_DistributionRect.Contains(new float2(candidate.x, candidate.z)) && IsFarEnough(candidate, m_SpawnData.AgentDistCellSize))
 				{
 					var agentPos = new float3(candidate.x + _hit.x, 0, candidate.z + _hit.z);
-					var gridIndex = GridUtilties.WorldToIndex(m_Data.GridSettings[0], agentPos);
-					if (m_Data.TileCost[gridIndex].Value > initData.m_unitDistSpawningThreshold)
+					var gridIndex = GridUtilties.WorldToIndex(m_agentData.GridSettings[0], agentPos);
+					if (m_agentData.TileCost[gridIndex].Value > m_SpawnData.AgentDistSpawningThreshold)
 						continue;
 					
-					AddSample(candidate, initData.m_unitDistCellSize);
+					AddSample(candidate, m_SpawnData.AgentDistCellSize);
 					return agentPos;
 				}
 			}
@@ -145,5 +151,24 @@ public class AgentSpawingSystem : ComponentSystem
 		var z = (int)(sample.z / cellSize);
 		var index = z * m_DistWidth + x;
 		m_Grid[index] = sample;
+	}
+	
+	//-----------------------------------------------------------------------------
+	private void CreateAgentSteerData()
+	{
+		var steerData = AgentSteerData.Instance;
+		m_steerParams = new AgentSteerParams
+		{
+			MaxSpeed = steerData.MaxSpeed,
+			Acceleration = steerData.Acceleration,
+			TerrainFieldWeight = steerData.TerrainFieldWeight,
+			TargetFieldWeight = steerData.TargetFieldWeight,
+			SeparationRadius = steerData.SeparationRadius,
+			SeparationWeight = steerData.SeparationWeight,
+			AlignmentWeight = steerData.AlignmentWeight,
+			CohesionWeight = steerData.CohesionWeight,
+			NeighbourHashCellSize = steerData.NeighbourHashCellSize,
+			AlignmentHashCellSize = steerData.AlignmentHashCellSize,
+		};
 	}
 }
