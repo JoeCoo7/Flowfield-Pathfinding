@@ -3,8 +3,6 @@ using RSGLib.ECS;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
-using Unity.Rendering;
-using Unity.Transforms;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -87,7 +85,7 @@ public class AgentSpawingSystem : ComponentSystem
 	{
 		// First sample is choosen randomly
 		var initData = InitializationData.Instance;
-		AddSample(new float3(Random.value * m_DistributionRect.width, 0, Random.value * m_DistributionRect.height), initData.m_unitDistCellSize);
+		AddSample(new float3(Random.value * m_DistributionRect.width-1, 0, Random.value * m_DistributionRect.height-1), initData.m_unitDistCellSize);
 		while (m_activeSamples.Length > 0)
 		{
 			// Pick a random active sample
@@ -107,10 +105,10 @@ public class AgentSpawingSystem : ComponentSystem
 				{
 					var agentPos = new float3(candidate.x + _hit.x, 0, candidate.z + _hit.z);
 					var gridIndex = GridUtilties.WorldToIndex(m_Data.GridSettings[0], agentPos);
-					if (m_Data.TileCost[gridIndex].value > 0)
+					if (m_Data.TileCost[gridIndex].value < 255)
 						continue;
 					
-					return AddSample(agentPos, initData.m_unitDistCellSize);
+					return AddSample(candidate, initData.m_unitDistCellSize);
 				}
 			}
 
@@ -154,7 +152,9 @@ public class AgentSpawingSystem : ComponentSystem
 		m_activeSamples.Add(sample);
 		var x = (int)(sample.x / cellSize);
 		var z = (int)(sample.z / cellSize);
-		m_Grid[z * m_DistWidth + x] = sample;
+		var index = z * m_DistWidth + x;
+		if (index < m_Grid.Length && index > 0)
+			m_Grid[index] = sample;
 		return sample;
 	}
 }

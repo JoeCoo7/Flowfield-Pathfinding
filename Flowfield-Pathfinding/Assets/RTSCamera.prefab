@@ -165,7 +165,7 @@ MonoBehaviour:
   TiltStart: 150
   TiltAngle: 65
   PanBuffer: 0.1
-  PanSpeed: 0.5
+  PanSpeed: 2
   PanningMinX: -100
   PanningMinZ: -100
   PanningMaxX: 100
