@@ -19,7 +19,7 @@ public class RenderSystem : JobComponentSystem
 		[ReadOnly]
 		public SharedComponentDataArray<GridSettings> Grid;
 		[ReadOnly]
-		public ComponentDataArray<TileCost> Cost;
+		public ComponentDataArray<Tile.Cost> Cost;
 		public EntityArray Entity;
 		public int Length;
 	}
@@ -42,7 +42,7 @@ public class RenderSystem : JobComponentSystem
 	struct Job : IJobParallelFor
 	{
 		[ReadOnly]
-		public ComponentDataArray<TileCost> Cost;
+		public ComponentDataArray<Tile.Cost> Cost;
 		public NativeArray<RenderData> Render;
 		public GridSettings Grid;
 
@@ -50,7 +50,7 @@ public class RenderSystem : JobComponentSystem
 		{
 			var bi = GridUtilties.Grid2Index(Grid, new int2(i % Grid.cellCount.x, i / Grid.cellCount.x));
 
-			Render[i] = new RenderData() { color = 1f - Cost[bi].value / 255f };
+			Render[i] = new RenderData() { color = 1f - Cost[bi].Value / 255f };
 		}
 
 	}
