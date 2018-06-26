@@ -74,7 +74,8 @@ public class TileSystem : JobComponentSystem
             settings = gridSettings,
             goals = new NativeArray<int2>(1, Allocator.TempJob),
             heatmap = initializeJob.heatmap,
-            offsets = m_Offsets
+            offsets = m_Offsets,
+            openSet = new NativeArray<int>(initializeJob.heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory)
         };
         heatmapJob.goals[0] = GridUtilties.World2Grid(gridSettings, hit.point);
 
@@ -131,7 +132,7 @@ public class TileSystem : JobComponentSystem
         }
     }
 
-    //[BurstCompile]
+    [BurstCompile]
     struct ComputeHeatmapJob : IJob
     {
         [ReadOnly]
@@ -147,6 +148,9 @@ public class TileSystem : JobComponentSystem
         //public NativeArray<int> values;
 
         public NativeArray<int> heatmap;
+
+        [DeallocateOnJobCompletion]
+        public NativeArray<int> openSet;
 
         int queueStart;
         int queueEnd;
@@ -169,9 +173,6 @@ public class TileSystem : JobComponentSystem
 
         public void Execute()
         {
-            var openSet = new NativeArray<int>(heatmap.Length, Allocator.TempJob);
-            //var openSet = new NativeQueue<int>(Allocator.TempJob);
-
             for (int i = 0; i < goals.Length; ++i)
             {
                 var tileIndex = GridUtilties.Grid2Index(settings, goals[i]);
@@ -199,8 +200,6 @@ public class TileSystem : JobComponentSystem
                     }
                 }
             }
-
-            openSet.Dispose();
         }
     }
 
