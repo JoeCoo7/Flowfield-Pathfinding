@@ -148,21 +148,41 @@ public class TileSystem : JobComponentSystem
 
         public NativeArray<int> heatmap;
 
+        int queueStart;
+        int queueEnd;
+        int queueLength;
+
+        void Enqueue(NativeArray<int> queue, int value)
+        {
+            queue[queueEnd] = value;
+            queueEnd = (queueEnd + 1) % queue.Length;
+            ++queueLength;
+        }
+
+        int Dequeue(NativeArray<int> queue)
+        {
+            var retVal = queue[queueStart];
+            queueStart = (queueStart + 1) % queue.Length;
+            --queueLength;
+            return retVal;
+        }
+
         public void Execute()
         {
-            var openSet = new NativeQueue<int>(Allocator.TempJob);
+            var openSet = new NativeArray<int>(heatmap.Length, Allocator.TempJob);
+            //var openSet = new NativeQueue<int>(Allocator.TempJob);
 
             for (int i = 0; i < goals.Length; ++i)
             {
                 var tileIndex = GridUtilties.Grid2Index(settings, goals[i]);
                 heatmap[tileIndex] = 0;//values[i];
-                openSet.Enqueue(tileIndex);
+                Enqueue(openSet, tileIndex);
             }
 
             // Search!
-            while (openSet.Count > 0)
+            while (queueLength > 0)
             {
-                var index = openSet.Dequeue();
+                var index = Dequeue(openSet);
                 var distance = heatmap[index];
                 var newDistance = distance + 1;
                 var grid = GridUtilties.Index2Grid(settings, index);
@@ -175,7 +195,7 @@ public class TileSystem : JobComponentSystem
                     if (heatmap[neighborIndex] != k_Obstacle && newDistance < heatmap[neighborIndex])
                     {
                         heatmap[neighborIndex] = newDistance;
-                        openSet.Enqueue(neighborIndex);
+                        Enqueue(openSet, neighborIndex);
                     }
                 }
             }
