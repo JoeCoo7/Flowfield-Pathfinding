@@ -37,7 +37,7 @@ public class AgentSystem : JobComponentSystem
 	struct HashPositions : IJobParallelFor
 	{
 		[ReadOnly] public ComponentDataArray<Position> positions;
-		public NativeMultiHashMap<int, int>.Concurrent hashMap;
+		[WriteOnly] public NativeMultiHashMap<int, int>.Concurrent hashMap;
 		public float cellRadius;
 
 		public void Execute(int index)
@@ -46,7 +46,21 @@ public class AgentSystem : JobComponentSystem
 			hashMap.Add(hash, index);
 		}
 	}
+	[BurstCompile]
+	struct HashPositionsWidthSavedHash : IJobParallelFor
+	{
+		[ReadOnly] public ComponentDataArray<Position> positions;
+		[WriteOnly] public NativeMultiHashMap<int, int>.Concurrent hashMap;
+		[WriteOnly] public NativeArray<int> HashedPositions;
+		public float cellRadius;
 
+		public void Execute(int index)
+		{
+			var hash = GridHash.Hash(positions[index].Value, cellRadius);
+			HashedPositions[index] = hash;
+			hashMap.Add(hash, index);
+		}
+	}
 
 	protected override JobHandle OnUpdate(JobHandle inputDeps)
 	{
@@ -67,15 +81,16 @@ public class AgentSystem : JobComponentSystem
 		m_hashMap = new NativeMultiHashMap<int, int>(agentCount, Allocator.TempJob);
 		m_neighborHashMap = new NativeMultiHashMap<int, int>(agentCount, Allocator.TempJob);
 		var cellNeighborIndices = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+		var neighborHashes = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
 		var cellSize = 10;
 		var neighborCellSize = 2;
 
 		var hashPositionsJob = new HashPositions
 		{
-			positions      = positions,
-			hashMap        = m_hashMap,
-			cellRadius     = cellSize
+			positions = positions,
+			hashMap = m_hashMap,
+			cellRadius = cellSize,
 		};
 		var hashPositionsJobHandle = hashPositionsJob.Schedule(agentCount, 64, inputDeps);
 
@@ -111,11 +126,12 @@ public class AgentSystem : JobComponentSystem
 		};
 		var mergeCellsJobHandle = mergeCellsJob.Schedule(m_hashMap,64,mergeCellsBarrierJobHandle);
 
-		var hashNeighborPositionsJob = new HashPositions
+		var hashNeighborPositionsJob = new HashPositionsWidthSavedHash
 		{
 			positions = positions,
 			hashMap = m_neighborHashMap,
-			cellRadius = neighborCellSize
+			cellRadius = neighborCellSize,
+			 HashedPositions = neighborHashes
 		};
 		var hashNeighborPositionsJobHandle = hashNeighborPositionsJob.Schedule(agentCount, 64, inputDeps);
 
@@ -129,10 +145,11 @@ public class AgentSystem : JobComponentSystem
 		var closestNeighborJob = new FindClosestNeighbor
 		{
 			cellHash = m_neighborHashMap,
-			cellIndices = cellNeighborIndices,
+			cellHashes = cellNeighborIndices,
 			positions = positions,
 			closestNeighbor = nearestNeighbor,
-			cellRadius = neighborCellSize
+			cellRadius = neighborCellSize, 
+			 hashes = neighborHashes,
 		};
 
 		var closestNeighborJobHandle = closestNeighborJob.Schedule(agentCount, 64, mergeNeighborCellsJobHandle);
@@ -150,7 +167,7 @@ public class AgentSystem : JobComponentSystem
 			velocities = velocities,
 			targetFlowfield = m_agents.TargetFlowfield[0].Value,
 			terrainFlowfield = InitializationData.m_initialFlow,
-			maxSpeed = InitializationData.Instance.m_unitMaxSpeed
+			maxSpeed = InitializationData.Instance.m_unitMaxSpeed,
 		};
 
 		var speedJob = new PositionJob
@@ -177,7 +194,7 @@ public class AgentSystem : JobComponentSystem
 	[BurstCompile]
 	struct MergeCells : IJobNativeMultiHashMapMergedSharedKeyIndices
 	{
-		public NativeArray<int> cellIndices;
+		[WriteOnly] public NativeArray<int> cellIndices;
 		public NativeArray<Velocity> cellAlignment;
 		public NativeArray<Position> cellSeparation;
 		public NativeArray<int> cellCount;
@@ -200,7 +217,7 @@ public class AgentSystem : JobComponentSystem
 	[BurstCompile]
 	struct MergeNeighborCells : IJobNativeMultiHashMapMergedSharedKeyIndices
 	{
-		 public NativeArray<int> cellIndices;
+		[WriteOnly] public NativeArray<int> cellIndices;
 
 		public void ExecuteFirst(int index)
 		{
@@ -216,18 +233,18 @@ public class AgentSystem : JobComponentSystem
 	[BurstCompile]
 	struct FindClosestNeighbor : IJobParallelFor
 	{
-		[DeallocateOnJobCompletion] [ReadOnly]public NativeArray<int> cellIndices;
+		[DeallocateOnJobCompletion] [ReadOnly]public NativeArray<int> cellHashes;
 		[ReadOnly] public ComponentDataArray<Position> positions;
 		[ReadOnly] public NativeMultiHashMap<int, int> cellHash;
-		public NativeArray<int> closestNeighbor;
+		[WriteOnly] public NativeArray<int> closestNeighbor;
+		[DeallocateOnJobCompletion] [ReadOnly] public NativeArray<int> hashes;
 		public float cellRadius;
 		public void Execute(int index)
 		{
 			var myPosition = positions[index].Value;
 			var closestDistance = float.MaxValue;
 			var closestIndex = -1;
-			var hash = GridHash.Hash(myPosition, cellRadius);
-
+			var hash = hashes[index];
 			if (cellHash.TryGetFirstValue(hash, out int item, out NativeMultiHashMapIterator<int> it))
 			{
 				do
@@ -269,8 +286,6 @@ public class AgentSystem : JobComponentSystem
 
 		public float deltaTime;
 		public ComponentDataArray<Velocity> velocities;
-
-
 		public void Execute(int index)
 		{
 			var velocity = velocities[index].Value;
