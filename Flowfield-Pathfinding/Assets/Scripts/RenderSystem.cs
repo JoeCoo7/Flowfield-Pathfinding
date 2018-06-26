@@ -82,7 +82,7 @@ public class RenderSystem : JobComponentSystem
 			{
 				var h = Heat[bi] * HeatScale;
 				if (h < 1)
-					flowColor += (1 - h) * (1 - h) * HeatAlpha;
+					flowColor += (1 - h) * (1 - h) * (1 - h) * HeatAlpha;
 			}
 			Render[i] = new RenderData() { color = flowColor };
 		}
