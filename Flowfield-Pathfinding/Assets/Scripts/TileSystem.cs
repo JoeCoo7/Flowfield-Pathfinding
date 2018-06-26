@@ -23,29 +23,11 @@ public class TileSystem : JobComponentSystem
     [Inject]
     EndFrameBarrier m_EndFrameBarrier;
 
-    struct SelectedUnits
-    {
-        public EntityArray entities;
-        [ReadOnly]
-        SharedComponentDataArray<FlowField.Data> flowField;
-        SubtractiveComponent<FlowField.Query> flowFieldQuery;
-        //ComponentDataArray<SelectedUnit> selected;
-    }
-
-    struct SelectedUnitsWithQuery
-    {
-        public EntityArray entities;
-        [ReadOnly]
-        SharedComponentDataArray<FlowField.Data> flowField;
-        ComponentDataArray<FlowField.Query> flowFieldQuery;
-        //ComponentDataArray<SelectedUnit> selected;
-    }
+    [Inject]
+    Agent.Group.Selected m_Selected;
 
     [Inject]
-    SelectedUnits selectedUnits;
-
-    [Inject]
-    SelectedUnits selectedUnitsWithQuery;
+    Agent.Group.SelectedWithQuery m_SelectedWithQuery;
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
@@ -61,10 +43,10 @@ public class TileSystem : JobComponentSystem
 
         var buffer = m_EndFrameBarrier.CreateCommandBuffer();
         var query = new FlowField.Query { Handle = queryHandle };
-        for (var i = 0; i < selectedUnits.entities.Length; ++i)
-            buffer.AddComponent(selectedUnits.entities[i], query);
-        for (var i = 0; i < selectedUnitsWithQuery.entities.Length; ++i)
-            buffer.SetComponent(selectedUnitsWithQuery.entities[i], query);
+        for (var i = 0; i < m_Selected.entity.Length; ++i)
+            buffer.AddComponent(m_Selected.entity[i], query);
+        for (var i = 0; i < m_SelectedWithQuery.entity.Length; ++i)
+            buffer.SetComponent(m_SelectedWithQuery.entity[i], query);
 
         // Create & Initialize heatmap
         var initializeJob = new InitializeHeatmapJob()
