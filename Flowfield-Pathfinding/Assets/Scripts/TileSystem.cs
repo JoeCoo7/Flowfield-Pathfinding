@@ -84,7 +84,7 @@ public class TileSystem : JobComponentSystem
             inputHeatmap = heatmapJob.heatmap,
             outputHeatmap = debugHeatmap
         };
-        buffer.SetSharedComponent(m_DebugHeatmapGroup.entities[0], new DebugHeatmap.Component { Value = debugHeatmap });
+        buffer.SetSharedComponent(m_DebugHeatmapGroup.entities[0], new DebugHeatmap.Component { Value = debugHeatmap, Time = Time.realtimeSinceStartup });
 
         // Convert flowfield from heatmap
         var flowFieldJob = new FlowField.ComputeFlowFieldJob
