@@ -13,7 +13,8 @@ public static class GridUtilties
 
 	public static int2 World2Grid(GridSettings grid, float3 pos)
 	{
-		return (int2)(new float2(pos.x, pos.z) / grid.cellCount);
+		var newPos = new float2(pos.x, pos.z) + grid.worldSize * .5f;
+		return (int2)(newPos / grid.cellCount);
 	}
 
 	//size is in blocks, c is absolute pos
