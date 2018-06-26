@@ -14,7 +14,7 @@ namespace FlowField
         [ReadOnly, DeallocateOnJobCompletion]
         public NativeArray<int> heatmap;
 
-        [ReadOnly, DeallocateOnJobCompletion]
+        [ReadOnly]
         public NativeArray<int2> offsets;
 
         [WriteOnly]
