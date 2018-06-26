@@ -63,7 +63,7 @@ public class GridDataView : MonoBehaviour
 	private void LateUpdate()
 	{
 		var rs = World.Active.GetOrCreateManager<RenderSystem>();
-		//rs.lastJob.Complete();
+		rs.lastJob.Complete();
 
 		m_computeBuffer.SetData(rs.Render);
 		m_computeShader.SetBuffer(m_computeMain, "colors", m_computeBuffer);
