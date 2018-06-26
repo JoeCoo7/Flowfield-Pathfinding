@@ -2,18 +2,19 @@
 using Unity.Entities;
 using Unity.Collections;
 using Unity.Mathematics;
-//using Unity.Burst;
 using Unity.Jobs;
 using RSGLib;
 
 [System.Serializable]
 public struct GridSettings : ISharedComponentData
 {
-	public float2 worldSize;
-	public float2 cellSize;
-	public int2 cellCount;
-	public int2 cellsPerBlock;
-	public int2 blockCount;
+    public float2 worldSize;
+    public float2 cellSize;
+    public int2 cellCount;
+    public int2 cellsPerBlock;
+    public int2 blockCount;
+    public float separationWeight;
+    public float alignmentWeight;
 }
 
 public class TileSystem : JobComponentSystem
@@ -115,7 +116,7 @@ public class TileSystem : JobComponentSystem
         public void Execute(ref Tile.Cost cost, ref Tile.Position position)
         {
             var outputIndex = GridUtilties.Grid2Index(settings, position.Value);
-            heatmap[outputIndex] = math.select(k_Obstacle, k_Unvisited, cost.Value == byte.MaxValue);
+            heatmap[outputIndex] = math.select(k_Unvisited, k_Obstacle, cost.Value == byte.MaxValue);
         }
     }
 

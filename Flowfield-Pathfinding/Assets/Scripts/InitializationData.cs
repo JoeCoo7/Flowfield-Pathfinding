@@ -42,6 +42,9 @@ public class InitializationData : ScriptableObject
 	public int m_unitDistCellSize = 1;
 	public int m_unitDistNumPerClick = 100;
 	public int m_unitDistSpawningThreshold = 128;
+	public int m_unitSeparationWeight;
+	public int m_unitFlowFieldWeight;
+	
 	public float m_unitMaxSpeed = 25;
 	public float m_unitMaxForce = 1000;
 	

@@ -16,14 +16,18 @@
             <e p="RTSCameraSettings.cs" t="Include" />
           </e>
           <e p="CombineHeatmapsJob.cs" t="Include" />
+          <e p="ComponentGroups" t="Include">
+            <e p="AgentGroups.cs" t="Include" />
+            <e p="FlowFieldGroups.cs" t="Include" />
+          </e>
           <e p="Components" t="Include">
             <e p="FlowFieldComponents.cs" t="Include" />
             <e p="TileComponents.cs" t="Include" />
           </e>
           <e p="ComputeFlowFieldJob.cs" t="Include" />
-          <e p="FlowFieldQuerySystem.cs" t="Include" />
           <e p="GridDataView.cs" t="Include" />
           <e p="GridUtilities.cs" t="Include" />
+          <e p="HashUtility.cs" t="Include" />
           <e p="InitializationData.cs" t="Include" />
           <e p="lib" t="Include">
             <e p="Camera" t="Include">
@@ -38,8 +42,10 @@
           </e>
           <e p="Main.cs" t="Include" />
           <e p="MathExt.cs" t="Include" />
+          <e p="MathUtility.cs" t="Include" />
           <e p="RenderSystem.cs" t="Include" />
           <e p="TileSystem.cs" t="Include" />
+          <e p="UpdateAgentWithQuerySystem.cs" t="Include" />
         </e>
       </e>
       <e p="Flowfield-Pathfinding.sln" t="IncludeFlat" />
