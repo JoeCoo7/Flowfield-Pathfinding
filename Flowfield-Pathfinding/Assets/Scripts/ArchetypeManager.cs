@@ -36,7 +36,7 @@ namespace Manager
                 ComponentType.Create<Unity.Transforms.Rotation>(),
                 ComponentType.Create<Unity.Transforms.TransformMatrix>(),
                 ComponentType.Create<Unity.Rendering.MeshInstanceRenderer>(),
-                ComponentType.Create<AgentData>(),
+                ComponentType.Create<Velocity>(),
                 ComponentType.Create<GridSettings>(),
                 ComponentType.Create<FlowField.Data>());
 
@@ -45,7 +45,7 @@ namespace Manager
                 ComponentType.Create<Unity.Transforms.Rotation>(),
                 ComponentType.Create<Unity.Transforms.TransformMatrix>(),
                 ComponentType.Create<Unity.Rendering.MeshInstanceRenderer>(),
-                ComponentType.Create<AgentData>(),
+                ComponentType.Create<Velocity>(),
                 ComponentType.Create<GridSettings>(),
                 ComponentType.Create<FlowField.Data>(),
                 ComponentType.Create<FlowField.Query>());

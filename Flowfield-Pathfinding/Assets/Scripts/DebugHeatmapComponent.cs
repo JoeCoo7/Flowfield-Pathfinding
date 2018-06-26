@@ -1,16 +1,18 @@
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
+using Unity.Mathematics;
 
 namespace DebugHeatmap
 {
     [System.Serializable]
     public struct Component : ISharedComponentData
     {
-        public NativeArray<int> Value;
-    }
+		public NativeArray<int> Value;
+		public float Time;
+	}
 
-    struct Group
+	struct Group
     {
         public EntityArray entities;
 
@@ -30,6 +32,7 @@ namespace DebugHeatmap
         }
     }
 
+    [Unity.Burst.BurstCompile]
     public struct CopyHeatmapJob : IJobParallelFor
     {
         [ReadOnly]

@@ -1,11 +1,11 @@
-﻿//using Unity.Burst;
+﻿using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 
 namespace FlowField
 {
-    //[BurstCompile]
+    [BurstCompile]
     struct ComputeFlowFieldJob : IJobParallelFor
     {
         [ReadOnly]
@@ -13,6 +13,9 @@ namespace FlowField
 
         [ReadOnly, DeallocateOnJobCompletion]
         public NativeArray<int> heatmap;
+
+        [ReadOnly]
+        public NativeArray<int2> offsets;
 
         [WriteOnly]
         public NativeArray<float3> flowfield;
@@ -25,8 +28,12 @@ namespace FlowField
 
             for (GridUtilties.Direction dir = 0; dir < GridUtilties.Direction.MAX; ++dir)
             {
-                int2 dirOffset = GridUtilties.Offset[(int)dir];
-                int neighborWeight = GridUtilties.Neighbor(settings, heatmap, grid, dirOffset);
+                int2 dirOffset = offsets[(int)dir];
+                int neigborIndex = GridUtilties.Grid2Index(settings, grid + dirOffset);
+                if (neigborIndex == -1)
+                    continue;
+
+                int neighborWeight = heatmap[neigborIndex];
                 if (weight <= neighborWeight)
                     continue;
 

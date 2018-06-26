@@ -16,8 +16,8 @@ MonoBehaviour:
   m_cellSize: 1
   m_cellsPerBlock: 8
   m_noiseScale: 7
-  m_noiseMultiplier: 4
-  m_noiseShift: -1
+  m_noiseMultiplier: 20
+  m_noiseShift: -10
   m_gridPrefab: {fileID: 1095766587170428, guid: 244779e4b985c974abdcabc2aee9fa20,
     type: 2}
   m_cameraObject: {fileID: 1083118766984968, guid: a7b79582ae1595442a40029858f7555d,
@@ -33,3 +33,8 @@ MonoBehaviour:
   m_unitDistMaxTries: 30
   m_unitDistCellSize: 1
   m_unitDistNumPerClick: 100
+  m_unitDistSpawningThreshold: 128
+  m_unitSeparationWeight: 12
+  m_unitFlowFieldWeight: 100
+  m_unitMaxSpeed: 25
+  m_unitMaxForce: 1000

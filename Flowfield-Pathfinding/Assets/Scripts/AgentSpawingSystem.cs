@@ -14,6 +14,8 @@ public class AgentSpawingSystem : ComponentSystem
 	{
 		[ReadOnly]
 		public SharedComponentDataArray<GridSettings> GridSettings;
+
+        [ReadOnly]
 		public ComponentDataArray<Tile.Cost> TileCost;
 	}
 
@@ -29,19 +31,6 @@ public class AgentSpawingSystem : ComponentSystem
 	//-----------------------------------------------------------------------------
 	protected override void OnUpdate()
 	{
-		if (Input.GetMouseButtonDown(StandardInput.RIGHT_MOUSE_BUTTON))
-		{
-			if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit2))
-			{
-				var grid = InitializationData.Instance.m_grid;
-				var uv = new float2(hit2.textureCoord.x,hit2.textureCoord.y);
-				var pos = uv * grid.worldSize - grid.worldSize * .5f;
-				var coord = GridUtilties.World2Grid(grid, new float3(pos.x, 0, pos.y));
-				Debug.LogFormat("UV {0}, POS {1}, COORD: {2}", uv, pos, coord);
-			}
-
-		}
-
 		if (!Input.GetMouseButtonDown(StandardInput.LEFT_MOUSE_BUTTON)) return;
 		if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity)) return;
 		var initData = InitializationData.Instance;
