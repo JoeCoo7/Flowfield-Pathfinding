@@ -44,14 +44,12 @@ public class RenderSystem : JobComponentSystem
 		if (!EmptyHeatMap.IsCreated)
 			EmptyHeatMap = new NativeArray<int>(m_Data.Length, Allocator.Persistent);
 
-	//	var heat = (m_Data2.Heat[0].Value.IsCreated ? m_Data2.Heat[0].Value : EmptyHeatMap).ToArray();
-
 		return (lastJob = new Job()
 		{
 			Cost = m_Data.Cost,
 			Render = Render,
 			Heat = m_Data2.Heat[0].Value.IsCreated ? m_Data2.Heat[0].Value : EmptyHeatMap,
-			HeatAlpha = (m_Data2.Heat[0].Value.IsCreated ? math.clamp(1 - (Time.realtimeSinceStartup - m_Data2.Heat[0].Time), 0, 1) : 0),
+			HeatAlpha = 1,//(m_Data2.Heat[0].Value.IsCreated ? math.clamp(1 - (Time.realtimeSinceStartup - m_Data2.Heat[0].Time), 0, 1) : 0),
 			Flow = InitializationData.m_initialFlow,
 			Grid = m_Data.Grid[0],
 			HeatScale = 1f / m_Data.Grid[0].cellCount.x
