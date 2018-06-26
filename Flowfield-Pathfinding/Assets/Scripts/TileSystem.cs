@@ -16,21 +16,6 @@ public struct GridSettings : ISharedComponentData
 	public int2 blockCount;
 }
 
-public struct TileCost : IComponentData
-{
-    public byte value;
-}
-
-public struct TileCollision : IComponentData
-{
-    public float3 value;
-}
-
-public struct TilePosition : IComponentData
-{
-    public int2 value;
-}
-
 public class TileSystem : JobComponentSystem
 {
     static uint s_QueryHandle = 0;
@@ -125,7 +110,7 @@ public class TileSystem : JobComponentSystem
     const int k_Unvisited = k_Obstacle - 1;
 
     //[BurstCompile]
-    struct InitializeHeatmapJob : IJobProcessComponentData<TileCost, TilePosition>
+    struct InitializeHeatmapJob : IJobProcessComponentData<Tile.Cost, Tile.Position>
     {
         [ReadOnly]
         public GridSettings settings;
@@ -133,10 +118,10 @@ public class TileSystem : JobComponentSystem
         [WriteOnly]
         public NativeArray<int> heatmap;
 
-        public void Execute(ref TileCost cost, ref TilePosition position)
+        public void Execute(ref Tile.Cost cost, ref Tile.Position position)
         {
-            var outputIndex = GridUtilties.Grid2Index(settings, position.value);
-            heatmap[outputIndex] = math.select(k_Obstacle, k_Unvisited, cost.value == byte.MaxValue);
+            var outputIndex = GridUtilties.Grid2Index(settings, position.Value);
+            heatmap[outputIndex] = math.select(k_Obstacle, k_Unvisited, cost.Value == byte.MaxValue);
         }
     }
 

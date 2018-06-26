@@ -14,7 +14,7 @@ public class AgentSpawingSystem : ComponentSystem
 	{
 		[ReadOnly]
 		public SharedComponentDataArray<GridSettings> GridSettings;
-		public ComponentDataArray<TileCost> TileCost;
+		public ComponentDataArray<Tile.Cost> TileCost;
 	}
 
 	[Inject] Data m_Data;
@@ -106,7 +106,7 @@ public class AgentSpawingSystem : ComponentSystem
 				{
 					var agentPos = new float3(candidate.x + _hit.x, 0, candidate.z + _hit.z);
 					var gridIndex = GridUtilties.WorldToIndex(m_Data.GridSettings[0], agentPos);
-					if (m_Data.TileCost[gridIndex].value > initData.m_unitDistSpawningThreshold)
+					if (m_Data.TileCost[gridIndex].Value > initData.m_unitDistSpawningThreshold)
 						continue;
 					
 					AddSample(candidate, initData.m_unitDistCellSize);
