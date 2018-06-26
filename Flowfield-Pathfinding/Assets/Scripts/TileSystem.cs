@@ -245,12 +245,10 @@ public class TileSystem : JobComponentSystem
         {
             var flowFieldIndex = GridUtilties.Grid2Index(settings, position.Value);
             var flowDirection = flowField[flowFieldIndex];
-            var scale = new float3(0.2f, 0.2f, 0.8f);
             transform.Value = 
-                math.mul(math.lookRotationToMatrix(
+                math.lookRotationToMatrix(
                     new float3(position.Value.x - settings.worldSize.x/2.0f - 0.5f, 0.0f, position.Value.y - settings.worldSize.y/2.0f - 0.5f),
-                    flowDirection, new float3(0.0f, 1.0f, 0.0f)),
-                math.scale(scale));
+                    flowDirection, new float3(0.0f, 1.0f, 0.0f));
 
         }
     }
