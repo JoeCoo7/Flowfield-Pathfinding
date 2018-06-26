@@ -22,7 +22,7 @@ MonoBehaviour:
     type: 2}
   m_cameraObject: {fileID: 1083118766984968, guid: a7b79582ae1595442a40029858f7555d,
     type: 2}
-  AgentMesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+  AgentMesh: {fileID: 4300000, guid: d2b9f4e38d54c4e43858946e825d3346, type: 3}
   AgentMaterial: {fileID: 2100000, guid: d7743bd95fc0f9d4d9cdcd412a5ba84f, type: 2}
   TileDirectionMesh: {fileID: 4300000, guid: 6138750424a81274ab6dcfc8a3f3d9d1, type: 3}
   TileDirectionMaterial: {fileID: 2100000, guid: e3c4f23818b6020418bf279d7e751149,
@@ -38,4 +38,4 @@ MonoBehaviour:
   m_unitFlowFieldWeight: 100
   m_unitMaxSpeed: 25
   m_unitMaxForce: 1000
-  m_drawFlowField: 1
+  m_drawFlowField: 0
