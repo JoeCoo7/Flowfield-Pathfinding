@@ -14,7 +14,7 @@ public static class GridUtilties
 	public static int2 World2Grid(GridSettings grid, float3 pos)
 	{
 		var newPos = new float2(pos.x, pos.z) + grid.worldSize * .5f;
-		return (int2)(newPos / 4);
+		return (int2)(newPos / grid.cellSize);
 	}
 
 	//size is in blocks, c is absolute pos
@@ -56,10 +56,10 @@ public static class GridUtilties
 		return data[Grid2Index(grid, cell + new int2(dx, dz))];
 	}
 	public static NativeArray<float3> m_initialFlow;
-	public static GridSettings CreateGrid(float worldWidth, float worldHeight, float gridSize, int cellsPerBlock, Func<GridSettings, int2, byte> func)
+	public static GridSettings CreateGrid(float worldWidth, float worldHeight, float cellSize, int cellsPerBlock, Func<GridSettings, int2, byte> func)
 	{
-		var width = (int)(worldWidth / gridSize);
-		var height = (int)(worldHeight / gridSize);
+		var width = (int)(worldWidth / cellSize);
+		var height = (int)(worldHeight / cellSize);
 		var cellCount = new int2(width, height);
 
 		var settings = new GridSettings()
@@ -67,7 +67,8 @@ public static class GridUtilties
 			worldSize = new float2(worldWidth, worldHeight),
 			cellCount = cellCount,
 			cellsPerBlock = cellsPerBlock,
-			blockCount = cellCount / cellsPerBlock
+			blockCount = cellCount / cellsPerBlock,
+			cellSize = new float2(cellSize, cellSize)
 		};
 
 		var entityManager = World.Active.GetOrCreateManager<EntityManager>();

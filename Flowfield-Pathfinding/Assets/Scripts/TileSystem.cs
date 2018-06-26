@@ -9,10 +9,11 @@ using RSGLib;
 [System.Serializable]
 public struct GridSettings : ISharedComponentData
 {
-    public float2 worldSize;
-    public int2 cellCount;
-    public int2 cellsPerBlock;
-    public int2 blockCount;
+	public float2 worldSize;
+	public float2 cellSize;
+	public int2 cellCount;
+	public int2 cellsPerBlock;
+	public int2 blockCount;
 }
 
 public struct TileCost : IComponentData

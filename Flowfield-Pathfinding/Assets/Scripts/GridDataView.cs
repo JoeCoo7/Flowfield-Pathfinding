@@ -39,6 +39,23 @@ public class GridDataView : MonoBehaviour
 
 	}
 
+	private void OnDrawGizmosSelected()
+	{
+		var grid = InitializationData.Instance.m_grid;
+		float2 cellSize = grid.worldSize / grid.cellCount;
+		for (int y = 0; y < grid.blockCount.y; y++)
+		{
+			for (int x = 0; x < grid.blockCount.x; x++)
+			{
+				var coord = new float2(x, y);
+				var center = (coord * cellSize * grid.cellsPerBlock - grid.worldSize * .5f) + cellSize * grid.cellsPerBlock * .5f;
+				var size = grid.cellsPerBlock * cellSize;
+				Gizmos.color = Color.blue;
+				Gizmos.DrawWireCube(new Vector3(center.x, 0, center.y), new Vector3(size.x, 1, size.y));
+			}
+		}
+	}
+
 	private void LateUpdate()
 	{
 		var rs = World.Active.GetOrCreateManager<RenderSystem>();
