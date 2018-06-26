@@ -17,6 +17,11 @@ public struct FlowFieldData : ISharedComponentData
 	public NativeArray<float3> value;
 }
 
+[System.Serializable]
+public struct FlowFieldQuery : IComponentData
+{
+    public uint handle;
+}
 
 public class AgentSystem : JobComponentSystem
 {

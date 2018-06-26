@@ -11,7 +11,7 @@ namespace FlowField
         [ReadOnly]
         public GridSettings settings;
 
-        [ReadOnly]
+        [ReadOnly, DeallocateOnJobCompletion]
         public NativeArray<int> heatmap;
 
         [WriteOnly]
