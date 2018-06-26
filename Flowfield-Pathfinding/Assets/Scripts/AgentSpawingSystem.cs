@@ -14,6 +14,8 @@ public class AgentSpawingSystem : ComponentSystem
 	{
 		[ReadOnly]
 		public SharedComponentDataArray<GridSettings> GridSettings;
+
+        [ReadOnly]
 		public ComponentDataArray<Tile.Cost> TileCost;
 	}
 
