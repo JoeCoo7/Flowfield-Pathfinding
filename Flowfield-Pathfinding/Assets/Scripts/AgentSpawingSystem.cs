@@ -11,8 +11,6 @@ using Random = UnityEngine.Random;
 //-----------------------------------------------------------------------------
 public class AgentSpawingSystem : ComponentSystem
 {
-	public static EntityArchetype s_AgentType;
-
 	struct Data
 	{
 		[ReadOnly]
@@ -28,14 +26,6 @@ public class AgentSpawingSystem : ComponentSystem
 	private NativeArray<float3> m_Grid;
 	private NativeList<float3> m_activeSamples;
 	static FlowFieldData m_flowField;
-	//-----------------------------------------------------------------------------
-	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-	static void Initialize()
-	{
-		var entityManager = World.Active.GetOrCreateManager<EntityManager>();
-		s_AgentType = entityManager.CreateArchetype(typeof(FlowFieldData), typeof(GridSettings), typeof(Position), typeof(Rotation), typeof(TransformMatrix), typeof(MeshInstanceRenderer), typeof(TileDirection), typeof(AgentData));
-
-	}
 
 	//-----------------------------------------------------------------------------
 	protected override void OnUpdate()
@@ -81,19 +71,7 @@ public class AgentSpawingSystem : ComponentSystem
 		if (!m_flowField.value.IsCreated)
 			m_flowField = new FlowFieldData() { value = GridUtilties.m_initialFlow };
 
-		PostUpdateCommands.CreateEntity(s_AgentType);
-		PostUpdateCommands.SetComponent(new Position() {Value = _pos});
-		PostUpdateCommands.SetSharedComponent(m_Data.GridSettings[0]);
-		PostUpdateCommands.SetComponent(new Position() { Value = _pos});
-		PostUpdateCommands.SetComponent(new AgentData() { velocity = new float3(0, 0, 0) });
-		PostUpdateCommands.SetComponent(new Rotation());
-		PostUpdateCommands.SetComponent(new TransformMatrix());
-		PostUpdateCommands.SetSharedComponent(m_flowField);
-		PostUpdateCommands.SetSharedComponent(new MeshInstanceRenderer()
-		{
-			mesh = InitializationData.Instance.AgentMesh,
-			material = InitializationData.Instance.AgentMaterial
-		});
+        Manager.Archetype.CreateAgent(PostUpdateCommands, _pos, InitializationData.Instance.AgentMesh, InitializationData.Instance.AgentMaterial, m_Data.GridSettings[0], m_flowField);
 	}
 
 	//-----------------------------------------------------------------------------

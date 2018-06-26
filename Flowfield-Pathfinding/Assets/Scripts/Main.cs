@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using Unity.Entities;
 using UnityEngine;
 
 public class Main : MonoBehaviour
@@ -9,6 +8,9 @@ public class Main : MonoBehaviour
 	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
 	static void Initialize()
 	{
-		GameObject.FindObjectOfType<Main>().m_InitData.Initalize();
+        var entityManager = World.Active.GetOrCreateManager<EntityManager>();
+        Manager.Archetype.Initialize(entityManager);
+
+		FindObjectOfType<Main>().m_InitData.Initalize();
 	}
 }

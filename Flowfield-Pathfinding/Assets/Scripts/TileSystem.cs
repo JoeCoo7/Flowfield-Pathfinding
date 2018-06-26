@@ -20,11 +20,6 @@ public struct TileCost : IComponentData
     public byte value;
 }
 
-public struct TileDirection : IComponentData
-{
-    public float3 value;
-}
-
 public struct TileCollision : IComponentData
 {
     public float3 value;
@@ -230,9 +225,7 @@ public class TileSystem : JobComponentSystem
 
         public void Execute()
         {
-            commandBuffer.CreateEntity(FlowField.FlowFieldQuerySystem.FlowFieldResultType);
-            commandBuffer.SetComponent(new FlowField.FlowFieldResult { handle = handle });
-            commandBuffer.SetSharedComponent(new FlowFieldData { value = flowField });
+            Manager.Archetype.CreateFlowFieldResult(commandBuffer, handle, new FlowFieldData { value = flowField });
         }
     }
 }

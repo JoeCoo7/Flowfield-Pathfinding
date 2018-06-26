@@ -56,19 +56,8 @@ namespace FlowField
 
     public class FlowFieldQuerySystem : JobComponentSystem
     {
-        public static EntityArchetype FlowFieldResultType;
-
         [Inject]
         EndFrameBarrier m_EndFrameBarrier;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        static void Initialize()
-        {
-            var entityManager = World.Active.GetOrCreateManager<EntityManager>();
-            FlowFieldResultType = entityManager.CreateArchetype(
-                ComponentType.Create<FlowFieldResult>(),
-                ComponentType.Create<FlowFieldData>());
-        }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
