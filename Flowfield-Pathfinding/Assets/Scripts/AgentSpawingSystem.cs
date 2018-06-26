@@ -9,6 +9,7 @@ using Random = UnityEngine.Random;
 //-----------------------------------------------------------------------------
 public class AgentSpawingSystem : ComponentSystem
 {
+	
 	struct Data
 	{
 		[ReadOnly]
@@ -105,7 +106,7 @@ public class AgentSpawingSystem : ComponentSystem
 				{
 					var agentPos = new float3(candidate.x + _hit.x, 0, candidate.z + _hit.z);
 					var gridIndex = GridUtilties.WorldToIndex(m_Data.GridSettings[0], agentPos);
-					if (m_Data.TileCost[gridIndex].value < 255)
+					if (m_Data.TileCost[gridIndex].value > initData.m_unitDistSpawningThreshold)
 						continue;
 					
 					AddSample(candidate, initData.m_unitDistCellSize);

@@ -123,5 +123,4 @@ public static class GridUtilties
 		SW,
 		MAX
 	}
-
 }
