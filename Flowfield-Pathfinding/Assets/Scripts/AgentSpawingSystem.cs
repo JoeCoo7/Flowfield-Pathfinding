@@ -9,11 +9,12 @@ using Random = UnityEngine.Random;
 //-----------------------------------------------------------------------------
 public class AgentSpawingSystem : ComponentSystem
 {
+	
 	struct Data
 	{
 		[ReadOnly]
 		public SharedComponentDataArray<GridSettings> GridSettings;
-		public ComponentDataArray<TileCost> TileCost;
+		public ComponentDataArray<Tile.Cost> TileCost;
 	}
 
 	[Inject] Data m_Data;
@@ -67,7 +68,7 @@ public class AgentSpawingSystem : ComponentSystem
 	private void CreateAgent(float3 _pos)
 	{
 		if (!m_flowField.Value.IsCreated)
-            m_flowField = new FlowField.Data() { Value = GridUtilties.m_initialFlow };
+            m_flowField = new FlowField.Data() { Value = InitializationData.m_initialFlow };
 
         Manager.Archetype.CreateAgent(PostUpdateCommands, _pos, InitializationData.Instance.AgentMesh, InitializationData.Instance.AgentMaterial, m_Data.GridSettings[0], m_flowField);
 	}
@@ -105,7 +106,7 @@ public class AgentSpawingSystem : ComponentSystem
 				{
 					var agentPos = new float3(candidate.x + _hit.x, 0, candidate.z + _hit.z);
 					var gridIndex = GridUtilties.WorldToIndex(m_Data.GridSettings[0], agentPos);
-					if (m_Data.TileCost[gridIndex].value < 255)
+					if (m_Data.TileCost[gridIndex].Value > initData.m_unitDistSpawningThreshold)
 						continue;
 					
 					AddSample(candidate, initData.m_unitDistCellSize);

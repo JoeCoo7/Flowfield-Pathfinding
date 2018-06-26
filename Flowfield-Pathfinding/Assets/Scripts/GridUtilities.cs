@@ -55,14 +55,13 @@ public static class GridUtilties
 	{
 		return data[Grid2Index(grid, cell + new int2(dx, dz))];
 	}
-	public static NativeArray<float3> m_initialFlow;
-	public static GridSettings CreateGrid(float worldWidth, float worldHeight, float cellSize, int cellsPerBlock, Func<GridSettings, int2, byte> func)
+	public static GridSettings CreateGrid(ref NativeArray<float3> initialFlow, float worldWidth, float worldHeight, float cellSize, int cellsPerBlock, Func<GridSettings, int2, byte> func)
 	{
 		var width = (int)(worldWidth / cellSize);
 		var height = (int)(worldHeight / cellSize);
 		var cellCount = new int2(width, height);
 
-		var settings = new GridSettings()
+		var grid = new GridSettings()
 		{
 			worldSize = new float2(worldWidth, worldHeight),
 			cellCount = cellCount,
@@ -79,25 +78,31 @@ public static class GridUtilties
 
 		for (int ii = 0; ii < entities.Length; ii++)
 		{
-			int2 pos = GridUtilties.Index2Grid(settings, ii); //new int2(ii % grid.cellCount.x, ii / grid.cellCount.x);
-            costs[ii] = func(settings, pos);
-            Manager.Archetype.SetupTile(entityManager, entities[ii], pos, costs[ii], new float3(), settings);
+			int2 pos = GridUtilties.Index2Grid(grid, ii);
+            costs[ii] = func(grid, pos);
+            Manager.Archetype.SetupTile(entityManager, entities[ii], pos, costs[ii], new float3(), grid);
 		}
-		
-		m_initialFlow = new NativeArray<float3>(costs.Length, Allocator.Persistent);
-		
-		for (int ii = 0; ii < m_initialFlow.Length; ii++)
+
+		initialFlow = new NativeArray<float3>(costs.Length, Allocator.Persistent);
+
+		float inv255 = 1f / 255f;
+		for (int ii = 0; ii < initialFlow.Length; ii++)
 		{
-			int2 coord = GridUtilties.Index2Grid(settings, ii);
-			float2 per = new float2(coord.x, coord.y) / settings.cellCount.x;
-
-			var n = UnityEngine.Mathf.PerlinNoise(per.x * 10, per.y * 10) + .15f;
-
-			m_initialFlow[ii] = new float3(n - .5f, 0, n - .5f);
+			int2 coord = Index2Grid(grid, ii);
+			var s0 = costs[Grid2Index(grid, coord + new int2(-1, -1))]* inv255;
+			var s1 = costs[Grid2Index(grid, coord + new int2(0, -1))] * inv255;
+			var s2 = costs[Grid2Index(grid, coord + new int2(1, -1))] * inv255;
+			var s3 = costs[Grid2Index(grid, coord + new int2(-1, 0))] * inv255;
+			var s5 = costs[Grid2Index(grid, coord + new int2(1, 0))] * inv255;
+			var s6 = costs[Grid2Index(grid, coord + new int2(-1, 1))] * inv255;
+			var s7 = costs[Grid2Index(grid, coord + new int2(0, 1))] * inv255;
+			var s8 = costs[Grid2Index(grid, coord + new int2(1, 1))] * inv255;
+			var normal = math.normalize(new float3(-(s2 - s0 + 2 * (s5 - s3) + s8 - s6), .2f, -(s6 - s0 + 2 * (s7 - s1) + s8 - s2)));
+			initialFlow[ii] = normal;
 		}
 		entities.Dispose();
 
-		return settings;
+		return grid;
 	}
 
 	public static readonly int2[] Offset = new[] {
@@ -123,5 +128,4 @@ public static class GridUtilties
 		SW,
 		MAX
 	}
-
 }

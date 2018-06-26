@@ -1,4 +1,5 @@
 using System;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -28,6 +29,8 @@ public class InitializationData : ScriptableObject
 	public float m_cellSize;
 	public int m_cellsPerBlock = 8;
 	public float m_noiseScale = 3;
+	public float m_noiseMultiplier = 4;
+	public float m_noiseShift = -2;
 	public GameObject m_gridPrefab;
 	public GameObject m_cameraObject;
 	[NonSerialized]
@@ -38,27 +41,26 @@ public class InitializationData : ScriptableObject
 	public int m_unitDistMaxTries = 30;
 	public int m_unitDistCellSize = 1;
 	public int m_unitDistNumPerClick = 100;
-	
+	public int m_unitDistSpawningThreshold = 128;
+	public float m_unitMaxSpeed = 25;
+	public float m_unitMaxForce = 1000;
 	
 	static public InitializationData Instance;
+	static public NativeArray<float3> m_initialFlow;
 
 	public void Initalize()
 	{
-		
 		Instance = this;
 		Instantiate(m_cameraObject);
-		m_grid = GridUtilties.CreateGrid(m_worldWidth, m_worldHeight, m_cellSize, m_cellsPerBlock, GridFunc);
+		m_grid = GridUtilties.CreateGrid(ref m_initialFlow, m_worldWidth, m_worldHeight, m_cellSize, m_cellsPerBlock, GridFunc);
 		CreateGridView();
 	}
 
 	byte GridFunc(GridSettings grid, int2 coord)
 	{
-		float2 per = new float2(coord.x, coord.y) / grid.cellCount.x;
-		var n = Mathf.PerlinNoise(per.x * m_noiseScale, per.y * m_noiseScale) - .15f;
-		float c = (n * 255);
-		float f = ((259 * (c + 255)) / (255 * (259 - c)));
-		c = (f * (c - 128) + 128);
-		return (byte)math.clamp(c, 0, 255);
+		float2 per = new float2(coord) / grid.cellCount;
+		var n = Mathf.PerlinNoise(per.x * m_noiseScale, per.y * m_noiseScale) * m_noiseMultiplier + m_noiseShift;
+		return (byte)math.clamp(n * 255, 0, 255);
 	}
 
 }

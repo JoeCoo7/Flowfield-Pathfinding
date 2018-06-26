@@ -16,13 +16,14 @@
             <e p="RTSCameraSettings.cs" t="Include" />
           </e>
           <e p="CombineHeatmapsJob.cs" t="Include" />
+          <e p="Components" t="Include">
+            <e p="FlowFieldComponents.cs" t="Include" />
+            <e p="TileComponents.cs" t="Include" />
+          </e>
           <e p="ComputeFlowFieldJob.cs" t="Include" />
-          <e p="FlowFieldCache.cs" t="Include" />
-          <e p="FlowFieldDirections.cs" t="Include" />
           <e p="FlowFieldQuerySystem.cs" t="Include" />
           <e p="GridDataView.cs" t="Include" />
           <e p="GridUtilities.cs" t="Include" />
-          <e p="HeatmapToFlowField.cs" t="Include" />
           <e p="InitializationData.cs" t="Include" />
           <e p="lib" t="Include">
             <e p="Camera" t="Include">
