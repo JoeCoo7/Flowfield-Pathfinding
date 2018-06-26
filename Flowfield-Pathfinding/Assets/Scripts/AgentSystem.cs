@@ -241,6 +241,8 @@ public class AgentSystem : JobComponentSystem
 						{
 							closestIndex = item;
 							closestDistance = neighborDistance;
+							if (closestDistance < 1)
+								break;
 						}
 					}
 
