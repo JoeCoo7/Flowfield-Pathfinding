@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿using Unity.Collections;
+using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -13,6 +14,8 @@ namespace Manager
         public static EntityArchetype Agent;
 
         public static EntityArchetype AgentWithQuery;
+
+        public static EntityArchetype DebugHeatmapType;
 
         public static void Initialize(EntityManager entityManager)
         {
@@ -44,6 +47,9 @@ namespace Manager
                 ComponentType.Create<GridSettings>(),
                 ComponentType.Create<FlowField.Data>(),
                 ComponentType.Create<FlowField.Query>());
+
+            DebugHeatmapType = entityManager.CreateArchetype(
+                ComponentType.Create<DebugHeatmap.Component>());
         }
 
         public static void SetupTile(EntityManager em, Entity e, int2 pos, byte cost, float3 col, GridSettings settings)

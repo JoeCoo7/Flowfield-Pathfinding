@@ -22,6 +22,9 @@ public class TileSystem : JobComponentSystem
     static uint s_QueryHandle = 0;
 
     [Inject]
+    DebugHeatmap.Group m_DebugHeatmapGroup;
+
+    [Inject]
     EndFrameBarrier m_EndFrameBarrier;
 
     [Inject]
@@ -65,6 +68,14 @@ public class TileSystem : JobComponentSystem
         };
         heatmapJob.goals[0] = GridUtilties.World2Grid(gridSettings, hit.point);
 
+        var debugHeatmap = m_DebugHeatmapGroup.GetOrCreateHeatmap(numTiles);
+        var copyDebugHeatmapJob = new DebugHeatmap.CopyHeatmapJob()
+        {
+            inputHeatmap = heatmapJob.heatmap,
+            outputHeatmap = debugHeatmap
+        };
+        buffer.SetSharedComponent(m_DebugHeatmapGroup.entities[0], new DebugHeatmap.Component { Value = debugHeatmap });
+
         // Convert flowfield from heatmap
         var flowFieldJob = new FlowField.ComputeFlowFieldJob
         {
@@ -83,7 +94,8 @@ public class TileSystem : JobComponentSystem
         // Create all the jobs
         var initializeHandle = initializeJob.Schedule(this, 64, inputDeps);
         var heatmapHandle = heatmapJob.Schedule(initializeHandle);
-        var flowFieldHandle = flowFieldJob.Schedule(numTiles, 64, heatmapHandle);
+        var copyDebugHeatmapHandle = copyDebugHeatmapJob.Schedule(numTiles, 64, heatmapHandle);
+        var flowFieldHandle = flowFieldJob.Schedule(numTiles, 64, copyDebugHeatmapHandle);
         var createResultHandle = createResultJob.Schedule(flowFieldHandle);
         return createResultHandle;
     }
@@ -124,7 +136,7 @@ public class TileSystem : JobComponentSystem
 
         public void Execute()
         {
-            var openSet = new NativeQueue<int>(Allocator.Temp);
+            var openSet = new NativeQueue<int>(Allocator.TempJob);
 
             for (int i = 0; i < goals.Length; ++i)
             {
