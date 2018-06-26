@@ -17,7 +17,7 @@ namespace System
 
             public void Execute(int index)
             {
-                for (int i = 0; i < results.flowFieldData.Length; ++i)
+                for (int i = results.flowFieldData.Length - 1; i >= 0; --i)
                 {
                     if (units.flowFieldQuery[index].Handle != results.flowFieldResult[i].Handle)
                         continue;
