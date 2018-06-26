@@ -31,6 +31,7 @@ public class AgentSystem : JobComponentSystem
 	[Inject] AgentData m_agents;
 	[Inject] EndFrameBarrier m_Barrier;
 	private NativeMultiHashMap<int, int> m_hashMap;
+	private NativeMultiHashMap<int, int> m_neighborHashMap;
 
 	//-----------------------------------------------------------------------------
 	[BurstCompile]
@@ -52,7 +53,9 @@ public class AgentSystem : JobComponentSystem
 	{
 		if (m_hashMap.IsCreated)
 			m_hashMap.Dispose();
-		
+		if (m_neighborHashMap.IsCreated)
+			m_neighborHashMap.Dispose();
+
 		var settings = m_agents.GridSettings[0];
 		var positions = m_agents.Positions;
         var rotations = m_agents.Rotations;
@@ -63,9 +66,12 @@ public class AgentSystem : JobComponentSystem
 		var cellSeparation            = new NativeArray<Position>(agentCount, Allocator.TempJob,NativeArrayOptions.UninitializedMemory);
 		var cellCount = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 		var nearestNeighbor = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-		m_hashMap = new NativeMultiHashMap<int,int>(agentCount,Allocator.TempJob);
+		m_hashMap = new NativeMultiHashMap<int, int>(agentCount, Allocator.TempJob);
+		m_neighborHashMap = new NativeMultiHashMap<int, int>(agentCount, Allocator.TempJob);
+		var cellNeighborIndices = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
 		var cellSize = 10;
+		var neighborCellSize = 2;
 
 		var hashPositionsJob = new HashPositions
 		{
@@ -107,16 +113,31 @@ public class AgentSystem : JobComponentSystem
 		};
 		var mergeCellsJobHandle = mergeCellsJob.Schedule(m_hashMap,64,mergeCellsBarrierJobHandle);
 
-		var closestNeighborJob = new FindClosestNeighbor
+		var hashNeighborPositionsJob = new HashPositions
 		{
-			cellHash = m_hashMap,
-			cellIndices = cellIndices,
 			positions = positions,
-			closestNeighbor = nearestNeighbor,
-			cellRadius = cellSize
+			hashMap = m_neighborHashMap,
+			cellRadius = neighborCellSize
+		};
+		var hashNeighborPositionsJobHandle = hashNeighborPositionsJob.Schedule(agentCount, 64, inputDeps);
+
+		var mergeNeighborCellsJob = new MergeNeighborCells
+		{
+			cellIndices = cellNeighborIndices, 
 		};
 
-		var closestNeighborJobHandle = closestNeighborJob.Schedule(agentCount, 64, mergeCellsJobHandle);
+		var mergeNeighborCellsJobHandle = mergeNeighborCellsJob.Schedule(m_neighborHashMap, 64, hashNeighborPositionsJobHandle);
+
+		var closestNeighborJob = new FindClosestNeighbor
+		{
+			cellHash = m_neighborHashMap,
+			cellIndices = cellNeighborIndices,
+			positions = positions,
+			closestNeighbor = nearestNeighbor,
+			cellRadius = neighborCellSize
+		};
+
+		var closestNeighborJobHandle = closestNeighborJob.Schedule(agentCount, 64, mergeNeighborCellsJobHandle);
 
 		var steerJob = new Steer
 		{
@@ -141,8 +162,9 @@ public class AgentSystem : JobComponentSystem
             Rotations = rotations,
 			TimeDelta = Time.deltaTime,
 		};
-		
-		var steerJobHandle = steerJob.Schedule(agentCount, 64, closestNeighborJobHandle);
+
+		var combinedJobHandle = JobHandle.CombineDependencies(mergeCellsJobHandle, closestNeighborJobHandle);
+		var steerJobHandle = steerJob.Schedule(agentCount, 64, combinedJobHandle);
 		var speedJobHandel = speedJob.Schedule(agentCount, 64, steerJobHandle);
 		
 		return speedJobHandel;
@@ -151,8 +173,9 @@ public class AgentSystem : JobComponentSystem
 	protected override void OnStopRunning()
 	{
 		m_hashMap.Dispose();
+		m_neighborHashMap.Dispose();
 	}
-	
+
 	//-----------------------------------------------------------------------------
 	[BurstCompile]
 	struct MergeCells : IJobNativeMultiHashMapMergedSharedKeyIndices
@@ -161,22 +184,7 @@ public class AgentSystem : JobComponentSystem
 		public NativeArray<Velocity> cellAlignment;
 		public NativeArray<Position> cellSeparation;
 		public NativeArray<int> cellCount;
-		
-		void NearestPosition(NativeArray<Position> neighbours, float3 agentPosition, out int nearestNeighbourIndex, out float nearestDistance )
-		{
-			nearestNeighbourIndex = 0;
-			nearestDistance      = math.lengthSquared(agentPosition-neighbours[0].Value);
-			for (int i = 1; i < neighbours.Length; i++)
-			{
-				var targetPosition = neighbours[i].Value;
-				var distance       = math.lengthSquared(agentPosition-targetPosition);
-				var nearest        = distance < nearestDistance;
-				nearestDistance      = math.select(nearestDistance, distance, nearest);
-				nearestNeighbourIndex = math.select(nearestNeighbourIndex, i, nearest);
-			}
-			nearestDistance = math.sqrt(nearestDistance);
-		}
-		
+
 		public void ExecuteFirst(int index)
 		{
 			cellIndices[index] = index;
@@ -184,17 +192,34 @@ public class AgentSystem : JobComponentSystem
 
 		public void ExecuteNext(int cellIndex, int index)
 		{
-			cellCount[cellIndex]      += 1;
-			cellAlignment[cellIndex]  = new Velocity { Value = cellAlignment[cellIndex].Value + cellAlignment[index].Value };
+			cellCount[cellIndex] += 1;
+			cellAlignment[cellIndex] = new Velocity { Value = cellAlignment[cellIndex].Value + cellAlignment[index].Value };
 			cellSeparation[cellIndex] = new Position { Value = cellSeparation[cellIndex].Value + cellSeparation[index].Value };
-			cellIndices[index]        = cellIndex;
+			cellIndices[index] = cellIndex;
+		}
+	}
+
+	//-----------------------------------------------------------------------------
+	[BurstCompile]
+	struct MergeNeighborCells : IJobNativeMultiHashMapMergedSharedKeyIndices
+	{
+		 public NativeArray<int> cellIndices;
+
+		public void ExecuteFirst(int index)
+		{
+			cellIndices[index] = index;
+		}
+
+		public void ExecuteNext(int cellIndex, int index)
+		{
+			cellIndices[index] = cellIndex;
 		}
 	}
 
 	[BurstCompile]
 	struct FindClosestNeighbor : IJobParallelFor
 	{
-		[ReadOnly]public NativeArray<int> cellIndices;
+		[DeallocateOnJobCompletion] [ReadOnly]public NativeArray<int> cellIndices;
 		[ReadOnly] public ComponentDataArray<Position> positions;
 		[ReadOnly] public NativeMultiHashMap<int, int> cellHash;
 		public NativeArray<int> closestNeighbor;
@@ -219,6 +244,8 @@ public class AgentSystem : JobComponentSystem
 						{
 							closestIndex = item;
 							closestDistance = neighborDistance;
+							if (closestDistance < 1)
+								break;
 						}
 					}
 

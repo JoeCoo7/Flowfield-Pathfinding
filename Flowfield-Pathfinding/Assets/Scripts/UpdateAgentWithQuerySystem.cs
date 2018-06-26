@@ -1,30 +1,54 @@
-﻿using Unity.Entities;
+﻿using Unity.Burst;
+using Unity.Entities;
+using Unity.Jobs;
 
 namespace System
 {
-    public class UpdateAgentWithQuerySystem : ComponentSystem
+    public class UpdateAgentWithQuerySystem : JobComponentSystem
     {
+        [BurstCompile]
+        struct UpdateJob : IJobParallelFor
+        {
+            public Agent.Group.WithQuery units;
+
+            public FlowField.Group.FlowFieldResult results;
+
+            public EntityCommandBuffer.Concurrent concurrent;
+
+            public void Execute(int index)
+            {
+                for (int i = 0; i < results.flowFieldData.Length; ++i)
+                {
+                    if (units.flowFieldQuery[index].Handle != results.flowFieldResult[i].Handle)
+                        continue;
+
+                    // Update the data and buffer the remove component
+                    concurrent.SetSharedComponent(units.entity[index], results.flowFieldData[i]);
+                    concurrent.RemoveComponent<FlowField.Query>(units.entity[index]);
+                    break;
+                }
+            }
+        }
+
         [Inject]
         Agent.Group.WithQuery m_Units;
 
         [Inject]
         FlowField.Group.FlowFieldResult m_Results;
 
-        protected override void OnUpdate()
-        {
-            for (int index = 0; index < m_Units.flowFieldQuery.Length; ++index)
-            {
-                for (int i = 0; i < m_Results.flowFieldData.Length; ++i)
-                {
-                    if (m_Units.flowFieldQuery[index].Handle != m_Results.flowFieldResult[i].Handle)
-                        continue;
+        [Inject]
+        EndFrameBarrier m_Barrier;
 
-                    // Update the data and buffer the remove component
-                    PostUpdateCommands.SetSharedComponent(m_Units.entity[index], m_Results.flowFieldData[i]);
-                    PostUpdateCommands.RemoveComponent<FlowField.Query>(m_Units.entity[index]);
-                    break;
-                }
-            }
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
+        {
+            var update = new UpdateJob
+            {
+                units = m_Units,
+                results = m_Results,
+                concurrent = m_Barrier.CreateCommandBuffer()
+            };
+
+            return update.Schedule(update.units.entity.Length, 64, inputDeps);
         }
     }
 }
