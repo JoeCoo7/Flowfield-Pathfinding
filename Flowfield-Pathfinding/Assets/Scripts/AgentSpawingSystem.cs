@@ -108,7 +108,8 @@ public class AgentSpawingSystem : ComponentSystem
 					if (m_Data.TileCost[gridIndex].value < 255)
 						continue;
 					
-					return AddSample(candidate, initData.m_unitDistCellSize);
+					AddSample(candidate, initData.m_unitDistCellSize);
+					return agentPos;
 				}
 			}
 
@@ -147,13 +148,12 @@ public class AgentSpawingSystem : ComponentSystem
 		return true;
 	}
 	//-----------------------------------------------------------------------------
-	private float3 AddSample(float3 sample, float cellSize)
+	private void AddSample(float3 sample, float cellSize)
 	{
 		m_activeSamples.Add(sample);
 		var x = (int)(sample.x / cellSize);
 		var z = (int)(sample.z / cellSize);
 		var index = z * m_DistWidth + x;
 		m_Grid[index] = sample;
-		return sample;
 	}
 }
