@@ -85,7 +85,7 @@ public class AgentSpawingSystem : ComponentSystem
 	{
 		// First sample is choosen randomly
 		var initData = InitializationData.Instance;
-		AddSample(new float3(Random.value * m_DistributionRect.width-1, 0, Random.value * m_DistributionRect.height-1), initData.m_unitDistCellSize);
+		AddSample(new float3(Random.value * m_DistributionRect.width, 0, Random.value * m_DistributionRect.height), initData.m_unitDistCellSize);
 		while (m_activeSamples.Length > 0)
 		{
 			// Pick a random active sample
@@ -101,7 +101,7 @@ public class AgentSpawingSystem : ComponentSystem
 				var candidate = sample + randomNumber * new float3(math.cos(angle), 0, math.sin(angle));
 
 				// Accept candidates if it's inside the rect and farther than 2 * radius to any existing sample.
-				if (m_DistributionRect.Contains(candidate) && IsFarEnough(candidate, initData.m_unitDistCellSize))
+				if (m_DistributionRect.Contains(new float2(candidate.x, candidate.z)) && IsFarEnough(candidate, initData.m_unitDistCellSize))
 				{
 					var agentPos = new float3(candidate.x + _hit.x, 0, candidate.z + _hit.z);
 					var gridIndex = GridUtilties.WorldToIndex(m_Data.GridSettings[0], agentPos);
@@ -153,8 +153,7 @@ public class AgentSpawingSystem : ComponentSystem
 		var x = (int)(sample.x / cellSize);
 		var z = (int)(sample.z / cellSize);
 		var index = z * m_DistWidth + x;
-		if (index < m_Grid.Length && index > 0)
-			m_Grid[index] = sample;
+		m_Grid[index] = sample;
 		return sample;
 	}
 }
