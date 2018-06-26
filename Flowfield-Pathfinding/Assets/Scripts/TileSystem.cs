@@ -80,8 +80,14 @@ public class TileSystem : JobComponentSystem
         {
             settings = gridSettings,
             heatmap = heatmapJob.heatmap,
-            flowfield = new NativeArray<float3>(numTiles, Allocator.Persistent, NativeArrayOptions.UninitializedMemory)
+            flowfield = new NativeArray<float3>(numTiles, Allocator.Persistent, NativeArrayOptions.UninitializedMemory),
+            offsets = new NativeArray<int2>((int)GridUtilties.Direction.MAX, Allocator.TempJob)
         };
+
+        for (int i = 0; i < (int)GridUtilties.Direction.MAX; ++i)
+        {
+            flowFieldJob.offsets[i] = GridUtilties.Offset[i];
+        }
 
         var createResultJob = new CreateFlowFieldResultEntity
         {
