@@ -63,7 +63,7 @@ public class TileSystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        if (!Input.GetMouseButtonDown(StandardInput.LEFT_MOUSE_BUTTON))
+        if (!Input.GetMouseButtonDown(StandardInput.RIGHT_MOUSE_BUTTON))
             return inputDeps;
 
         if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity))
@@ -84,7 +84,7 @@ public class TileSystem : JobComponentSystem
         var initializeJob = new InitializeHeatmapJob()
         {
             settings = gridSettings,
-            heatmap = new NativeArray<int>(numTiles, Allocator.Temp, NativeArrayOptions.UninitializedMemory)
+            heatmap = new NativeArray<int>(numTiles, Allocator.Persistent, NativeArrayOptions.UninitializedMemory) // Deallocated in ComputeFlowFieldJob
         };
 
         // Compute heatmap from goals
@@ -112,7 +112,7 @@ public class TileSystem : JobComponentSystem
         };
 
         // Create all the jobs
-        var initializeHandle = initializeJob.Schedule(numTiles, 64, inputDeps);
+        var initializeHandle = initializeJob.Schedule(this, 64, inputDeps);
         var heatmapHandle = heatmapJob.Schedule(initializeHandle);
         var flowFieldHandle = flowFieldJob.Schedule(numTiles, 64, heatmapHandle);
         var createResultHandle = createResultJob.Schedule(flowFieldHandle);
@@ -137,27 +137,18 @@ public class TileSystem : JobComponentSystem
     }
 
     [BurstCompile]
-    struct InitializeHeatmapJob : IJobParallelFor
+    struct InitializeHeatmapJob : IJobProcessComponentData<TileCost, TilePosition>
     {
         [ReadOnly]
         public GridSettings settings;
 
-        struct TileData
-        {
-            public ComponentDataArray<TileCost> costs;
-            public ComponentDataArray<TilePosition> positions;
-        }
-
-        [ReadOnly, Inject]
-        TileData tileData;
-
         [WriteOnly]
         public NativeArray<int> heatmap;
 
-        public void Execute(int index)
+        public void Execute(ref TileCost cost, ref TilePosition position)
         {
-            var outputIndex = GridUtilties.Grid2Index(settings, tileData.positions[index].value);
-            heatmap[outputIndex] = math.select(k_Obstacle, k_Unvisited, tileData.costs[index].value == byte.MaxValue);
+            var outputIndex = GridUtilties.Grid2Index(settings, position.value);
+            heatmap[outputIndex] = math.select(k_Obstacle, k_Unvisited, cost.value == byte.MaxValue);
         }
     }
 
@@ -167,13 +158,12 @@ public class TileSystem : JobComponentSystem
         [ReadOnly]
         public GridSettings settings;
 
-        [ReadOnly]
+        [ReadOnly, DeallocateOnJobCompletion]
         public NativeArray<int2> goals;
 
         //[ReadOnly]
         //public NativeArray<int> values;
-
-        [WriteOnly]
+        
         public NativeArray<int> heatmap;
 
         public void Execute()
@@ -196,7 +186,9 @@ public class TileSystem : JobComponentSystem
                 var grid = GridUtilties.Index2Grid(settings, index);
 
                 for (GridUtilties.Direction dir = GridUtilties.Direction.N; dir <= GridUtilties.Direction.W; ++dir)
-                    VisitNeighbor(settings, heatmap, openSet, grid, dir, newDistance);
+                { 
+                    //VisitNeighbor(settings, heatmap, openSet, grid, dir, newDistance);
+                }
             }
 
             openSet.Dispose();
