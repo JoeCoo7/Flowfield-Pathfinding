@@ -29,15 +29,14 @@ public class AgentSystem : JobComponentSystem
 
 	protected override JobHandle OnUpdate(JobHandle inputDeps)
 	{
-
 		return new Job()
 		{
 			Agents = m_Data.Agents,
 			Field = m_Data.Field[0].Value,
 			TimeDelta = Time.deltaTime,
 			Positions = m_Data.Positions,
-			MaxSpeed = 10,
-			MaxForce = 100,
+			MaxSpeed = InitializationData.Instance.m_unitMaxSpeed,
+			MaxForce = InitializationData.Instance.m_unitMaxForce,
 			Grid = m_Data.Grid[0]
 		}.Schedule(m_Data.Length, 64, inputDeps);
 	}
@@ -61,7 +60,7 @@ public class AgentSystem : JobComponentSystem
 
 			var tileIndex = GridUtilties.WorldToIndex(Grid, pos.Value);
 			force += Field[tileIndex];
-
+			force.y = 0;
 			//force += new float3(1, 0, 1);
 			//steering behavior goes here..
 			var mag = math.length(force);

@@ -21,9 +21,9 @@ namespace Manager
                     ComponentType.Create<FlowField.Data>());
 
             Tile = entityManager.CreateArchetype(
-                    ComponentType.Create<TilePosition>(),
-                    ComponentType.Create<TileCost>(),
-                    ComponentType.Create<TileCollision>(),
+                    ComponentType.Create<Tile.Position>(),
+                    ComponentType.Create<Tile.Cost>(),
+                    ComponentType.Create<Tile.Collision>(),
                     ComponentType.Create<GridSettings>());
 
             Agent = entityManager.CreateArchetype(
@@ -48,9 +48,9 @@ namespace Manager
 
         public static void SetupTile(EntityManager em, Entity e, int2 pos, byte cost, float3 col, GridSettings settings)
         {
-            em.SetComponentData(e, new TilePosition { value = pos });
-            em.SetComponentData(e, new TileCost { value = cost });
-            em.SetComponentData(e, new TileCollision { value = col });
+            em.SetComponentData(e, new Tile.Position { Value = pos });
+            em.SetComponentData(e, new Tile.Cost { Value = cost });
+            em.SetComponentData(e, new Tile.Collision { Value = col });
             em.SetSharedComponentData(e, settings);
         }
 

@@ -19,7 +19,7 @@ public class RenderSystem : JobComponentSystem
 		[ReadOnly]
 		public SharedComponentDataArray<GridSettings> Grid;
 		[ReadOnly]
-		public ComponentDataArray<TileCost> Cost;
+		public ComponentDataArray<Tile.Cost> Cost;
 		public EntityArray Entity;
 		public int Length;
 	}
@@ -43,7 +43,7 @@ public class RenderSystem : JobComponentSystem
 	struct Job : IJobParallelFor
 	{
 		[ReadOnly]
-		public ComponentDataArray<TileCost> Cost;
+		public ComponentDataArray<Tile.Cost> Cost;
 		public NativeArray<RenderData> Render;
 		[ReadOnly]
 		public NativeArray<float3> Flow;
@@ -53,8 +53,7 @@ public class RenderSystem : JobComponentSystem
 		{
 			var bi = GridUtilties.Grid2Index(Grid, new int2(i % Grid.cellCount.x, i / Grid.cellCount.x));
 			float3 flowColor = Flow[bi];
-			//float invCost = 1f - Cost[bi].value / 255f;
-			if (Cost[bi].value == 255)
+			if (Cost[bi].Value == 255)
 				flowColor = new float3(0,0,0);
 			Render[i] = new RenderData() { color = flowColor};
 		}
