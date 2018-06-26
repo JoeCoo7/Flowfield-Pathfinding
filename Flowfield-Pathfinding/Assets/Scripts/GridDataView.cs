@@ -66,4 +66,9 @@ public class GridDataView : MonoBehaviour
 		m_computeShader.Dispatch(m_computeMain, m_width / 8,  m_height / 8, 1);
 	}
 
+	private void OnDestroy()
+	{
+		m_computeBuffer.Release();
+	}
+	
 }
