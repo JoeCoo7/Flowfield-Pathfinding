@@ -13,9 +13,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_worldWidth: 512
   m_worldHeight: 512
-  m_cellSize: 4
+  m_cellSize: 1
   m_cellsPerBlock: 8
-  m_noiseScale: 10
+  m_noiseScale: 7
+  m_noiseMultiplier: 4
+  m_noiseShift: -1
   m_gridPrefab: {fileID: 1095766587170428, guid: 244779e4b985c974abdcabc2aee9fa20,
     type: 2}
   m_cameraObject: {fileID: 1083118766984968, guid: a7b79582ae1595442a40029858f7555d,

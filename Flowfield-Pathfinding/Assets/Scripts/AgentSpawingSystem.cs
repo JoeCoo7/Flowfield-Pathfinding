@@ -67,7 +67,7 @@ public class AgentSpawingSystem : ComponentSystem
 	private void CreateAgent(float3 _pos)
 	{
 		if (!m_flowField.Value.IsCreated)
-            m_flowField = new FlowField.Data() { Value = GridUtilties.m_initialFlow };
+            m_flowField = new FlowField.Data() { Value = InitializationData.m_initialFlow };
 
         Manager.Archetype.CreateAgent(PostUpdateCommands, _pos, InitializationData.Instance.AgentMesh, InitializationData.Instance.AgentMaterial, m_Data.GridSettings[0], m_flowField);
 	}
