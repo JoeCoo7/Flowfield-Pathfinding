@@ -156,14 +156,14 @@ MonoBehaviour:
   AllowMoveTo: 1
   AllowShake: 0
   AllowFollowTarget: 0
-  Zoom: 10
+  Zoom: 500
   ZoomSpeed: 100
   ZoomSmoothing: 5
-  MinZoom: 10
-  MaxZoom: 300
-  TiltMaxChange: 0
-  TiltStart: 150
-  TiltAngle: 65
+  MinZoom: 50
+  MaxZoom: 500
+  TiltMaxChange: -50
+  TiltStart: 400
+  TiltAngle: 80
   PanBuffer: 0.1
   PanSpeed: 2
   PanningMinX: -100

@@ -12,6 +12,7 @@ public struct RenderData : IComponentData
 	public float3 color;
 }
 
+[UpdateAfter(typeof(TileSystem))]
 public class RenderSystem : JobComponentSystem
 {
 	struct Data
@@ -43,7 +44,7 @@ public class RenderSystem : JobComponentSystem
 		if (!EmptyHeatMap.IsCreated)
 			EmptyHeatMap = new NativeArray<int>(m_Data.Length, Allocator.Persistent);
 
-		var heat = (m_Data2.Heat[0].Value.IsCreated ? m_Data2.Heat[0].Value : EmptyHeatMap).ToArray();
+	//	var heat = (m_Data2.Heat[0].Value.IsCreated ? m_Data2.Heat[0].Value : EmptyHeatMap).ToArray();
 
 		return (lastJob = new Job()
 		{
