@@ -1,8 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Entities;
-using System.ComponentModel;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Burst;
@@ -24,11 +21,6 @@ public struct TileCost : IComponentData
     public byte value;
 }
 
-public struct TileDirection : IComponentData
-{
-    public float3 value;
-}
-
 public struct TileCollision : IComponentData
 {
     public float3 value;
@@ -39,123 +31,150 @@ public struct TilePosition : IComponentData
     public int2 value;
 }
 
-public class TileSystem : ComponentSystem
+public class TileSystem : JobComponentSystem
 {
-    public static EntityArchetype s_TileType;
+    static uint s_QueryHandle = 0;
 
-    ComponentGroup m_CostGroup;
+    [Inject]
+    EndFrameBarrier m_EndFrameBarrier;
 
-    struct Tile
+    struct SelectedUnits
     {
-		public SharedComponentDataArray<GridSettings> Grid;
-		public ComponentDataArray<TileCost> cost;
-        public ComponentDataArray<TileCollision> collisionDirection;
-        public ComponentDataArray<TilePosition> position;
-        public readonly int length;
+        public EntityArray entities;
+        [ReadOnly]
+        SharedComponentDataArray<FlowField.Data> flowField;
+        SubtractiveComponent<FlowField.Query> flowFieldQuery;
+        //ComponentDataArray<SelectedUnit> selected;
     }
 
-    protected override void OnUpdate()
+    struct SelectedUnitsWithQuery
     {
-        SelectGoal();
+        public EntityArray entities;
+        [ReadOnly]
+        SharedComponentDataArray<FlowField.Data> flowField;
+        ComponentDataArray<FlowField.Query> flowFieldQuery;
+        //ComponentDataArray<SelectedUnit> selected;
     }
 
-    void SelectGoal()
+    [Inject]
+    SelectedUnits selectedUnits;
+
+    [Inject]
+    SelectedUnits selectedUnitsWithQuery;
+
+    protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        if (!Input.GetMouseButtonDown(StandardInput.LEFT_MOUSE_BUTTON))
-            return;
+        if (!Input.GetMouseButtonDown(StandardInput.RIGHT_MOUSE_BUTTON))
+            return inputDeps;
 
         if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity))
-            return;
+            return inputDeps;
 
-        //var goal = GridUtilties.World2Grid(hit);
+        uint queryHandle = s_QueryHandle++;
+        GridSettings gridSettings = InitializationData.Instance.m_grid;
+        int numTiles = gridSettings.cellCount.x * gridSettings.cellCount.y;
 
-        //var inputData = new ChunkInputData()
-        //{
-        //    size = new int2(1, 2),
-        //    goals = new NativeArray<int2>(1, Allocator.TempJob)
-        //};
-        //inputData.goals[0] = goal;
-        //inputData.costs = GetComponentGroup(typeof(TileCost));
+        var buffer = m_EndFrameBarrier.CreateCommandBuffer();
+        var query = new FlowField.Query { Handle = queryHandle };
+        for (var i = 0; i < selectedUnits.entities.Length; ++i)
+            buffer.AddComponent(selectedUnits.entities[i], query);
+        for (var i = 0; i < selectedUnitsWithQuery.entities.Length; ++i)
+            buffer.SetComponent(selectedUnitsWithQuery.entities[i], query);
 
-        //var job = new ComputeHeatmapChunkJob()
-        //{
-
-        //}
-    }
-
-    void Initialize()
-    {
-        m_CostGroup = GetComponentGroup(typeof(TileCost));
-    }
-
-    static int GetTileIndex(int width, int2 position)
-    {
-        return position.x + position.y * width;
-    }
-
-    const int s_Obstacle = int.MaxValue;
-    const int s_Unvisited = s_Obstacle - 1;
-
-    static void VisitNeighbor(NativeArray<int> heatmap, ref NativeQueue<int> openSet, int index, int newDistance)
-    {
-        if (heatmap[index] != s_Obstacle && newDistance < heatmap[index])
+        // Create & Initialize heatmap
+        var initializeJob = new InitializeHeatmapJob()
         {
-            heatmap[index] = newDistance;
-            openSet.Enqueue(index);
+            settings = gridSettings,
+            heatmap = new NativeArray<int>(numTiles, Allocator.Persistent, NativeArrayOptions.UninitializedMemory) // Deallocated in ComputeFlowFieldJob
+        };
+
+        // Compute heatmap from goals
+        var heatmapJob = new ComputeHeatmapJob()
+        {
+            settings = gridSettings,
+            goals = new NativeArray<int2>(1, Allocator.TempJob),
+            heatmap = initializeJob.heatmap
+        };
+        heatmapJob.goals[0] = GridUtilties.World2Grid(gridSettings, hit.point);
+
+        // Convert flowfield from heatmap
+        var flowFieldJob = new FlowField.ComputeFlowFieldJob
+        {
+            settings = gridSettings,
+            heatmap = heatmapJob.heatmap,
+            flowfield = new NativeArray<float3>(numTiles, Allocator.Persistent, NativeArrayOptions.UninitializedMemory)
+        };
+
+        var createResultJob = new CreateFlowFieldResultEntity
+        {
+            commandBuffer = buffer,
+            handle = queryHandle,
+            flowField = flowFieldJob.flowfield
+        };
+
+        // Create all the jobs
+        var initializeHandle = initializeJob.Schedule(this, 64, inputDeps);
+        var heatmapHandle = heatmapJob.Schedule(initializeHandle);
+        var flowFieldHandle = flowFieldJob.Schedule(numTiles, 64, heatmapHandle);
+        var createResultHandle = createResultJob.Schedule(flowFieldHandle);
+        return createResultHandle;
+    }
+
+    const int k_Obstacle = int.MaxValue;
+
+    const int k_Unvisited = k_Obstacle - 1;
+
+    static void VisitNeighbor(GridSettings gridSettings, NativeArray<int> heatmap,
+        NativeQueue<int> openSet, int2 grid, GridUtilties.Direction direction, int newDistance)
+    {
+        var neighborGrid = grid + GridUtilties.Offset[(int)direction];
+        var neighborIndex = GridUtilties.Grid2Index(gridSettings, neighborGrid);
+
+        if (heatmap[neighborIndex] != k_Obstacle && newDistance < heatmap[neighborIndex])
+        {
+            heatmap[neighborIndex] = newDistance;
+            openSet.Enqueue(neighborIndex);
         }
     }
 
-    struct ChunkInputData
+    [BurstCompile]
+    struct InitializeHeatmapJob : IJobProcessComponentData<TileCost, TilePosition>
     {
-        public GridSettings gridSettings;
-        public NativeArray<int2> goals;
-        public NativeArray<byte> costs;
-    }
+        [ReadOnly]
+        public GridSettings settings;
 
-    struct ChunkOutputData
-    {
+        [WriteOnly]
         public NativeArray<int> heatmap;
-    }
 
-    [BurstCompile]
-    struct GetChunkDataJob : IJobParallelFor
-    {
-        public GridSettings gridSettings;
-        public ComponentDataArray<TileCost> tileCosts;
-        public ComponentDataArray<TilePosition> tilePositions;
-        public NativeArray<byte> costs;
-
-        public void Execute(int index)
+        public void Execute(ref TileCost cost, ref TilePosition position)
         {
+            var outputIndex = GridUtilties.Grid2Index(settings, position.value);
+            heatmap[outputIndex] = math.select(k_Obstacle, k_Unvisited, cost.value == byte.MaxValue);
         }
     }
 
     [BurstCompile]
-    struct ComputeHeatmapChunkJob : IJobParallelFor
+    struct ComputeHeatmapJob : IJob
     {
-        [Unity.Collections.ReadOnly]
-        NativeArray<ChunkInputData> inputData;
+        [ReadOnly]
+        public GridSettings settings;
 
-        NativeArray<ChunkOutputData> outputData;
+        [ReadOnly, DeallocateOnJobCompletion]
+        public NativeArray<int2> goals;
 
-        public void Execute(int chunkData)
+        //[ReadOnly]
+        //public NativeArray<int> values;
+        
+        public NativeArray<int> heatmap;
+
+        public void Execute()
         {
-            var width = 0;// inputData[chunkData].size.x;
-            var height = 0;// inputData[chunkData].size.y;
-            var costs = inputData[chunkData].costs;
-            var heatmap = outputData[chunkData].heatmap;
-
-            for (int i = 0; i < costs.Length; ++i)
-            {
-                heatmap[i] = math.select(s_Obstacle, s_Unvisited, costs[i] == byte.MaxValue);
-            }
-
             var openSet = new NativeQueue<int>(Allocator.Temp);
-            var goals = inputData[chunkData].goals;
+
             for (int i = 0; i < goals.Length; ++i)
             {
-                var tileIndex = GetTileIndex(width, goals[i]);
-                heatmap[tileIndex] = 0;
+                var tileIndex = GridUtilties.Grid2Index(settings, goals[i]);
+                heatmap[tileIndex] = 0;//values[i];
                 openSet.Enqueue(tileIndex);
             }
 
@@ -164,61 +183,33 @@ public class TileSystem : ComponentSystem
             {
                 var index = openSet.Dequeue();
                 var distance = heatmap[index];
-
-                // Get neighbors
-                var x = index % width;
-                var y = index / width;
                 var newDistance = distance + 1;
+                var grid = GridUtilties.Index2Grid(settings, index);
 
-                if (x < width - 1) // right
-                    VisitNeighbor(heatmap, ref openSet, index + 1, newDistance);
-                if (x > 0) // left
-                    VisitNeighbor(heatmap, ref openSet, index - 1, newDistance);
-                if (y > 0) // up
-                    VisitNeighbor(heatmap, ref openSet, index - width, newDistance);
-                if (y < height - 1) // down
-                    VisitNeighbor(heatmap, ref openSet, index + width, newDistance);
+                for (GridUtilties.Direction dir = GridUtilties.Direction.N; dir <= GridUtilties.Direction.W; ++dir)
+                { 
+                    //VisitNeighbor(settings, heatmap, openSet, grid, dir, newDistance);
+                }
             }
 
-            outputData[chunkData] = new ChunkOutputData() { heatmap = heatmap };
+            openSet.Dispose();
         }
     }
 
-    public static NativeArray<int> ComputeHeatmap(int width, int height, NativeArray<byte> costs, int2 goal)
+    [BurstCompile]
+    struct CreateFlowFieldResultEntity : IJob
     {
-        var n = width * height;
-        var heatmap = new NativeArray<int>(n, Allocator.Persistent);
-        var maxValue = int.MaxValue;
-        var maxTraversable = maxValue - 1;
-        for (int i = 0; i < n; ++i)
+        [ReadOnly]
+        public uint handle;
+
+        [ReadOnly]
+        public NativeArray<float3> flowField;
+
+        public EntityCommandBuffer commandBuffer;
+
+        public void Execute()
         {
-            heatmap[i] = (byte)math.select(maxValue, maxTraversable, costs[i] == byte.MaxValue);
+            Manager.Archetype.CreateFlowFieldResult(commandBuffer, handle, new FlowField.Data { Value = flowField });
         }
-        heatmap[GetTileIndex(width, goal)] = 0;
-
-        // Search!
-        var openSet = new NativeQueue<int>(Allocator.Temp);
-        openSet.Enqueue(GetTileIndex(width, goal));
-        while (openSet.Count > 0)
-        {
-            var index = openSet.Dequeue();
-            var distance = heatmap[index];
-
-            // Get neighbors
-            var x = index % width;
-            var y = index / width;
-            var newDistance = distance + 1;
-
-            if (x < width - 1) // right
-                VisitNeighbor(heatmap, ref openSet, index + 1, newDistance);
-            if (x > 0) // left
-                VisitNeighbor(heatmap, ref openSet, index - 1, newDistance);
-            if (y > 0) // up
-                VisitNeighbor(heatmap, ref openSet, index - width, newDistance);
-            if (y < height - 1) // down
-                VisitNeighbor(heatmap, ref openSet, index + width, newDistance);
-        }
-
-        return heatmap;
     }
 }

@@ -11,13 +11,6 @@ public struct AgentData : IComponentData
 	public float3 velocity;
 }
 
-[System.Serializable]
-public struct FlowFieldData : ISharedComponentData
-{
-	public NativeArray<float3> value;
-}
-
-
 public class AgentSystem : JobComponentSystem
 {
 	struct Data
@@ -25,7 +18,7 @@ public class AgentSystem : JobComponentSystem
 		[ReadOnly]
 		public SharedComponentDataArray<GridSettings> Grid;
 		[ReadOnly]
-		public SharedComponentDataArray<FlowFieldData> Field;
+		public SharedComponentDataArray<FlowField.Data> Field;
 		public ComponentDataArray<AgentData> Agents;
 		public ComponentDataArray<Position> Positions;
 		public EntityArray Entity;
@@ -34,20 +27,13 @@ public class AgentSystem : JobComponentSystem
 	[Inject] Data m_Data;
 	[Inject] EndFrameBarrier m_Barrier;
 
-	void SetFlowField(int index, FlowFieldData ff)
-	{
-		//.AddSharedComponent(m_Data.Entity[index], ff);
-
-
-	}
-
 	protected override JobHandle OnUpdate(JobHandle inputDeps)
 	{
 
 		return new Job()
 		{
 			Agents = m_Data.Agents,
-			Field = m_Data.Field[0].value,
+			Field = m_Data.Field[0].Value,
 			TimeDelta = Time.deltaTime,
 			Positions = m_Data.Positions,
 			MaxSpeed = 10,

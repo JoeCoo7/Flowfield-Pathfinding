@@ -14,7 +14,7 @@ public static class GridUtilties
 	public static int2 World2Grid(GridSettings grid, float3 pos)
 	{
 		var newPos = new float2(pos.x, pos.z) + grid.worldSize * .5f;
-		return (int2)(newPos / grid.cellCount);
+		return (int2)(newPos / grid.cellSize);
 	}
 
 	//size is in blocks, c is absolute pos
@@ -61,7 +61,8 @@ public static class GridUtilties
 		var width = (int)(worldWidth / cellSize);
 		var height = (int)(worldHeight / cellSize);
 		var cellCount = new int2(width, height);
-		var grid = new GridSettings()
+
+		var settings = new GridSettings()
 		{
 			worldSize = new float2(worldWidth, worldHeight),
 			cellCount = cellCount,
@@ -72,26 +73,23 @@ public static class GridUtilties
 
 		var entityManager = World.Active.GetOrCreateManager<EntityManager>();
 		var entities = new NativeArray<Entity>(width * height, Allocator.Persistent);
-		var arch = entityManager.CreateArchetype(typeof(GridSettings), typeof(TileCost));
-		entityManager.CreateEntity(arch, entities);
+		
+		entityManager.CreateEntity(Manager.Archetype.Tile, entities);
 		var costs = new byte[entities.Length];
 
 		for (int ii = 0; ii < entities.Length; ii++)
 		{
-			var e = entities[ii];
-			int2 coord = GridUtilties.Index2Grid(grid, ii); //new int2(ii % grid.cellCount.x, ii / grid.cellCount.x);
-
-			entityManager.SetSharedComponentData(e, grid);
-			entityManager.SetComponentData(e, new TileCost() { value = (costs[ii] = func(grid, coord)) });
+			int2 pos = GridUtilties.Index2Grid(settings, ii); //new int2(ii % grid.cellCount.x, ii / grid.cellCount.x);
+            costs[ii] = func(settings, pos);
+            Manager.Archetype.SetupTile(entityManager, entities[ii], pos, costs[ii], new float3(), settings);
 		}
-		
 		
 		m_initialFlow = new NativeArray<float3>(costs.Length, Allocator.Persistent);
 		
 		for (int ii = 0; ii < m_initialFlow.Length; ii++)
 		{
-			int2 coord = GridUtilties.Index2Grid(grid, ii);
-			float2 per = new float2(coord.x, coord.y) / grid.cellCount.x;
+			int2 coord = GridUtilties.Index2Grid(settings, ii);
+			float2 per = new float2(coord.x, coord.y) / settings.cellCount.x;
 
 			var n = UnityEngine.Mathf.PerlinNoise(per.x * 10, per.y * 10) + .15f;
 
@@ -99,7 +97,7 @@ public static class GridUtilties
 		}
 		entities.Dispose();
 
-		return grid;
+		return settings;
 	}
 
 	public static readonly int2[] Offset = new[] {
