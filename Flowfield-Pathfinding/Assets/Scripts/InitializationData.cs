@@ -36,7 +36,9 @@ public class InitializationData : ScriptableObject
 	public GridSettings m_grid;
 	public Mesh AgentMesh;
 	public Material AgentMaterial;
-	public float2 m_unitDistSize = new float2(30, 30);
+    public Mesh TileDirectionMesh;
+    public Material TileDirectionMaterial;
+    public float2 m_unitDistSize = new float2(30, 30);
 	public int m_unitDistMaxTries = 30;
 	public int m_unitDistCellSize = 1;
 	public int m_unitDistNumPerClick = 100;
@@ -46,6 +48,8 @@ public class InitializationData : ScriptableObject
 	
 	public float m_unitMaxSpeed = 25;
 	public float m_unitMaxForce = 1000;
+
+    public bool m_drawFlowField = false;
 	
 	static public InitializationData Instance;
 	static public NativeArray<float3> m_initialFlow;
