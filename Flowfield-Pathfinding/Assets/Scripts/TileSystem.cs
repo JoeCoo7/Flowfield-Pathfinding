@@ -35,14 +35,14 @@ public class TileSystem : JobComponentSystem
     static uint s_QueryHandle = 0;
 
     [Inject]
-    EndFrameBarrier endFrame;
+    EndFrameBarrier m_EndFrameBarrier;
 
     struct SelectedUnits
     {
         public EntityArray entities;
         [ReadOnly]
-        SharedComponentDataArray<FlowFieldData> flowField;
-        SubtractiveComponent<FlowFieldQuery> flowFieldQuery;
+        SharedComponentDataArray<FlowField.Data> flowField;
+        SubtractiveComponent<FlowField.Query> flowFieldQuery;
         //ComponentDataArray<SelectedUnit> selected;
     }
 
@@ -50,8 +50,8 @@ public class TileSystem : JobComponentSystem
     {
         public EntityArray entities;
         [ReadOnly]
-        SharedComponentDataArray<FlowFieldData> flowField;
-        ComponentDataArray<FlowFieldQuery> flowFieldQuery;
+        SharedComponentDataArray<FlowField.Data> flowField;
+        ComponentDataArray<FlowField.Query> flowFieldQuery;
         //ComponentDataArray<SelectedUnit> selected;
     }
 
@@ -60,15 +60,6 @@ public class TileSystem : JobComponentSystem
 
     [Inject]
     SelectedUnits selectedUnitsWithQuery;
-
-    struct Tile
-    {
-        public SharedComponentDataArray<GridSettings> Grid;
-        public ComponentDataArray<TileCost> cost;
-        public ComponentDataArray<TileCollision> collisionDirection;
-        public ComponentDataArray<TilePosition> position;
-        public readonly int length;
-    }
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
@@ -82,8 +73,8 @@ public class TileSystem : JobComponentSystem
         GridSettings gridSettings = InitializationData.Instance.m_grid;
         int numTiles = gridSettings.cellCount.x * gridSettings.cellCount.y;
 
-        var buffer = endFrame.CreateCommandBuffer();
-        var query = new FlowFieldQuery { handle = queryHandle };
+        var buffer = m_EndFrameBarrier.CreateCommandBuffer();
+        var query = new FlowField.Query { Handle = queryHandle };
         for (var i = 0; i < selectedUnits.entities.Length; ++i)
             buffer.AddComponent(selectedUnits.entities[i], query);
         for (var i = 0; i < selectedUnitsWithQuery.entities.Length; ++i)
@@ -225,7 +216,7 @@ public class TileSystem : JobComponentSystem
 
         public void Execute()
         {
-            Manager.Archetype.CreateFlowFieldResult(commandBuffer, handle, new FlowFieldData { value = flowField });
+            Manager.Archetype.CreateFlowFieldResult(commandBuffer, handle, new FlowField.Data { Value = flowField });
         }
     }
 }

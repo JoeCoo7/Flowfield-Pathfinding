@@ -25,7 +25,7 @@ public class AgentSpawingSystem : ComponentSystem
 	private float m_RadiusSquared; // radius squared
 	private NativeArray<float3> m_Grid;
 	private NativeList<float3> m_activeSamples;
-	static FlowFieldData m_flowField;
+	static FlowField.Data m_flowField;
 
 	//-----------------------------------------------------------------------------
 	protected override void OnUpdate()
@@ -68,8 +68,8 @@ public class AgentSpawingSystem : ComponentSystem
 	//-----------------------------------------------------------------------------
 	private void CreateAgent(float3 _pos)
 	{
-		if (!m_flowField.value.IsCreated)
-			m_flowField = new FlowFieldData() { value = GridUtilties.m_initialFlow };
+		if (!m_flowField.Value.IsCreated)
+            m_flowField = new FlowField.Data() { Value = GridUtilties.m_initialFlow };
 
         Manager.Archetype.CreateAgent(PostUpdateCommands, _pos, InitializationData.Instance.AgentMesh, InitializationData.Instance.AgentMaterial, m_Data.GridSettings[0], m_flowField);
 	}

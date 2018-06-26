@@ -2,16 +2,9 @@
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using UnityEngine;
 
 namespace FlowField
 {
-    [System.Serializable]
-    public struct FlowFieldResult : IComponentData
-    {
-        public uint handle;
-    }
-
     // TODO: SetSharedComponent can't use BurstCompile
     //[BurstCompile]
     struct UpdateFlowFieldOnAgents : IJobParallelFor
@@ -19,8 +12,8 @@ namespace FlowField
         public struct UnitsWithQuery
         {
             public EntityArray entity;
-            public ComponentDataArray<FlowFieldQuery> flowFieldQuery;
-            public SharedComponentDataArray<FlowFieldData> flowFieldData;
+            public ComponentDataArray<FlowField.Query> flowFieldQuery;
+            public SharedComponentDataArray<FlowField.Data> flowFieldData;
         }
 
         [Inject]
@@ -28,8 +21,8 @@ namespace FlowField
 
         public struct FlowFieldResults
         {
-            public ComponentDataArray<FlowFieldResult> flowFieldResult;
-            public SharedComponentDataArray<FlowFieldData> flowFieldData;
+            public ComponentDataArray<Result> flowFieldResult;
+            public SharedComponentDataArray<FlowField.Data> flowFieldData;
         }
 
         [ReadOnly, Inject]
@@ -42,13 +35,13 @@ namespace FlowField
         {
             for (int i = 0; i < results.flowFieldData.Length; ++i)
             {
-                if (units.flowFieldQuery[index].handle != results.flowFieldResult[i].handle)
+                if (units.flowFieldQuery[index].Handle != results.flowFieldResult[i].Handle)
                     continue;
 
                 // Update the data and buffer the remove component
                 // TODO: SetSharedComponent can't use BurstCompile
                 commandBuffer.SetSharedComponent(units.entity[index], results.flowFieldData[i]);
-                commandBuffer.RemoveComponent<FlowFieldQuery>(units.entity[index]);
+                commandBuffer.RemoveComponent<FlowField.Query>(units.entity[index]);
                 break;
             }
         }
