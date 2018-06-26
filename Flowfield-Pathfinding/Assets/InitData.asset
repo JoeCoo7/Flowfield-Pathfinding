@@ -30,3 +30,8 @@ MonoBehaviour:
   m_unitDistMaxTries: 30
   m_unitDistCellSize: 1
   m_unitDistNumPerClick: 100
+  m_unitDistSpawningThreshold: 128
+  m_unitSeparationWeight: 100
+  m_unitFlowFieldWeight: 100
+  m_unitMaxSpeed: 25
+  m_unitMaxForce: 1000

@@ -38,6 +38,10 @@ public class GridDataView : MonoBehaviour
 		rs.Render = new NativeArray<RenderData>(m_width * m_height, Allocator.Persistent);
 
 	}
+	private void OnDisable()
+	{
+		m_computeBuffer.Dispose();
+	}
 
 	private void OnDrawGizmosSelected()
 	{
