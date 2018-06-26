@@ -35,9 +35,10 @@ public class GridDataView : MonoBehaviour
 		m_computeBuffer = new ComputeBuffer(m_width * m_height, 4 * 3);
 
 		var rs = World.Active.GetOrCreateManager<RenderSystem>();
-		rs.Render = new NativeArray<RenderData>(m_width * m_height, Allocator.Persistent);
-
+		rs.Render[0] = new NativeArray<RenderData>(m_width * m_height, Allocator.Persistent);
+		rs.Render[1] = new NativeArray<RenderData>(m_width * m_height, Allocator.Persistent);
 	}
+
 	private void OnDisable()
 	{
 		m_computeBuffer.Dispose();
@@ -63,9 +64,9 @@ public class GridDataView : MonoBehaviour
 	private void LateUpdate()
 	{
 		var rs = World.Active.GetOrCreateManager<RenderSystem>();
-		rs.lastJob.Complete();
+		rs.lastJobs[rs.displayJobIndex].Complete();
 
-		m_computeBuffer.SetData(rs.Render);
+		m_computeBuffer.SetData(rs.Render[rs.displayJobIndex]);
 		m_computeShader.SetBuffer(m_computeMain, "colors", m_computeBuffer);
 		m_computeShader.Dispatch(m_computeMain, m_width / 8,  m_height / 8, 1);
 	}

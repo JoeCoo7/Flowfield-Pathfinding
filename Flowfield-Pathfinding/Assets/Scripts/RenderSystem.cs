@@ -35,25 +35,30 @@ public class RenderSystem : JobComponentSystem
 	[Inject]
 	Data2 m_Data2;
 
-
-	public JobHandle lastJob;
-	public NativeArray<RenderData> Render;
+	public int renderingJobIndex = 0;
+	public int displayJobIndex = 0;
+	public JobHandle[] lastJobs = new JobHandle[2];
+	public NativeArray<RenderData>[] Render = new NativeArray<RenderData>[2];
 	NativeArray<int> EmptyHeatMap;
 	protected override JobHandle OnUpdate(JobHandle inputDeps)
 	{
 		if (!EmptyHeatMap.IsCreated)
 			EmptyHeatMap = new NativeArray<int>(m_Data.Length, Allocator.Persistent);
+		displayJobIndex = renderingJobIndex;
+		renderingJobIndex++;
+		if (renderingJobIndex > 1)
+			renderingJobIndex = 0;
 
-		return (lastJob = new Job()
+		return lastJobs[renderingJobIndex] = new Job()
 		{
 			Cost = m_Data.Cost,
-			Render = Render,
+			Render = Render[renderingJobIndex],
 			Heat = m_Data2.Heat[0].Value.IsCreated ? m_Data2.Heat[0].Value : EmptyHeatMap,
 			HeatAlpha = 1,//(m_Data2.Heat[0].Value.IsCreated ? math.clamp(1 - (Time.realtimeSinceStartup - m_Data2.Heat[0].Time), 0, 1) : 0),
 			Flow = InitializationData.m_initialFlow,
 			Grid = m_Data.Grid[0],
 			HeatScale = 1f / m_Data.Grid[0].cellCount.x
-		}.Schedule(m_Data.Length, 64, inputDeps));
+		}.Schedule(m_Data.Length, 64, inputDeps);
 	}
 
 	[Unity.Burst.BurstCompile]
