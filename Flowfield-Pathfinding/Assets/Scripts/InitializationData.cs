@@ -54,7 +54,7 @@ public class InitializationData : ScriptableObject
 	byte GridFunc(GridSettings grid, int2 coord)
 	{
 		float2 per = new float2(coord.x, coord.y) / grid.cellCount.x;
-		var n = Mathf.PerlinNoise(per.x * m_noiseScale, per.y * m_noiseScale) + .15f;
+		var n = Mathf.PerlinNoise(per.x * m_noiseScale, per.y * m_noiseScale) - .15f;
 		float c = (n * 255);
 		float f = ((259 * (c + 255)) / (255 * (259 - c)));
 		c = (f * (c - 128) + 128);
