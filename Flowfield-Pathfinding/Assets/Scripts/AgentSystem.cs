@@ -8,6 +8,8 @@ using Unity.Jobs;
 using Unity.Mathematics.Experimental;
 using Unity.Transforms;
 
+[UpdateInGroup(typeof(ProcessGroup))]
+[UpdateAfter(typeof(AgentSpawingSystem))]
 public class AgentSystem : JobComponentSystem
 {
 	struct AgentData

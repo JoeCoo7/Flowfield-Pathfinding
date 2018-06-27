@@ -5,6 +5,7 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
+using Unity.Rendering;
 
 [System.Serializable]
 public struct RenderData : IComponentData
@@ -12,7 +13,7 @@ public struct RenderData : IComponentData
 	public float3 color;
 }
 
-[UpdateAfter(typeof(TileSystem))]
+[UpdateInGroup(typeof(RenderingGroup))]
 public class RenderSystem : JobComponentSystem
 {
 	struct Data

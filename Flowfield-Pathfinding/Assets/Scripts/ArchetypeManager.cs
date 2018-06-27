@@ -13,6 +13,7 @@ namespace Manager
         public static EntityArchetype Agent;
         public static EntityArchetype AgentWithQuery;
         public static EntityArchetype DebugHeatmapType;
+        public static EntityArchetype PlayerInput;
 
         public static void Initialize(EntityManager entityManager)
         {
@@ -26,6 +27,7 @@ namespace Manager
                     ComponentType.Create<Tile.Position>(),
                     ComponentType.Create<Tile.Cost>(),
                     ComponentType.Create<Tile.Collision>(),
+                    ComponentType.Create<Tile.FlowFieldHandle>(),
                     ComponentType.Create<GridSettings>());
 
             Agent = entityManager.CreateArchetype(
@@ -49,6 +51,11 @@ namespace Manager
 
             DebugHeatmapType = entityManager.CreateArchetype(
                 ComponentType.Create<DebugHeatmap.Component>());
+
+            PlayerInput = entityManager.CreateArchetype(
+                ComponentType.Create<PlayerInputTag>(),
+                ComponentType.Create<MouseDoubleClick>(),
+                ComponentType.Create<MousePosition>());
         }
 
         public static void SetupTile(EntityManager em, Entity e, Mesh mesh, Material mat, int2 pos, byte cost, float3 col, GridSettings settings)
@@ -56,6 +63,7 @@ namespace Manager
             em.SetComponentData(e, new Tile.Position { Value = pos });
             em.SetComponentData(e, new Tile.Cost { Value = cost });
             em.SetComponentData(e, new Tile.Collision { Value = col });
+            em.SetComponentData(e, new Tile.FlowFieldHandle { Handle = uint.MaxValue });
             em.SetSharedComponentData(e, new Tile.TileMeshInstanceRenderer { mesh = mesh, material = mat });
             em.SetSharedComponentData(e, settings);
         }
@@ -69,6 +77,15 @@ namespace Manager
             ecb.SetSharedComponent(flowField);
         }
 
+        public static void CreateInputSystem(EntityCommandBuffer ecb)
+        {
+            ecb.CreateEntity(Agent);
+            ecb.SetComponent(new PlayerInputTag());
+            ecb.SetComponent(new MouseDoubleClick());
+            ecb.SetComponent(new MousePosition());
+            ecb.SetSharedComponent(new InputButtons());
+        }
+        
         public static void CreateFlowFieldResult(EntityCommandBuffer ecb, uint handle, FlowField.Data flowFieldData)
         {
             ecb.CreateEntity(FlowFieldResult);
