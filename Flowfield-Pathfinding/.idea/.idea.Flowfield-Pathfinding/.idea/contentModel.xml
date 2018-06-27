@@ -37,6 +37,10 @@
           <e p="GridUtilities.cs" t="Include" />
           <e p="HashUtility.cs" t="Include" />
           <e p="InitializationData.cs" t="Include" />
+          <e p="Input" t="Include">
+            <e p="InputSettings.cs" t="Include" />
+            <e p="PlayerInputSystem.cs" t="Include" />
+          </e>
           <e p="lib" t="Include">
             <e p="Camera" t="Include">
               <e p="CameraExtensions.cs" t="Include" />
@@ -52,6 +56,7 @@
           <e p="MathExt.cs" t="Include" />
           <e p="MathUtility.cs" t="Include" />
           <e p="RenderSystem.cs" t="Include" />
+          <e p="SystemOrder.cs" t="Include" />
           <e p="TileMeshInstanceRendererSystem.cs" t="Include" />
           <e p="TileSystem.cs" t="Include" />
           <e p="UpdateAgentWithQuerySystem.cs" t="Include" />

@@ -5,6 +5,7 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
+using Unity.Rendering;
 
 [System.Serializable]
 public struct RenderData : IComponentData
@@ -12,7 +13,7 @@ public struct RenderData : IComponentData
 	public float3 color;
 }
 
-[UpdateAfter(typeof(TileSystem))]
+[UpdateInGroup(typeof(RenderingGroup))]
 public class RenderSystem : JobComponentSystem
 {
 	struct Data
@@ -40,10 +41,26 @@ public class RenderSystem : JobComponentSystem
 	public JobHandle[] lastJobs = new JobHandle[2];
 	public NativeArray<RenderData>[] Render = new NativeArray<RenderData>[2];
 	NativeArray<int> EmptyHeatMap;
+
+	protected override void OnStartRunning()
+	{
+		var grid = InitializationData.Instance.m_grid;
+		EmptyHeatMap = new NativeArray<int>(grid.cellCount.x * grid.cellCount.y, Allocator.Persistent);
+		Render[0] = new NativeArray<RenderData>(grid.cellCount.x * grid.cellCount.y, Allocator.Persistent);
+		Render[1] = new NativeArray<RenderData>(grid.cellCount.x * grid.cellCount.y, Allocator.Persistent);
+	}
+
+	protected override void OnStopRunning()
+	{
+		lastJobs[0].Complete();
+		lastJobs[1].Complete();
+		EmptyHeatMap.Dispose();
+		Render[0].Dispose();
+		Render[1].Dispose();
+	}
+
 	protected override JobHandle OnUpdate(JobHandle inputDeps)
 	{
-		if (!EmptyHeatMap.IsCreated)
-			EmptyHeatMap = new NativeArray<int>(m_Data.Length, Allocator.Persistent);
 		displayJobIndex = renderingJobIndex;
 		renderingJobIndex++;
 		if (renderingJobIndex > 1)

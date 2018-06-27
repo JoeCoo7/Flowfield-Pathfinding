@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Entities;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -18,8 +16,6 @@ public class GridDataView : MonoBehaviour
 	public void Init(InitializationData init)
 	{
 		transform.localScale = new Vector3(init.m_worldWidth, init.m_worldHeight, init.m_worldHeight);
-		var entityManager = World.Active.GetOrCreateManager<EntityManager>();
-		
 		m_width = init.m_grid.cellCount.x;
 		m_height = init.m_grid.cellCount.y;
 
@@ -33,15 +29,6 @@ public class GridDataView : MonoBehaviour
 		m_computeShader.SetTexture(m_computeMain, "Result", m_texture);
 		m_computeShader.SetInt("Stride", m_width);
 		m_computeBuffer = new ComputeBuffer(m_width * m_height, 4 * 3);
-
-		var rs = World.Active.GetOrCreateManager<RenderSystem>();
-		rs.Render[0] = new NativeArray<RenderData>(m_width * m_height, Allocator.Persistent);
-		rs.Render[1] = new NativeArray<RenderData>(m_width * m_height, Allocator.Persistent);
-	}
-
-	private void OnDisable()
-	{
-		m_computeBuffer.Dispose();
 	}
 
 	private void OnDrawGizmosSelected()
@@ -71,9 +58,8 @@ public class GridDataView : MonoBehaviour
 		m_computeShader.Dispatch(m_computeMain, m_width / 8,  m_height / 8, 1);
 	}
 
-	private void OnDestroy()
+	private void OnDisable()
 	{
-		m_computeBuffer.Release();
+		m_computeBuffer.Dispose();
 	}
-	
 }

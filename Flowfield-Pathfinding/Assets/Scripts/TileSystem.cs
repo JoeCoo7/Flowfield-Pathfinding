@@ -21,6 +21,8 @@ public struct GridSettings : ISharedComponentData
     public float agentRadius;
 }
 
+[UpdateInGroup(typeof(ProcessGroup))]
+[UpdateAfter(typeof(AgentSystem))]
 public class TileSystem : JobComponentSystem
 {
     static uint s_QueryHandle = 0;
@@ -121,18 +123,7 @@ public class TileSystem : JobComponentSystem
         var computeHeatmapHandle = computeHeatmapJob.Schedule(initializeHeatmapHandle);
         var flowFieldHandle = computeFlowFieldJob.Schedule(numTiles, 64, computeHeatmapHandle);
         var createResultHandle = createResultJob.Schedule(flowFieldHandle);
-        if (InitializationData.Instance.m_drawFlowField)
-        {
-            var updateFlowDirectionsJob = new UpdateFlowDirectionsJob
-            {
-                settings = gridSettings,
-                flowField = createResultJob.flowField
-            };
-            var updateFlowDirectionsHandle = updateFlowDirectionsJob.Schedule(this, 64, createResultHandle);
-            return updateFlowDirectionsHandle;
-        }
-        else
-            return createResultHandle;
+        return createResultHandle;
     }
     const int k_Obstacle = int.MaxValue;
 
