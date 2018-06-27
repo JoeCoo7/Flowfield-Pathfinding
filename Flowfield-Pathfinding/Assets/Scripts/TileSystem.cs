@@ -125,6 +125,7 @@ public class TileSystem : JobComponentSystem
         var createResultHandle = createResultJob.Schedule(flowFieldHandle);
         return createResultHandle;
     }
+
     const int k_Obstacle = int.MaxValue;
 
     const int k_Unvisited = k_Obstacle - 1;
@@ -230,28 +231,6 @@ public class TileSystem : JobComponentSystem
         public void Execute()
         {
             Manager.Archetype.CreateFlowFieldResult(commandBuffer, handle, new FlowField.Data { Value = flowField });
-        }
-    }
-
-    struct UpdateFlowDirectionsJob : IJobProcessComponentData<Unity.Transforms.TransformMatrix, Tile.Position>
-    {
-        [ReadOnly]
-        public GridSettings settings;
-
-        [ReadOnly]
-        public NativeArray<float3> flowField;
-
-        [ReadOnly]
-        public Unity.Transforms.TransformMatrix originTransform;
-
-        public void Execute(ref Unity.Transforms.TransformMatrix transform, ref Tile.Position position)
-        {
-            var flowFieldIndex = GridUtilties.Grid2Index(settings, position.Value);
-            var flowDirection = flowField[flowFieldIndex];
-            transform.Value = 
-                math.lookRotationToMatrix(
-                    new float3(position.Value.x - settings.worldSize.x/2.0f - 0.5f, 0.0f, position.Value.y - settings.worldSize.y/2.0f - 0.5f),
-                    flowDirection, new float3(0.0f, 1.0f, 0.0f));
         }
     }
 }
