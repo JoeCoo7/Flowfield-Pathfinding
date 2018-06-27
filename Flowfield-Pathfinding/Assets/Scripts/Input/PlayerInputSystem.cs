@@ -57,7 +57,6 @@ public class PlayerInputSystem : ComponentSystem
 	}
 
 	[Inject] private InjectedPlayerInput m_playerInput;
-	private InputSettings m_playerInputSettings;
 	private float m_timer;
 	private int m_numberOfClicks = 0;
 
@@ -78,18 +77,17 @@ public class PlayerInputSystem : ComponentSystem
 	//----------------------------------------------------------------------------------------
 	private void CreateInputSettings()
 	{
-		if (m_playerInput.Length != 0)
+		if (m_playerInput.Buttons[0].Values != null)
 			return;
 
-		Manager.Archetype.CreateInputSystem(PostUpdateCommands);
 		ProcessInputSettings();
 	}
 	//----------------------------------------------------------------------------------------
-	private void ProcessInputSettings()
+	public static InputButtons ProcessInputSettings()
 	{
 		var inputButtons = new InputButtons {Values = new Dictionary<string, InputButtons.Command>()};
-		m_playerInputSettings = Utils.InstantiateAssetFromResource<InputSettings>("Data/InputSettings");
-		foreach (var entry in m_playerInputSettings.Commands)
+		var settings = Utils.InstantiateAssetFromResource<InputSettings>("InputSettings");
+		foreach (var entry in settings.Commands)
 		{
 			var fullKey = entry.Value.Split(';');
 			if (fullKey.Length < 2)
@@ -109,11 +107,12 @@ public class PlayerInputSystem : ComponentSystem
 				AltMod =  altMod
 			});
 		}
-		PostUpdateCommands.SetSharedComponent(inputButtons);				
+
+		return inputButtons;
 	}
 	
 	//----------------------------------------------------------------------------------------
-	private void GetKeys(string _keys, out string  _main, out string _alt)
+	private static void GetKeys(string _keys, out string  _main, out string _alt)
 	{
 		_main = _alt = "";
 		if (string.IsNullOrEmpty(_keys)) 
@@ -131,11 +130,7 @@ public class PlayerInputSystem : ComponentSystem
 	//----------------------------------------------------------------------------------------
 	private void UpdateButtonsInput()
 	{
-		if (m_playerInput.Length == 0)
-			return;
-		
 		var buttons = m_playerInput.Buttons[0];
-
 		var keys = buttons.Values.Keys.ToList();
 		foreach (var key in keys)
 		{
@@ -148,8 +143,6 @@ public class PlayerInputSystem : ComponentSystem
 	//----------------------------------------------------------------------------------------
 	private void UpdateMouseInput()
 	{
-		if (m_playerInput.Length == 0)
-			return;
 		
 		var pos = m_playerInput.MousePos[0];
 		pos.Value = Input.mousePosition;

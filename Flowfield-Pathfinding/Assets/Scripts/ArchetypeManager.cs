@@ -55,7 +55,8 @@ namespace Manager
             PlayerInput = entityManager.CreateArchetype(
                 ComponentType.Create<PlayerInputTag>(),
                 ComponentType.Create<MouseDoubleClick>(),
-                ComponentType.Create<MousePosition>());
+                ComponentType.Create<MousePosition>(),
+                ComponentType.Create<InputButtons>());
         }
 
         public static void SetupTile(EntityManager em, Entity e, Mesh mesh, Material mat, int2 pos, byte cost, float3 col, GridSettings settings)
@@ -77,13 +78,13 @@ namespace Manager
             ecb.SetSharedComponent(flowField);
         }
 
-        public static void CreateInputSystem(EntityCommandBuffer ecb)
+        public static void CreateInputSystem(EntityManager entityManager)
         {
-            ecb.CreateEntity(Agent);
-            ecb.SetComponent(new PlayerInputTag());
-            ecb.SetComponent(new MouseDoubleClick());
-            ecb.SetComponent(new MousePosition());
-            ecb.SetSharedComponent(new InputButtons());
+            var inputSystemEntity =entityManager.CreateEntity(PlayerInput);
+            entityManager.SetComponentData(inputSystemEntity, new PlayerInputTag());
+            entityManager.SetComponentData(inputSystemEntity, new MouseDoubleClick());
+            entityManager.SetComponentData(inputSystemEntity, new MousePosition());
+            entityManager.SetSharedComponentData(inputSystemEntity, PlayerInputSystem.ProcessInputSettings());
         }
         
         public static void CreateFlowFieldResult(EntityCommandBuffer ecb, uint handle, FlowField.Data flowFieldData)

@@ -1,5 +1,6 @@
 ﻿using RSGLib;
 using RSGLib.ECS;
+using TMPro;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -15,8 +16,15 @@ public class AgentSpawingSystem : ComponentSystem
 		[ReadOnly] public SharedComponentDataArray<GridSettings> GridSettings;
         [ReadOnly] public ComponentDataArray<Tile.Cost> TileCost;
 	}
-
+	
+	struct InputData
+	{
+		[ReadOnly] public SharedComponentDataArray<InputButtons> Buttons;
+		[ReadOnly] public ComponentDataArray<MousePosition> MousePos;
+	}
+	
 	[Inject] private AgentData m_agentData;
+	[Inject] private InputData m_inputData;
 	private Rect m_DistributionRect;
 	private int m_DistHeight;
 	private int m_DistWidth;
@@ -34,8 +42,8 @@ public class AgentSpawingSystem : ComponentSystem
 	//-----------------------------------------------------------------------------
 	protected override void OnUpdate()
 	{
-		if (!Input.GetMouseButton(StandardInput.LEFT_MOUSE_BUTTON)) return;
-		if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity)) return;
+		if (m_inputData.Buttons[0].Values["SpawnAgents"].Status != InputButtons.PRESSED) return;
+		if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_inputData.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity)) return;
 
 		if (m_SpawnData == null)
 		{
