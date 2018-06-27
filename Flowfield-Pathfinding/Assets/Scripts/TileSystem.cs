@@ -61,7 +61,7 @@ public class TileSystem : JobComponentSystem
         {
             if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity))
             {
-                m_Goal = GridUtilties.World2Grid(InitializationData.Instance.m_grid, hit.point);
+                m_Goal = GridUtilties.World2Grid(Main.ActiveInitParams.m_grid, hit.point);
             }
         }
 
@@ -79,7 +79,7 @@ public class TileSystem : JobComponentSystem
         if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity))
             return inputDeps;
 
-        GridSettings gridSettings = InitializationData.Instance.m_grid;
+        GridSettings gridSettings = Main.ActiveInitParams.m_grid;
         int numTiles = gridSettings.cellCount.x * gridSettings.cellCount.y;
 
         uint queryHandle = s_QueryHandle++;

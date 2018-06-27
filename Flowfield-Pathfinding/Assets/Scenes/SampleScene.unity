@@ -206,9 +206,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cdfdc659ef117b42a2803a3ee7a9ddb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_activeSteerData: 0
   m_InitData: {fileID: 11400000, guid: 39139ab02fd60244ebe9ea75514106a5, type: 2}
   m_AgentSpawnData: {fileID: 11400000, guid: 7fdce35a09511fd469f1f778437f070f, type: 2}
-  m_AgentSteerData: {fileID: 11400000, guid: 0a93aa877a56406429b23395f89177ce, type: 2}
+  m_AgentSteerData:
+  - {fileID: 11400000, guid: 0a93aa877a56406429b23395f89177ce, type: 2}
+  - {fileID: 11400000, guid: 73e88fb22f7cf6648aa84b056b1476f5, type: 2}
 --- !u!4 &708304320
 Transform:
   m_ObjectHideFlags: 0

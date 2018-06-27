@@ -16,7 +16,6 @@ public class AgentSystem : JobComponentSystem
 	{
 		[ReadOnly] public SharedComponentDataArray<GridSettings> GridSettings;
 		[ReadOnly] public SharedComponentDataArray<FlowField.Data> TargetFlowfield;
-//		[ReadOnly] public SharedComponentDataArray<AgentSteerParams> AgentSteerParams;
 		public ComponentDataArray<Velocity> Velocities;
 		public ComponentDataArray<Position> Positions;
         public ComponentDataArray<Rotation> Rotations;
@@ -25,24 +24,9 @@ public class AgentSystem : JobComponentSystem
 	}
 	
 	[Inject] AgentData m_agents;
-	private NativeMultiHashMap<int, int> m_hashMap;
 	private NativeMultiHashMap<int, int> m_neighborHashMap;
 
-	//-----------------------------------------------------------------------------
-	[BurstCompile]
-	struct HashPositions : IJobParallelFor
-	{
-		[ReadOnly] public ComponentDataArray<Position> positions;
-		[WriteOnly] public NativeMultiHashMap<int, int>.Concurrent hashMap;
-		public float cellRadius;
 
-		public void Execute(int index)
-		{
-			var pos = positions[index].Value;
-			var hash = GridHash.Hash(pos, cellRadius);
-			hashMap.Add(hash, index);
-		}
-	}
 	[BurstCompile]
 	struct HashPositionsWidthSavedHash : IJobParallelFor
 	{
@@ -61,8 +45,6 @@ public class AgentSystem : JobComponentSystem
 
 	protected override JobHandle OnUpdate(JobHandle inputDeps)
 	{
-		if (m_hashMap.IsCreated)
-			m_hashMap.Dispose();
 		if (m_neighborHashMap.IsCreated)
 			m_neighborHashMap.Dispose();
 
@@ -71,62 +53,15 @@ public class AgentSystem : JobComponentSystem
         var rotations = m_agents.Rotations;
 		var velocities = m_agents.Velocities;
 		var agentCount = positions.Length;
-		var cellIndices = new NativeArray<int>(agentCount, Allocator.TempJob,NativeArrayOptions.UninitializedMemory);
-//		var cellAlignment             = new NativeArray<Velocity>(agentCount, Allocator.TempJob,NativeArrayOptions.UninitializedMemory);
-		//var cellSeparation            = new NativeArray<Position>(agentCount, Allocator.TempJob,NativeArrayOptions.UninitializedMemory);
-		var cellCount = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-		var nearestNeighbor = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-		m_hashMap = new NativeMultiHashMap<int, int>(agentCount, Allocator.TempJob);
+
 		m_neighborHashMap = new NativeMultiHashMap<int, int>(agentCount, Allocator.TempJob);
+		var nearestNeighbor = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 		var cellNeighborIndices = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 		var neighborHashes = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 		var avgNeighborPositions = new NativeArray<float3>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 		var avgNeighborVelocities = new NativeArray<float3>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-		var steerParams = AgentSteerData.Instance.m_Data;
-		var cellSize = steerParams.AlignmentHashCellSize;
+		var steerParams = Main.ActiveSteeringParams;
 		var neighborCellSize = steerParams.NeighbourHashCellSize;
-
-		var hashPositionsJob = new HashPositions
-		{
-			positions = positions,
-			hashMap = m_hashMap,
-			cellRadius = cellSize,
-		};
-		var hashPositionsJobHandle = hashPositionsJob.Schedule(agentCount, 64, inputDeps);
-		
-		/*
-		var initialCellAlignmentJob = new CopyComponentData<Velocity>
-		{
-			Source  = velocities,
-			Results = cellAlignment
-		};
-		var initialCellAlignmentJobHandle = initialCellAlignmentJob.Schedule(agentCount, 64, inputDeps);
-		
-		var initialCellSeparationJob = new CopyComponentData<Position>
-		{
-			Source  = positions,
-			Results = cellSeparation
-		};
-		var initialCellSeparationJobHandle = initialCellSeparationJob.Schedule(agentCount, 64, inputDeps);
-		*/
-
-		var initialCellCountJob = new MemsetNativeArray<int>
-		{
-			Source = cellCount,
-			Value  = 1
-		};
-		var initialCellCountJobHandle = initialCellCountJob.Schedule(agentCount, 64, inputDeps);
-	//	var initialCellBarrierJobHandle = JobHandle.CombineDependencies(initialCellAlignmentJobHandle, initialCellSeparationJobHandle, initialCellCountJobHandle);
-		var mergeCellsBarrierJobHandle = JobHandle.CombineDependencies(hashPositionsJobHandle, initialCellCountJobHandle);
-
-		var mergeCellsJob = new MergeCells
-		{
-			cellIndices               = cellIndices,
-		//	cellAlignment             = cellAlignment,
-		//	cellSeparation            = cellSeparation,
-			cellCount                 = cellCount,
-		};
-		var mergeCellsJobHandle = mergeCellsJob.Schedule(m_hashMap,64,mergeCellsBarrierJobHandle);
 
 		var hashNeighborPositionsJob = new HashPositionsWidthSavedHash
 		{
@@ -163,11 +98,9 @@ public class AgentSystem : JobComponentSystem
 
 		var steerJob = new Steer
 		{
-			cellIndices = cellIndices,
 			settings = settings,
 			cellAlignment = avgNeighborVelocities,
 			cellCohesion = avgNeighborPositions,
-			cellCount = cellCount,
 			deltaTime = Time.deltaTime,
 			closestNeighbor = nearestNeighbor,
 			positions = positions,
@@ -183,10 +116,10 @@ public class AgentSystem : JobComponentSystem
             Positions = positions,
             Rotations = rotations,
 			TimeDelta = Time.deltaTime,
+			steerParams = steerParams
 		};
 
-		var combinedJobHandle = JobHandle.CombineDependencies(mergeCellsJobHandle, closestNeighborJobHandle);
-		var steerJobHandle = steerJob.Schedule(agentCount, 64, combinedJobHandle);
+		var steerJobHandle = steerJob.Schedule(agentCount, 64, closestNeighborJobHandle);
 		var speedJobHandel = speedJob.Schedule(agentCount, 64, steerJobHandle);
 		
 		return speedJobHandel;
@@ -194,31 +127,7 @@ public class AgentSystem : JobComponentSystem
 	
 	protected override void OnStopRunning()
 	{
-		m_hashMap.Dispose();
 		m_neighborHashMap.Dispose();
-	}
-
-	//-----------------------------------------------------------------------------
-	[BurstCompile]
-	struct MergeCells : IJobNativeMultiHashMapMergedSharedKeyIndices
-	{
-		[WriteOnly] public NativeArray<int> cellIndices;
-//		public NativeArray<Velocity> cellAlignment;
-//		public NativeArray<Position> cellSeparation;
-		public NativeArray<int> cellCount;
-
-		public void ExecuteFirst(int index)
-		{
-			cellIndices[index] = index;
-		}
-
-		public void ExecuteNext(int cellIndex, int index)
-		{
-			cellCount[cellIndex] += 1;
-//			cellAlignment[cellIndex] = new Velocity { Value = cellAlignment[cellIndex].Value + cellAlignment[index].Value };
-//			cellSeparation[cellIndex] = new Position { Value = cellSeparation[cellIndex].Value + cellSeparation[index].Value };
-			cellIndices[index] = cellIndex;
-		}
 	}
 
 	//-----------------------------------------------------------------------------
@@ -296,26 +205,22 @@ public class AgentSystem : JobComponentSystem
 	struct Steer : IJobParallelFor
 	{
 		[ReadOnly] public GridSettings settings;
-		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<int> cellIndices;
 		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<float3> cellAlignment;
 		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<float3> cellCohesion;
-		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<int> cellCount;
+		[DeallocateOnJobCompletion] [ReadOnly] public NativeArray<int> closestNeighbor;
 		[ReadOnly] public AgentSteerParams steerParams;
 
 		[ReadOnly] public NativeArray<float3> targetFlowfield;
 		[ReadOnly] public NativeArray<float3> terrainFlowfield;
 		[ReadOnly] public ComponentDataArray<Position> positions;
-		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<int> closestNeighbor;
 		public float deltaTime;
 		public ComponentDataArray<Velocity> velocities;
 		public void Execute(int index)
 		{
 			var velocity = velocities[index].Value;
 			var position = positions[index].Value;
-			var cellIndex = cellIndices[index];
-			var neighborCount = cellCount[cellIndex];
-			var alignment = cellAlignment[cellIndex];
-			var cohesion = cellCohesion[cellIndex];
+			var alignment = cellAlignment[index];
+			var cohesion = cellCohesion[index];
 			var alignmentResult = steerParams.AlignmentWeight * math_experimental.normalizeSafe(alignment - velocity);
 			var cohesionResult = steerParams.CohesionWeight * math_experimental.normalizeSafe(cohesion - position);//math_experimental.normalizeSafe((position * neighborCount) - cohesion);
 			var separationResult = new float3(0, 0, 0);
@@ -333,9 +238,9 @@ public class AgentSystem : JobComponentSystem
 			}
 
 			var gridIndex = GridUtilties.WorldToIndex(settings, position);
-			var terrainFlowFieldResult = terrainFlowfield[gridIndex] * steerParams.TerrainFieldWeight;
+			var terrainFlowFieldResult = gridIndex>-1?terrainFlowfield[gridIndex] * steerParams.TerrainFieldWeight:new float3(0,0,0);
 			terrainFlowFieldResult.y = 0;
-			var targetFlowFieldResult = targetFlowfield[gridIndex] * steerParams.TargetFieldWeight;
+			var targetFlowFieldResult = gridIndex > -1 ? targetFlowfield[gridIndex] * steerParams.TargetFieldWeight:new float3(0, 0, 0);
 			targetFlowFieldResult.y = 0;
 
 
@@ -363,15 +268,20 @@ public class AgentSystem : JobComponentSystem
 		[ReadOnly]public float TimeDelta;
 		public ComponentDataArray<Position> Positions;
         public ComponentDataArray<Rotation> Rotations;
-
+		public AgentSteerParams steerParams;
         public void Execute(int i)
 		{
 			var pos = Positions[i];
 			pos.Value += Velocity[i].Value * TimeDelta;
 			Positions[i] = pos;
+
             var rot = Rotations[i];
-            rot.Value = math.lookRotationToQuaternion(Velocity[i].Value, new float3(0.0f, 1.0f, 0.0f));
-            Rotations[i] = rot;
+			var currDir = math.forward(Rotations[i].Value);
+			var desiredDir = math.normalize(Velocity[i].Value);
+			var dirDiff = desiredDir - currDir;
+			var newDir = math.normalize(currDir + dirDiff * math.min(TimeDelta * steerParams.RotationSpeed, 1));
+			rot.Value = math.lookRotationToQuaternion(newDir, new float3(0.0f, 1.0f, 0.0f));
+			Rotations[i] = rot;
 		}
 	}
 
