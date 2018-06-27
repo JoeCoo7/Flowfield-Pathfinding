@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using Unity.Entities;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -27,6 +28,14 @@ public class TileSystem : JobComponentSystem
 {
     static uint s_QueryHandle = 0;
 
+    struct TileCostAndPositionGroup
+    {
+        [ReadOnly] public ComponentDataArray<Tile.Cost> cost;
+        [ReadOnly] public ComponentDataArray<Tile.Position> position;
+        public readonly int Length;
+    }
+
+    [Inject] TileCostAndPositionGroup m_TileCostAndPositionGroup;
     [Inject] EndFrameBarrier m_EndFrameBarrier;
     [Inject] Agent.Group.Selected m_Selected;
     [Inject] Agent.Group.SelectedWithQuery m_SelectedWithQuery;
@@ -47,10 +56,19 @@ public class TileSystem : JobComponentSystem
     protected override void OnDestroyManager()
     {
         m_Offsets.Dispose();
+        foreach (var kvp in m_Cache)
+        {
+            var entry = kvp.Value;
+            entry.heatmap.Dispose();
+            entry.flowField.Dispose();
+        }
+        m_Cache.Clear();
     }
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
+        ProcessPendingJobs(m_EndFrameBarrier.CreateCommandBuffer());
+
         if (m_input.Buttons[0].Values["CreateGoal"].Status != ECSInput.InputButtons.UP)
             return inputDeps;
 
@@ -58,14 +76,13 @@ public class TileSystem : JobComponentSystem
             return inputDeps;
 
         m_Goal = GridUtilties.World2Grid(Main.ActiveInitParams.m_grid, hit.point);
+
         return CreateJobs(inputDeps);
     }
 
     JobHandle CreateJobs(JobHandle inputDeps)
     {
         GridSettings gridSettings = Main.ActiveInitParams.m_grid;
-        int numTiles = gridSettings.cellCount.x * gridSettings.cellCount.y;
-
         uint queryHandle = s_QueryHandle++;
 
         for (var i = 0; i < m_SelectedWithQuery.entity.Length; ++i)
@@ -80,65 +97,126 @@ public class TileSystem : JobComponentSystem
         for (var i = 0; i < m_Selected.entity.Length; ++i)
             buffer.AddComponent(m_Selected.entity[i], newQuery);
 
+        // Copy inputs
+        var costsCopy = new NativeArray<Tile.Cost>(m_TileCostAndPositionGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        var copyTileCostsJobHandle = new CopyComponentData<Tile.Cost>
+        {
+            Source = m_TileCostAndPositionGroup.cost,
+            Results = costsCopy
+        }.Schedule(m_TileCostAndPositionGroup.Length, 64, inputDeps);
+
+        var positionsCopy = new NativeArray<Tile.Position>(m_TileCostAndPositionGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        var copyTilePositionsJobHandle = new CopyComponentData<Tile.Position>
+        {
+            Source = m_TileCostAndPositionGroup.position,
+            Results = positionsCopy
+        }.Schedule(m_TileCostAndPositionGroup.Length, 64, inputDeps);
+
+        var copyTileInputsBarrierHandle = JobHandle.CombineDependencies(copyTileCostsJobHandle, copyTilePositionsJobHandle);
+
         // Create & Initialize heatmap
-        var initializeHeatmapJob = new InitializeHeatmapJob()
+        var heatmap = new NativeArray<int>(m_TileCostAndPositionGroup.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+        var initializeHeatmapJobHandle = new InitializeHeatmapJob()
         {
             settings = gridSettings,
-            heatmap = new NativeArray<int>(numTiles, Allocator.Persistent, NativeArrayOptions.UninitializedMemory) // Deallocated in ComputeFlowFieldJob
-        };
+            costs = costsCopy,
+            positions = positionsCopy,
+            heatmap = heatmap
+        }.Schedule(m_TileCostAndPositionGroup.Length, 64, copyTileInputsBarrierHandle);
 
         // Compute heatmap from goals
-        var computeHeatmapJob = new ComputeHeatmapJob()
+        var goals = new NativeArray<int2>(1, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        goals[0] = m_Goal;
+        var computeHeatmapJobHandle = new ComputeHeatmapJob()
         {
             settings = gridSettings,
-            goals = new NativeArray<int2>(1, Allocator.TempJob),
-            heatmap = initializeHeatmapJob.heatmap,
+            goals = goals,
+            heatmap = heatmap,
             offsets = m_Offsets,
-            openSet = new NativeArray<int>(initializeHeatmapJob.heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory)
-        };
-        computeHeatmapJob.goals[0] = m_Goal;
+            openSet = new NativeArray<int>(heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory)
+        }.Schedule(initializeHeatmapJobHandle);
 
         // Convert flowfield from heatmap
-        var computeFlowFieldJob = new FlowField.ComputeFlowFieldJob
+        var flowField = new NativeArray<float3>(heatmap.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+        var computeFlowFieldJobHandle = new FlowField.ComputeFlowFieldJob
         {
             settings = gridSettings,
-            heatmap = computeHeatmapJob.heatmap,
-            flowfield = new NativeArray<float3>(numTiles, Allocator.Persistent, NativeArrayOptions.UninitializedMemory),
+            heatmap = heatmap,
+            flowfield = flowField,
             offsets = m_Offsets
-        };
+        }.Schedule(heatmap.Length, 64, computeHeatmapJobHandle);
 
-        var createResultJob = new CreateFlowFieldResultEntity
+        m_PendingJobs.Add(new PendingJob
         {
-            commandBuffer = buffer,
-            handle = queryHandle,
-            flowField = computeFlowFieldJob.flowfield
-        };
+            queryHandle = queryHandle,
+            jobHandle = computeFlowFieldJobHandle,
+            cacheEntry = new CacheEntry
+            {
+                heatmap = heatmap,
+                flowField = flowField
+            }
+        });
 
-        // Create all the jobs
-        var initializeHeatmapHandle = initializeHeatmapJob.Schedule(this, 64, inputDeps);
-        var computeHeatmapHandle = computeHeatmapJob.Schedule(initializeHeatmapHandle);
-        var flowFieldHandle = computeFlowFieldJob.Schedule(numTiles, 64, computeHeatmapHandle);
-        var createResultHandle = createResultJob.Schedule(flowFieldHandle);
-        return createResultHandle;
+        return computeFlowFieldJobHandle;
     }
+
+    void ProcessPendingJobs(EntityCommandBuffer commandBuffer)
+    {
+        for (int i = m_PendingJobs.Count - 1; i >= 0; --i)
+        {
+            if (m_PendingJobs[i].jobHandle.IsCompleted)
+            {
+                var queryHandle = m_PendingJobs[i].queryHandle;
+                m_Cache.Add(queryHandle, m_PendingJobs[i].cacheEntry);
+
+                Manager.Archetype.CreateFlowFieldResult(commandBuffer, queryHandle,
+                    new FlowField.Data { Value = m_PendingJobs[i].cacheEntry.flowField });
+
+                m_PendingJobs.RemoveAt(i);
+            }
+        }
+    }
+
+    struct CacheEntry
+    {
+        public NativeArray<int> heatmap;
+        public NativeArray<float3> flowField;
+    }
+
+    struct PendingJob
+    {
+        public uint queryHandle;
+        public JobHandle jobHandle;
+        public CacheEntry cacheEntry;
+    }
+
+    List<PendingJob> m_PendingJobs = new List<PendingJob>();
+
+    Dictionary<uint, CacheEntry> m_Cache = new Dictionary<uint, CacheEntry>();
 
     const int k_Obstacle = int.MaxValue;
 
     const int k_Unvisited = k_Obstacle - 1;
 
     [BurstCompile]
-    struct InitializeHeatmapJob : IJobProcessComponentData<Tile.Cost, Tile.Position>
+    struct InitializeHeatmapJob : IJobParallelFor
     {
         [ReadOnly]
         public GridSettings settings;
 
+        [ReadOnly, DeallocateOnJobCompletion]
+        public NativeArray<Tile.Cost> costs;
+
+        [ReadOnly, DeallocateOnJobCompletion]
+        public NativeArray<Tile.Position> positions;
+
         [WriteOnly]
         public NativeArray<int> heatmap;
 
-        public void Execute([ReadOnly] ref Tile.Cost cost, [ReadOnly] ref Tile.Position position)
+        public void Execute(int index)
         {
-            var outputIndex = GridUtilties.Grid2Index(settings, position.Value);
-            heatmap[outputIndex] = math.select(k_Unvisited, k_Obstacle, cost.Value == byte.MaxValue);
+            var outputIndex = GridUtilties.Grid2Index(settings, positions[index].Value);
+            heatmap[outputIndex] = math.select(k_Unvisited, k_Obstacle, costs[index].Value == byte.MaxValue);
         }
     }
 
@@ -210,23 +288,6 @@ public class TileSystem : JobComponentSystem
                     }
                 }
             }
-        }
-    }
-
-    //[BurstCompile]
-    struct CreateFlowFieldResultEntity : IJob
-    {
-        [ReadOnly]
-        public uint handle;
-
-        [ReadOnly]
-        public NativeArray<float3> flowField;
-
-        public EntityCommandBuffer commandBuffer;
-
-        public void Execute()
-        {
-            Manager.Archetype.CreateFlowFieldResult(commandBuffer, handle, new FlowField.Data { Value = flowField });
         }
     }
 }
