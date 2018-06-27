@@ -9,6 +9,16 @@ using Random = UnityEngine.Random;
 [UpdateInGroup(typeof(ProcessGroup))]
 public class AgentSpawingSystem : ComponentSystem
 {
+#if UNITY_EDITOR
+	[UnityEditor.MenuItem("Pathfinding/Create Test Agents")]
+	static void Spawn()
+	{
+		var agentSpawnSystem = World.Active.GetOrCreateManager<AgentSpawingSystem>();
+		agentSpawnSystem.spawnDebugAgentsOnNextFrame = true;
+	}
+#endif
+
+
 	struct AgentData
 	{
 		[ReadOnly] public SharedComponentDataArray<GridSettings> GridSettings;
@@ -24,25 +34,40 @@ public class AgentSpawingSystem : ComponentSystem
 	private NativeArray<float3> m_Grid;
 	private NativeList<float3> m_activeSamples;
 	static FlowField.Data m_flowField;
-
+	bool spawnDebugAgentsOnNextFrame = false;
 
 	//-----------------------------------------------------------------------------
 	protected override void OnUpdate()
 	{
-		if (m_inputData.Buttons[0].Values["SpawnAgents"].Status != ECSInput.InputButtons.PRESSED) return;
-		if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_inputData.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity)) return;
+		var spawnData = Main.ActiveSpawnParams;
+		if (spawnDebugAgentsOnNextFrame)
+		{
+			Spawn(0, 500, 10000);
+			spawnDebugAgentsOnNextFrame = false;
+		}
+		else
+		{
+			if (m_inputData.Buttons[0].Values["SpawnAgents"].Status != ECSInput.InputButtons.PRESSED) return;
+			if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_inputData.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity)) return;
+			Spawn(hit.point, spawnData.AgentSpawnRadius, spawnData.AgentDistNumPerClick);
+		}
+	}
+
+	void Spawn(float3 point, float radius, int count)
+	{
+		Debug.LogFormat("SPAWN({0}, {1}, {2})", point, radius, count);
 
 		var spawnData = Main.ActiveSpawnParams;
 		m_activeSamples = new NativeList<float3>(Allocator.Temp);
-		m_DistHeight = (int)math.floor(spawnData.AgentDistSize.x / spawnData.AgentDistCellSize);
-		m_DistWidth = (int)math.floor(spawnData.AgentDistSize.y / spawnData.AgentDistCellSize);
+		m_DistHeight = (int)math.floor(radius / spawnData.AgentDistCellSize);
+		m_DistWidth = (int)math.floor(radius / spawnData.AgentDistCellSize);
 		m_Grid = new NativeArray<float3>(m_DistWidth * m_DistHeight, Allocator.Temp);
-		InitSampler(spawnData);
-
-		for (int index = 0; index < spawnData.AgentDistNumPerClick; index++)
+		InitSampler(spawnData, radius);
+		var spawnPoint = point - new float3(radius, 0, radius) * .5f;
+		for (int index = 0; index < count; index++)
 		{
-			float3? pos = Sample(spawnData, hit.point);
-			if (pos != null)
+			float3? pos = Sample(spawnData, spawnPoint);
+			if (pos != null && math.length(pos.Value - point) < radius * .5)
 				CreateAgent(spawnData, pos.Value);
 		}
 
@@ -60,10 +85,10 @@ public class AgentSpawingSystem : ComponentSystem
 	}
 
 	//-----------------------------------------------------------------------------
-	public void InitSampler(AgentSpawnData spawnData)
+	public void InitSampler(AgentSpawnData spawnData, float radius)
 	{
 		var initData = Main.Instance.m_InitData;
-		m_DistributionRect = new Rect(0, 0, spawnData.AgentDistSize.x, spawnData.AgentDistSize.y);
+		m_DistributionRect = new Rect(0, 0, radius, radius);
 		m_RadiusSquared = initData.m_cellSize * initData.m_cellSize;
 	}
 

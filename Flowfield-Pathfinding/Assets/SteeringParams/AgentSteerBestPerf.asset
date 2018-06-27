@@ -12,15 +12,16 @@ MonoBehaviour:
   m_Name: AgentSteerBestPerf
   m_EditorClassIdentifier: 
   m_Data:
-    MaxSpeed: 53
-    Acceleration: 1.5
+    MaxSpeed: 40.2
+    Acceleration: 0.7
     Drag: 2
+    RotationSpeed: 4.2
     TerrainFieldWeight: 7.1
     TargetFieldWeight: 12.7
     SeparationRadius: 4.2
     SeparationWeight: 30.1
-    AlignmentWeight: 5.7
     CohesionWeight: 5.3
-    NeighbourHashCellSize: 17.8
+    AlignmentWeight: 5.7
     AlignmentRadius: 5.1
-    RotationSpeed: 4.2
+    MaxNeighborChecks: 25
+    NeighbourHashCellSize: 9.9
