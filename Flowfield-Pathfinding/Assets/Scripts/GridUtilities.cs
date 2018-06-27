@@ -100,10 +100,10 @@ public static class GridUtilties
                 else
                     s[i] = 0.5f;
             }
-            initialFlow[ii] = math.normalize(new float3(
-                -(s[4] - s[6] + 2 * (s[2] - s[3]) + s[5] - s[7]), 
+            initialFlow[ii] = new float3(
+                -(s[4] - s[6] + 2 * (s[2] - s[3]) + s[5] - s[7]) * 2, 
                 .2f,
-                -(s[7] - s[6] + 2 * (s[1] - s[0]) + s[5] - s[4])));
+                -(s[7] - s[6] + 2 * (s[1] - s[0]) + s[5] - s[4]) * 2) ;
         }
         entities.Dispose();
 

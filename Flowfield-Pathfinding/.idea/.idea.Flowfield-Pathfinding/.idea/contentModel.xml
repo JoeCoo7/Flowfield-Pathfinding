@@ -8,12 +8,13 @@
       <e p="Assets" t="Include">
         <e p="compute.compute" t="Include" />
         <e p="Scripts" t="Include">
-          <e p="AgentComponents.cs" t="Include" />
+          <e p="AgentChangeMaterialJob.cs" t="Include" />
           <e p="AgentSpawingSystem.cs" t="Include" />
           <e p="AgentSpawnData.cs" t="Include" />
           <e p="AgentSteerData.cs" t="Include" />
           <e p="AgentSystem.cs" t="Include" />
           <e p="ArchetypeManager.cs" t="Include" />
+          <e p="BurstQueue.cs" t="Include" />
           <e p="Camera" t="Include">
             <e p="CameraFacingBillboard.cs" t="Include" />
             <e p="RTSCamera.cs" t="Include" />
@@ -26,6 +27,7 @@
             <e p="TileGroups.cs" t="Include" />
           </e>
           <e p="Components" t="Include">
+            <e p="AgentComponents.cs" t="Include" />
             <e p="FlowFieldComponents.cs" t="Include" />
             <e p="TileComponents.cs" t="Include" />
           </e>
@@ -56,7 +58,9 @@
           <e p="Main.cs" t="Include" />
           <e p="MathExt.cs" t="Include" />
           <e p="MathUtility.cs" t="Include" />
+          <e p="PlayerSelectionSystem.cs" t="Include" />
           <e p="RenderSystem.cs" t="Include" />
+          <e p="SmoothFlowFieldJob.cs" t="Include" />
           <e p="SystemOrder.cs" t="Include" />
           <e p="TileMeshInstanceRendererSystem.cs" t="Include" />
           <e p="TileSystem.cs" t="Include" />
