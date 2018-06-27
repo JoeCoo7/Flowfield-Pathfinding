@@ -19,7 +19,7 @@ public struct AgentSteerParams
 	public float CohesionWeight;
 	public float NeighbourHashCellSize;
 	public float AlignmentRadius;
-	public float AlignmentHashCellSize;
+	public float RotationSpeed;
 }
 
 
