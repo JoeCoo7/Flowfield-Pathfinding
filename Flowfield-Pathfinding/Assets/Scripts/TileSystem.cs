@@ -39,30 +39,44 @@ public class TileSystem : JobComponentSystem
 
     NativeArray<int2> m_Offsets;
 
+    JobHandle m_JobHandle;
+
+    int2 m_Goal = new int2(197, 232);
+
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        if (!Input.GetMouseButtonDown(StandardInput.RIGHT_MOUSE_BUTTON))
-            return inputDeps;
+        if (Input.GetMouseButtonDown(StandardInput.RIGHT_MOUSE_BUTTON))
+        {
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity))
+            {
+                m_Goal = GridUtilties.World2Grid(InitializationData.Instance.m_grid, hit.point);
+            }
+        }
 
-        if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity))
-            return inputDeps;
+        if (m_JobHandle.IsCompleted)
+            m_JobHandle = CreateJobs(inputDeps);
 
-        uint queryHandle = s_QueryHandle++;
+        return m_JobHandle;
+    }
+
+    JobHandle CreateJobs(JobHandle inputDeps)
+    {
         GridSettings gridSettings = InitializationData.Instance.m_grid;
         int numTiles = gridSettings.cellCount.x * gridSettings.cellCount.y;
-
-        var buffer = m_EndFrameBarrier.CreateCommandBuffer();
-        var query = new FlowField.Query { Handle = queryHandle };
-        for (var i = 0; i < m_Selected.entity.Length; ++i)
-            buffer.AddComponent(m_Selected.entity[i], query);
-        for (var i = 0; i < m_SelectedWithQuery.entity.Length; ++i)
-            buffer.SetComponent(m_SelectedWithQuery.entity[i], query);
 
         if (!m_Offsets.IsCreated)
         {
             m_Offsets = new NativeArray<int2>(GridUtilties.Offset.Length, Allocator.Persistent);
             m_Offsets.CopyFrom(GridUtilties.Offset);
         }
+
+        uint queryHandle = s_QueryHandle++;
+        var buffer = m_EndFrameBarrier.CreateCommandBuffer();
+        var query = new FlowField.Query { Handle = queryHandle };
+        for (var i = 0; i < m_Selected.entity.Length; ++i)
+            buffer.AddComponent(m_Selected.entity[i], query);
+        for (var i = 0; i < m_SelectedWithQuery.entity.Length; ++i)
+            buffer.SetComponent(m_SelectedWithQuery.entity[i], query);
 
         // Create & Initialize heatmap
         var initializeJob = new InitializeHeatmapJob()
@@ -80,7 +94,7 @@ public class TileSystem : JobComponentSystem
             offsets = m_Offsets,
             openSet = new NativeArray<int>(initializeJob.heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory)
         };
-        heatmapJob.goals[0] = GridUtilties.World2Grid(gridSettings, hit.point);
+        heatmapJob.goals[0] = m_Goal;
 
         var debugHeatmap = m_DebugHeatmapGroup.GetOrCreateHeatmap(numTiles);
         var copyDebugHeatmapJob = new DebugHeatmap.CopyHeatmapJob()
