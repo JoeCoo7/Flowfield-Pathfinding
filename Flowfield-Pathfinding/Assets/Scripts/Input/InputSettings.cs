@@ -12,7 +12,7 @@ public class InputSettings : ScriptableObject
 	{
 		Commands = new Dictionary<string, string>
 		{
-			{"ShowDebug", ";mouse 0"},
+			{"SpawnAgents", ";mouse 0"},
 		};
 	}
 }
