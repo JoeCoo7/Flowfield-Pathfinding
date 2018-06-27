@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Name: AgentSteerData
   m_EditorClassIdentifier: 
   m_Data:
-    MaxSpeed: 0
-    Acceleration: 10
+    MaxSpeed: 19.9
+    Acceleration: 20
     TerrainFieldWeight: 23
     TargetFieldWeight: 26.91
     SeparationRadius: 1.38
@@ -22,4 +22,4 @@ MonoBehaviour:
     CohesionWeight: 0.77
     NeighbourHashCellSize: 20
     AlignmentRadius: 3.51
-    RotationSpeed: 10
+    RotationSpeed: 9

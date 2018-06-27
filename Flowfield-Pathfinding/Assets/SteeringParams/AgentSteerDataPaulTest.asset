@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Name: AgentSteerDataPaulTest
   m_EditorClassIdentifier: 
   m_Data:
-    MaxSpeed: 22.46
-    Acceleration: 10
+    MaxSpeed: 645
+    Acceleration: 388
     TerrainFieldWeight: 1.39
     TargetFieldWeight: 1.92
     SeparationRadius: 1.85
