@@ -14,8 +14,9 @@ MonoBehaviour:
   m_Data:
     MaxSpeed: 2.2
     Acceleration: 3.8
-    TerrainFieldWeight: 23
-    TargetFieldWeight: 26.91
+    Drag: 0
+    TerrainFieldWeight: 69.9
+    TargetFieldWeight: 9.2
     SeparationRadius: 1.38
     SeparationWeight: 123.3
     AlignmentWeight: 16.71
