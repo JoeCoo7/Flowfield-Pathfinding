@@ -4,7 +4,6 @@ using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Jobs;
 using Unity.Burst;
-using RSGLib;
 
 [System.Serializable]
 public struct GridSettings : ISharedComponentData
