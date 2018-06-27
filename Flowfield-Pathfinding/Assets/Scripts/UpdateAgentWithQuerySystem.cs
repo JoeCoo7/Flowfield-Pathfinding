@@ -4,15 +4,15 @@ using Unity.Jobs;
 
 namespace System
 {
+    [UpdateInGroup(typeof(ProcessGroup))]
+    [UpdateAfter(typeof(TileSystem))]
     public class UpdateAgentWithQuerySystem : JobComponentSystem
     {
         [BurstCompile]
         struct UpdateJob : IJobParallelFor
         {
             public Agent.Group.WithQuery units;
-
             public FlowField.Group.FlowFieldResult results;
-
             public EntityCommandBuffer.Concurrent concurrent;
 
             public void Execute(int index)

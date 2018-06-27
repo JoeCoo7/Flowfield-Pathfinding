@@ -12,15 +12,16 @@ using Unity.Rendering;
 /// <summary>
 /// Renders all Entities containing both TileMeshInstanceRenderer & TransformMatrix components.
 /// </summary>
+[UpdateInGroup(typeof(RenderingGroup))]
 [UpdateAfter(typeof(PreLateUpdate.ParticleSystemBeginUpdateAll))]
 [UpdateAfter(typeof(MeshCullingBarrier))]
-[UnityEngine.ExecuteInEditMode]
+[ExecuteInEditMode]
 public class TileMeshInstanceRendererSystem : ComponentSystem
 {
     // Instance renderer takes only batches of 1023
-    Matrix4x4[]                 m_MatricesArray = new Matrix4x4[1023];
+    Matrix4x4[] m_MatricesArray = new Matrix4x4[1023];
 	List<TileMeshInstanceRenderer>  m_CacheduniqueRendererTypes = new List<TileMeshInstanceRenderer>(10);
-	ComponentGroup              m_InstanceRendererGroup;
+	ComponentGroup m_InstanceRendererGroup;
 
 	// This is the ugly bit, necessary until Graphics.DrawMeshInstanced supports NativeArrays pulling the data in from a job.
     public unsafe static void CopyMatrices(ComponentDataArray<TransformMatrix> transforms, int beginIndex, int length, Matrix4x4[] outMatrices)

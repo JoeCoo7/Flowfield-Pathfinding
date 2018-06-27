@@ -7,6 +7,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 //-----------------------------------------------------------------------------
+[UpdateInGroup(typeof(ProcessGroup))]
 public class AgentSpawingSystem : ComponentSystem
 {
 	struct AgentData

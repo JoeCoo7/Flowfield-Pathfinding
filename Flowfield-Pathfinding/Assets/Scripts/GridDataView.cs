@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Entities;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -18,8 +16,6 @@ public class GridDataView : MonoBehaviour
 	public void Init(InitializationData init)
 	{
 		transform.localScale = new Vector3(init.m_worldWidth, init.m_worldHeight, init.m_worldHeight);
-		var entityManager = World.Active.GetOrCreateManager<EntityManager>();
-		
 		m_width = init.m_grid.cellCount.x;
 		m_height = init.m_grid.cellCount.y;
 
