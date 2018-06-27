@@ -1,8 +1,5 @@
-﻿using ECSInput;
-using Unity.Entities;
+﻿using Unity.Entities;
 using Unity.Mathematics;
-using Unity.Rendering;
-using Unity.Transforms;
 using UnityEngine;
 
 namespace Manager
@@ -32,20 +29,20 @@ namespace Manager
                     ComponentType.Create<GridSettings>());
 
             Agent = entityManager.CreateArchetype(
-                ComponentType.Create<Position>(),
-                ComponentType.Create<Rotation>(),
-                ComponentType.Create<TransformMatrix>(),
-                ComponentType.Create<MeshInstanceRenderer>(),
-                ComponentType.Create<Velocity>(),
+                ComponentType.Create<Unity.Transforms.Position>(),
+                ComponentType.Create<Unity.Transforms.Rotation>(),
+                ComponentType.Create<Unity.Transforms.TransformMatrix>(),
+                ComponentType.Create<Unity.Rendering.MeshInstanceRenderer>(),
+                ComponentType.Create<Agent.Velocity>(),
                 ComponentType.Create<GridSettings>(),
                 ComponentType.Create<FlowField.Data>());
 
             AgentWithQuery = entityManager.CreateArchetype(
-                ComponentType.Create<Position>(),
-                ComponentType.Create<Rotation>(),
-                ComponentType.Create<TransformMatrix>(),
-                ComponentType.Create<MeshInstanceRenderer>(),
-                ComponentType.Create<Velocity>(),
+                ComponentType.Create<Unity.Transforms.Position>(),
+                ComponentType.Create<Unity.Transforms.Rotation>(),
+                ComponentType.Create<Unity.Transforms.TransformMatrix>(),
+                ComponentType.Create<Unity.Rendering.MeshInstanceRenderer>(),
+                ComponentType.Create<Agent.Velocity>(),
                 ComponentType.Create<GridSettings>(),
                 ComponentType.Create<FlowField.Data>(),
                 ComponentType.Create<FlowField.Query>());
@@ -54,10 +51,10 @@ namespace Manager
                 ComponentType.Create<DebugHeatmap.Component>());
 
             PlayerInput = entityManager.CreateArchetype(
-                ComponentType.Create<PlayerInputTag>(),
-                ComponentType.Create<MouseDoubleClick>(),
-                ComponentType.Create<MousePosition>(),
-                ComponentType.Create<InputButtons>());
+                ComponentType.Create<ECSInput.PlayerInputTag>(),
+                ComponentType.Create<ECSInput.MouseDoubleClick>(),
+                ComponentType.Create<ECSInput.MousePosition>(),
+                ComponentType.Create<ECSInput.InputButtons>());
         }
 
         public static void SetupTile(EntityManager em, Entity e, Mesh mesh, Material mat, int2 pos, byte cost, float3 col, GridSettings settings)
@@ -73,8 +70,8 @@ namespace Manager
         public static void CreateAgent(EntityCommandBuffer ecb, float3 pos, Mesh mesh, Material mat, GridSettings settings, FlowField.Data flowField)
         {
             ecb.CreateEntity(Agent);
-            ecb.SetComponent(new Position { Value = pos });
-            ecb.SetSharedComponent(new MeshInstanceRenderer { mesh = mesh, material = mat });
+            ecb.SetComponent(new Unity.Transforms.Position { Value = pos });
+            ecb.SetSharedComponent(new Unity.Rendering.MeshInstanceRenderer { mesh = mesh, material = mat });
             ecb.SetSharedComponent(settings);
             ecb.SetSharedComponent(flowField);
         }
@@ -82,10 +79,10 @@ namespace Manager
         public static void CreateInputSystem(EntityManager entityManager)
         {
             var inputSystemEntity =entityManager.CreateEntity(PlayerInput);
-            entityManager.SetComponentData(inputSystemEntity, new PlayerInputTag());
-            entityManager.SetComponentData(inputSystemEntity, new MouseDoubleClick());
-            entityManager.SetComponentData(inputSystemEntity, new MousePosition());
-            entityManager.SetSharedComponentData(inputSystemEntity, PlayerInputSystem.ProcessInputSettings());
+            entityManager.SetComponentData(inputSystemEntity, new ECSInput.PlayerInputTag());
+            entityManager.SetComponentData(inputSystemEntity, new ECSInput.MouseDoubleClick());
+            entityManager.SetComponentData(inputSystemEntity, new ECSInput.MousePosition());
+            entityManager.SetSharedComponentData(inputSystemEntity, ECSInput.PlayerInputSystem.ProcessInputSettings());
         }
         
         public static void CreateFlowFieldResult(EntityCommandBuffer ecb, uint handle, FlowField.Data flowFieldData)

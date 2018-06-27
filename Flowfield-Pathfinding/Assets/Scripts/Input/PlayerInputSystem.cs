@@ -11,218 +11,221 @@ using UnityEngine;
 //----------------------------------------------------------------------------------------
 namespace ECSInput
 {
-	//----------------------------------------------------------------------------------------
-	public struct MouseDoubleClick : IComponentData
-	{
-		public int Value;
-		public int Reset;
-	}
-	//----------------------------------------------------------------------------------------
-	public struct MousePosition : IComponentData
-	{
-		public float3 Value;
-	}
+    //----------------------------------------------------------------------------------------
+    public struct MouseDoubleClick : IComponentData
+    {
+        public int Value;
+        public int Reset;
+    }
+    //----------------------------------------------------------------------------------------
+    public struct MousePosition : IComponentData
+    {
+        public float3 Value;
+    }
 
-	public struct PlayerInputTag : IComponentData { }
+    public struct PlayerInputTag : IComponentData { }
 
-	//----------------------------------------------------------------------------------------
-	public struct InputButtons : ISharedComponentData
-	{
-		public struct Command
-		{
-			public int Status;
-			public string Key;
-			public string AltKey;
-			public string Mod;
-			public string AltMod;
-		}
-		public const int NONE = 0;
-		public const int DOWN = 1;
-		public const int PRESSED = 2;
-		public const int UP = 3;
-		public Dictionary<string, Command> Values;
-	}
+    //----------------------------------------------------------------------------------------
+    public struct InputButtons : ISharedComponentData
+    {
+        public struct Command
+        {
+            public int Status;
+            public string Key;
+            public string AltKey;
+            public string Mod;
+            public string AltMod;
+        }
+        public const int NONE = 0;
+        public const int DOWN = 1;
+        public const int PRESSED = 2;
+        public const int UP = 3;
+        public Dictionary<string, Command> Values;
+    }
 
-	//---------------------------------------------------------------------------------------
-	struct InputDataGroup
-	{
-		[ReadOnly] public SharedComponentDataArray<InputButtons> Buttons;
-		[ReadOnly] public ComponentDataArray<MousePosition> MousePos;
-	}
-
-
-	[UpdateInGroup(typeof(InputGroup))]
-	public class PlayerInputSystem : ComponentSystem
-	{
-		public const float DOUBLE_CLICK_TIME_WINDOW = 0.2f;
-
-		//----------------------------------------------------------------------------------------
-		struct InjectedPlayerInput
-		{
-			public int Length;
-			[ReadOnly] private ComponentDataArray<PlayerInputTag> m_inputFilter;
-			[ReadOnly] public SharedComponentDataArray<InputButtons> Buttons;
-			public ComponentDataArray<MousePosition> MousePos;
-			public ComponentDataArray<MouseDoubleClick> DoubleClick;
-		}
-
-		[Inject] private InjectedPlayerInput m_playerInput;
-		private float m_timer;
-		private int m_numberOfClicks = 0;
+    //---------------------------------------------------------------------------------------
+    struct InputDataGroup
+    {
+        [ReadOnly] public SharedComponentDataArray<InputButtons> Buttons;
+        [ReadOnly] public ComponentDataArray<MousePosition> MousePos;
+    }
 
 
+    [UpdateInGroup(typeof(InputGroup))]
+    public class PlayerInputSystem : ComponentSystem
+    {
+        public const float DOUBLE_CLICK_TIME_WINDOW = 0.2f;
 
-		//----------------------------------------------------------------------------------------
-		protected override void OnCreateManager(int _capacity)
-		{
-			base.OnCreateManager(_capacity);
-		}
+        //----------------------------------------------------------------------------------------
+        struct InjectedPlayerInput
+        {
+            public int Length;
+            [ReadOnly] private ComponentDataArray<PlayerInputTag> m_inputFilter;
+            [ReadOnly] public SharedComponentDataArray<InputButtons> Buttons;
+            public ComponentDataArray<MousePosition> MousePos;
+            public ComponentDataArray<MouseDoubleClick> DoubleClick;
+        }
 
-		//----------------------------------------------------------------------------------------
-		protected override void OnUpdate()
-		{
-			CreateInputSettings();
-			UpdateMouseInput();
-			UpdateButtonsInput();
-		}
+        [Inject] private InjectedPlayerInput m_playerInput;
+        private float m_timer;
+        private int m_numberOfClicks = 0;
 
-		//----------------------------------------------------------------------------------------
-		private void CreateInputSettings()
-		{
-			if (m_playerInput.Buttons[0].Values != null)
-				return;
 
-			ProcessInputSettings();
-		}
 
-		//----------------------------------------------------------------------------------------
-		public static InputButtons ProcessInputSettings()
-		{
-			var inputButtons = new InputButtons {Values = new Dictionary<string, InputButtons.Command>()};
-			var settings = Utils.InstantiateAssetFromResource<InputSettings>("InputSettings");
-			foreach (var entry in settings.Commands)
-			{
-				var fullKey = entry.Value.Split(';');
-				if (fullKey.Length < 2)
-					throw new ApplicationException("full key needs at least 2 strings!");
+        //----------------------------------------------------------------------------------------
+        protected override void OnCreateManager(int _capacity)
+        {
+            base.OnCreateManager(_capacity);
+        }
 
-				GetKeys(fullKey[0], out string mod, out string altMod);
-				GetKeys(fullKey[1], out string key, out string altKey);
-				if (string.IsNullOrEmpty(key))
-					throw new ApplicationException("main key has to be defined!!");
+        //----------------------------------------------------------------------------------------
+        protected override void OnUpdate()
+        {
+            CreateInputSettings();
+            UpdateMouseInput();
+            UpdateButtonsInput();
+        }
 
-				inputButtons.Values.Add(entry.Key, new InputButtons.Command
-				{
-					Status = InputButtons.NONE,
-					Key = key,
-					AltKey = altKey,
-					Mod = mod,
-					AltMod = altMod
-				});
-			}
+        //----------------------------------------------------------------------------------------
+        private void CreateInputSettings()
+        {
+            if (m_playerInput.Buttons[0].Values != null)
+                return;
 
-			return inputButtons;
-		}
+            ProcessInputSettings();
+        }
 
-		//----------------------------------------------------------------------------------------
-		private static void GetKeys(string _keys, out string _main, out string _alt)
-		{
-			_main = _alt = "";
-			if (string.IsNullOrEmpty(_keys))
-				return;
+        //----------------------------------------------------------------------------------------
+        public static InputButtons ProcessInputSettings()
+        {
+            var inputButtons = new InputButtons { Values = new Dictionary<string, InputButtons.Command>() };
+            var settings = Utils.InstantiateAssetFromResource<InputSettings>("InputSettings");
+            foreach (var entry in settings.Commands)
+            {
+                var fullKey = entry.Value.Split(';');
+                if (fullKey.Length < 2)
+                    throw new ApplicationException("full key needs at least 2 strings!");
 
-			var keys = _keys.Split('|');
-			if (string.IsNullOrEmpty(keys[0]))
-				return;
+                GetKeys(fullKey[0], out string mod, out string altMod);
+                GetKeys(fullKey[1], out string key, out string altKey);
+                if (string.IsNullOrEmpty(key))
+                    throw new ApplicationException("main key has to be defined!!");
 
-			_main = keys[0];
-			if (keys.Length > 1)
-				_alt = keys[1];
-		}
+                inputButtons.Values.Add(entry.Key, new InputButtons.Command
+                {
+                    Status = InputButtons.NONE,
+                    Key = key,
+                    AltKey = altKey,
+                    Mod = mod,
+                    AltMod = altMod
+                });
+            }
 
-		//----------------------------------------------------------------------------------------
-		private void UpdateButtonsInput()
-		{
-			var buttons = m_playerInput.Buttons[0];
-			var keys = buttons.Values.Keys.ToList();
-			foreach (var key in keys)
-			{
-				var buttonsValue = buttons.Values[key];
-				GetButtonStatus(ref buttonsValue);
-				buttons.Values[key] = buttonsValue;
-			}
-		}
+            return inputButtons;
+        }
 
-		//----------------------------------------------------------------------------------------
-		private void UpdateMouseInput()
-		{
+        //----------------------------------------------------------------------------------------
+        private static void GetKeys(string _keys, out string _main, out string _alt)
+        {
+            _main = _alt = "";
+            if (string.IsNullOrEmpty(_keys))
+                return;
 
-			var pos = m_playerInput.MousePos[0];
-			pos.Value = Input.mousePosition;
-			m_playerInput.MousePos[0] = pos;
+            var keys = _keys.Split('|');
+            if (string.IsNullOrEmpty(keys[0]))
+                return;
 
-			var doubleClick = m_playerInput.DoubleClick[0];
-			if (doubleClick.Reset > 0)
-			{
-				doubleClick.Value = 0;
-				doubleClick.Reset = 0;
-				m_numberOfClicks = 0;
-			}
+            _main = keys[0];
+            if (keys.Length > 1)
+                _alt = keys[1];
+        }
 
-			if (doubleClick.Value == 0)
-				doubleClick.Value = GetDoubleClick();
+        //----------------------------------------------------------------------------------------
+        private void UpdateButtonsInput()
+        {
+            var buttons = m_playerInput.Buttons[0];
+            var keys = buttons.Values.Keys.ToList();
+            foreach (var key in keys)
+            {
+                var buttonsValue = buttons.Values[key];
+                GetButtonStatus(ref buttonsValue);
+                buttons.Values[key] = buttonsValue;
+            }
+        }
 
-			m_playerInput.DoubleClick[0] = doubleClick;
-		}
+        //----------------------------------------------------------------------------------------
+        private void UpdateMouseInput()
+        {
 
-		//----------------------------------------------------------------------------------------
-		private void GetButtonStatus(ref InputButtons.Command _command)
-		{
-			bool mod = true;
-			if (!string.IsNullOrEmpty(_command.Mod))
-				mod = Input.GetKey(_command.Mod);
-			if (!string.IsNullOrEmpty(_command.AltMod))
-				mod |= Input.GetKey(_command.Mod);
+            var pos = m_playerInput.MousePos[0];
+            pos.Value = Input.mousePosition;
+            m_playerInput.MousePos[0] = pos;
 
-			if (!mod)
-				_command.Status = InputButtons.NONE;
+            var doubleClick = m_playerInput.DoubleClick[0];
+            if (doubleClick.Reset > 0)
+            {
+                doubleClick.Value = 0;
+                doubleClick.Reset = 0;
+                m_numberOfClicks = 0;
+            }
 
-			int status = GetMainKeyStatus(_command.Key);
-			if (status == InputButtons.NONE && !string.IsNullOrEmpty(_command.AltKey))
-				status = GetMainKeyStatus(_command.AltKey);
-			_command.Status = status;
-		}
+            if (doubleClick.Value == 0)
+                doubleClick.Value = GetDoubleClick();
 
-		//----------------------------------------------------------------------------------------
-		public int GetMainKeyStatus(string _key)
-		{
-			if (Input.GetKeyUp(_key))
-				return InputButtons.UP;
+            m_playerInput.DoubleClick[0] = doubleClick;
+        }
 
-			if (Input.GetKeyDown(_key))
-				return InputButtons.DOWN;
+        //----------------------------------------------------------------------------------------
+        private void GetButtonStatus(ref InputButtons.Command _command)
+        {
+            bool mod = true;
+            if (!string.IsNullOrEmpty(_command.Mod))
+                mod = Input.GetKey(_command.Mod);
+            if (!string.IsNullOrEmpty(_command.AltMod))
+                mod |= Input.GetKey(_command.AltMod);
 
-			if (Input.GetKey(_key))
-				return InputButtons.PRESSED;
+            if (!mod)
+            {
+                _command.Status = InputButtons.NONE;
+                return;
+            }
 
-			return InputButtons.NONE;
-		}
+            int status = GetMainKeyStatus(_command.Key);
+            if (status == InputButtons.NONE && !string.IsNullOrEmpty(_command.AltKey))
+                status = GetMainKeyStatus(_command.AltKey);
+            _command.Status = status;
+        }
 
-		//----------------------------------------------------------------------------------------
-		public int GetDoubleClick()
-		{
-			m_timer += Time.deltaTime;
-			if (m_timer > DOUBLE_CLICK_TIME_WINDOW)
-				m_numberOfClicks = 0;
+        //----------------------------------------------------------------------------------------
+        public int GetMainKeyStatus(string _key)
+        {
+            if (Input.GetKeyUp(_key))
+                return InputButtons.UP;
 
-			if (!Input.GetMouseButtonDown(StandardInput.LEFT_MOUSE_BUTTON))
-				return 0;
+            if (Input.GetKeyDown(_key))
+                return InputButtons.DOWN;
 
-			m_numberOfClicks++;
-			m_timer = 0f;
+            if (Input.GetKey(_key))
+                return InputButtons.PRESSED;
 
-			return (m_numberOfClicks >= 2) ? 1 : 0;
-		}
+            return InputButtons.NONE;
+        }
 
-	}
+        //----------------------------------------------------------------------------------------
+        public int GetDoubleClick()
+        {
+            m_timer += Time.deltaTime;
+            if (m_timer > DOUBLE_CLICK_TIME_WINDOW)
+                m_numberOfClicks = 0;
+
+            if (!Input.GetMouseButtonDown(StandardInput.LEFT_MOUSE_BUTTON))
+                return 0;
+
+            m_numberOfClicks++;
+            m_timer = 0f;
+
+            return (m_numberOfClicks >= 2) ? 1 : 0;
+        }
+
+    }
 }

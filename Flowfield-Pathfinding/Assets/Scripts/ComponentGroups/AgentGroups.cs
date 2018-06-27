@@ -14,10 +14,9 @@ namespace Agent.Group
 
     public struct Selected
     {
+        [ReadOnly] public EntityArray entity;
         [ReadOnly] public SharedComponentDataArray<FlowField.Data> flowFieldData;
-
-        public EntityArray entity;
-        //ComponentDataArray<SelectedUnit> selected;
+        [ReadOnly] ComponentDataArray<Selection> selected;
         public SubtractiveComponent<FlowField.Query> flowFieldQuery;
     }
 
@@ -25,8 +24,23 @@ namespace Agent.Group
     {
         [ReadOnly] public EntityArray entity;
         [ReadOnly] public SharedComponentDataArray<FlowField.Data> flowFieldData;
-
-        //ComponentDataArray<SelectedUnit> selected;
+        [ReadOnly] ComponentDataArray<Selection> selected;
         public ComponentDataArray<FlowField.Query> flowFieldQuery;
+    }
+
+    public struct SelectedPositions
+    {
+        [ReadOnly] public EntityArray entity;
+        [ReadOnly] public ComponentDataArray<Unity.Transforms.Position> position;
+        [ReadOnly] public ComponentDataArray<Selection> selection;
+        [ReadOnly] public int Length;
+    }
+
+    public struct UnselectedPositions
+    {
+        [ReadOnly] public EntityArray entity;
+        [ReadOnly] public ComponentDataArray<Unity.Transforms.Position> position;
+        [ReadOnly] public SubtractiveComponent<Selection> selection;
+        [ReadOnly] public int Length;
     }
 }

@@ -1,4 +1,5 @@
-﻿using Samples.Common;
+﻿using Agent;
+using Samples.Common;
 using Unity.Burst;
 using UnityEngine;
 using Unity.Mathematics;

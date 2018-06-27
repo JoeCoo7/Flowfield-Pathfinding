@@ -12,8 +12,9 @@ public class InputSettings : ScriptableObject
 	{
 		Commands = new Dictionary<string, string>
 		{
-			{"SpawnAgents", ";mouse 0"},
+			{"SpawnAgents", "right shift|left shift;mouse 0"},
 			{"CreateGoal", ";mouse 1"},
+            {"SelectAgents", ";mouse 0" }
 		};
 	}
 }

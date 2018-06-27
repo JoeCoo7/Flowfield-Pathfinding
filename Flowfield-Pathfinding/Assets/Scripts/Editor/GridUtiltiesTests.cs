@@ -42,17 +42,17 @@ public class GridUtiltiesTests
         int edge = grid.x - 1;
 
         // Bounds Checks
-        Assert.AreEqual(new int2(0, 0), GridUtilties.I2G(grid, min));
-        Assert.AreEqual(new int2(grid.x - 1, grid.y - 1), GridUtilties.I2G(grid, max));
+        Assert.AreEqual(new int2(0, 0), GridUtilties.Index2Grid(grid, min));
+        Assert.AreEqual(new int2(grid.x - 1, grid.y - 1), GridUtilties.Index2Grid(grid, max));
         
         // Out Of Bounds Checks
-        Assert.AreEqual(Invalid_Grid, GridUtilties.I2G(grid, min - 1));
-        Assert.AreEqual(Invalid_Grid, GridUtilties.I2G(grid, max + 1));
+        Assert.AreEqual(Invalid_Grid, GridUtilties.Index2Grid(grid, min - 1));
+        Assert.AreEqual(Invalid_Grid, GridUtilties.Index2Grid(grid, max + 1));
 
         // Value Checks
-        Assert.AreEqual(new int2(grid.x - 1, 0), GridUtilties.I2G(grid, edge));
-        Assert.AreEqual(new int2(0, 1), GridUtilties.I2G(grid, edge + 1));
-        Assert.AreEqual(new int2(1, 1), GridUtilties.I2G(grid, edge + 2));
+        Assert.AreEqual(new int2(grid.x - 1, 0), GridUtilties.Index2Grid(grid, edge));
+        Assert.AreEqual(new int2(0, 1), GridUtilties.Index2Grid(grid, edge + 1));
+        Assert.AreEqual(new int2(1, 1), GridUtilties.Index2Grid(grid, edge + 2));
     }
 
     [Test]
@@ -96,18 +96,18 @@ public class GridUtiltiesTests
         int edge = grid.x - 1;
 
         // Bounds Checks
-        Assert.AreEqual(min, GridUtilties.G2I(grid, new int2(x_min, y_min)));
-        Assert.AreEqual(max, GridUtilties.G2I(grid, new int2(x_max, y_max)));
+        Assert.AreEqual(min, GridUtilties.Grid2Index(grid, new int2(x_min, y_min)));
+        Assert.AreEqual(max, GridUtilties.Grid2Index(grid, new int2(x_max, y_max)));
         
         // Out Of Bounds Checks
-        Assert.AreEqual(Invalid_Index, GridUtilties.G2I(grid, new int2(x_min - 1, y_min)));
-        Assert.AreEqual(Invalid_Index, GridUtilties.G2I(grid, new int2(x_min, y_min - 1)));
-        Assert.AreEqual(Invalid_Index, GridUtilties.G2I(grid, new int2(x_max + 1, y_max)));
-        Assert.AreEqual(Invalid_Index, GridUtilties.G2I(grid, new int2(x_max, y_max + 1)));
+        Assert.AreEqual(Invalid_Index, GridUtilties.Grid2Index(grid, new int2(x_min - 1, y_min)));
+        Assert.AreEqual(Invalid_Index, GridUtilties.Grid2Index(grid, new int2(x_min, y_min - 1)));
+        Assert.AreEqual(Invalid_Index, GridUtilties.Grid2Index(grid, new int2(x_max + 1, y_max)));
+        Assert.AreEqual(Invalid_Index, GridUtilties.Grid2Index(grid, new int2(x_max, y_max + 1)));
 
         // Value Checks
-        Assert.AreEqual(edge, GridUtilties.G2I(grid, new int2(x_max, y_min)));
-        Assert.AreEqual(edge + 1, GridUtilties.G2I(grid, new int2(x_min, y_min + 1)));
-        Assert.AreEqual(edge + 2, GridUtilties.G2I(grid, new int2(x_min + 1, y_min + 1)));
+        Assert.AreEqual(edge, GridUtilties.Grid2Index(grid, new int2(x_max, y_min)));
+        Assert.AreEqual(edge + 1, GridUtilties.Grid2Index(grid, new int2(x_min, y_min + 1)));
+        Assert.AreEqual(edge + 2, GridUtilties.Grid2Index(grid, new int2(x_min + 1, y_min + 1)));
     }
 }
