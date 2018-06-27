@@ -25,7 +25,6 @@ public class AgentSystem : JobComponentSystem
 	}
 	
 	[Inject] AgentData m_agents;
-	[Inject] EndFrameBarrier m_Barrier;
 	private NativeMultiHashMap<int, int> m_hashMap;
 	private NativeMultiHashMap<int, int> m_neighborHashMap;
 
