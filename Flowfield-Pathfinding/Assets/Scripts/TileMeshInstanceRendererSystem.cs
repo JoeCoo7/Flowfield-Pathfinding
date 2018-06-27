@@ -80,6 +80,11 @@ public class TileMeshInstanceRendererSystem : ComponentSystem
             {
                 int length = math.min(m_MatricesArray.Length, transforms.Length - beginIndex);
                 CopyMatrices(transforms, beginIndex, length, m_MatricesArray);
+	            for (int j = 0; j < m_MatricesArray.Length; ++j)
+	            {
+		            m_MatricesArray[j].m03 += Main.ActiveInitParams.m_cellSize / 2;
+		            m_MatricesArray[j].m23 += Main.ActiveInitParams.m_cellSize / 2;
+	            }
                 Graphics.DrawMeshInstanced(renderer.mesh, renderer.subMesh, renderer.material, m_MatricesArray, length, null, renderer.castShadows, renderer.receiveShadows);
 
                 beginIndex += length;
