@@ -25,7 +25,7 @@ public struct GridSettings : ISharedComponentData
 [UpdateAfter(typeof(AgentSystem))]
 public class TileSystem : JobComponentSystem
 {
-    static uint s_QueryHandle = 0;
+    static uint s_QueryHandle = uint.MaxValue;
 
     [Inject] EndFrameBarrier m_EndFrameBarrier;
     [Inject] Agent.Group.Selected m_Selected;
@@ -42,6 +42,7 @@ public class TileSystem : JobComponentSystem
 
         m_Offsets = new NativeArray<int2>(GridUtilties.Offset.Length, Allocator.Persistent);
         m_Offsets.CopyFrom(GridUtilties.Offset);
+        lastGeneratedQueryHandle = s_QueryHandle;
     }
 
     protected override void OnDestroyManager()
@@ -74,7 +75,7 @@ public class TileSystem : JobComponentSystem
     JobHandle CreateJobs(JobHandle inputDeps)
     {
         GridSettings gridSettings = Main.ActiveInitParams.m_grid;
-        uint queryHandle = s_QueryHandle++;
+        uint queryHandle = ++s_QueryHandle;
 
         for (var i = 0; i < m_SelectedWithQuery.entity.Length; ++i)
         {
@@ -154,6 +155,8 @@ public class TileSystem : JobComponentSystem
                 Manager.Archetype.CreateFlowFieldResult(commandBuffer, queryHandle,
                     new FlowField.Data { Value = m_PendingJobs[i].cacheEntry.flowField });
 
+                lastGeneratedQueryHandle = queryHandle;
+
                 m_PendingJobs.RemoveAt(i);
             }
         }
@@ -175,6 +178,16 @@ public class TileSystem : JobComponentSystem
     List<PendingJob> m_PendingJobs = new List<PendingJob>();
 
     Dictionary<uint, CacheEntry> m_Cache = new Dictionary<uint, CacheEntry>();
+
+    public uint lastGeneratedQueryHandle { get; private set; }
+
+    public NativeArray<float3> GetFlowField(uint handle)
+    {
+        if (m_Cache.TryGetValue(handle, out CacheEntry cacheEntry))
+            return cacheEntry.flowField;
+
+        return new NativeArray<float3>();
+    }
 
     const int k_Obstacle = int.MaxValue;
 

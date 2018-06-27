@@ -2,6 +2,7 @@
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Collections;
 
 namespace System
 {
@@ -11,30 +12,23 @@ namespace System
         {
             public Tile.Group.AllTiles tiles;
 
-            public FlowField.Group.FlowFieldResult results;
+            [ReadOnly]
+            public NativeArray<float3> flowField;
+
+            public uint handle;
 
             public void Execute(int index)
             {
-                uint finalHandle = 0;
-                FlowField.Data finalData = new FlowField.Data();
-                for (int i = results.flowFieldData.Length - 1; i >= 0; --i)
-                {
-                    if (finalHandle > results.flowFieldResult[i].Handle)
-                        continue;
-
-                    finalHandle = results.flowFieldResult[i].Handle;
-                    finalData = results.flowFieldData[i];
-                }
-
-                if (tiles.handles[index].Handle == finalHandle)
+                if (tiles.handles[index].Handle == handle)
                     return;
-                tiles.handles[index] = new Tile.FlowFieldHandle { Handle = finalHandle };
+
+                tiles.handles[index] = new Tile.FlowFieldHandle { Handle = handle };
 
                 var tileTransform = tiles.transforms[index];
                 var position = tiles.position[index];
                 var settings = tiles.settings[index];
                 var flowFieldIndex = GridUtilties.Grid2Index(settings, position.Value);
-                var flowDirection = finalData.Value[flowFieldIndex];
+                var flowDirection = flowField[flowFieldIndex];
 
                 tileTransform.Value = 
                     math.lookRotationToMatrix(
@@ -57,10 +51,14 @@ namespace System
         {
             if (m_Results.flowFieldData.Length == 0 || !Main.ActiveInitParams.m_drawFlowField)
                 return inputDeps;
+
+            var tileSystem = World.Active.GetExistingManager<TileSystem>();
+
             var update = new UpdateJob
             {
                 tiles = m_Tiles,
-                results = m_Results
+                handle = tileSystem.lastGeneratedQueryHandle,
+                flowField = tileSystem.GetFlowField(tileSystem.lastGeneratedQueryHandle)
             };
 
             return update.Schedule(update.tiles.transforms.Length, 64, inputDeps);
