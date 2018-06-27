@@ -38,4 +38,4 @@ MonoBehaviour:
   m_unitFlowFieldWeight: 100
   m_unitMaxSpeed: 25
   m_unitMaxForce: 1000
-  m_drawFlowField: 0
+  m_drawFlowField: 1

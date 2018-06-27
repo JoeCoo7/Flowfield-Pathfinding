@@ -112,18 +112,7 @@ public class TileSystem : JobComponentSystem
         var copyDebugHeatmapHandle = copyDebugHeatmapJob.Schedule(numTiles, 64, heatmapHandle);
         var flowFieldHandle = flowFieldJob.Schedule(numTiles, 64, copyDebugHeatmapHandle);
         var createResultHandle = createResultJob.Schedule(flowFieldHandle);
-        if (InitializationData.Instance.m_drawFlowField)
-        {
-            var updateFlowDirectionsJob = new UpdateFlowDirectionsJob
-            {
-                settings = gridSettings,
-                flowField = createResultJob.flowField
-            };
-            var updateFlowDirectionsHandle = updateFlowDirectionsJob.Schedule(this, 64, createResultHandle);
-            return updateFlowDirectionsHandle;
-        }
-        else
-            return createResultHandle;
+        return createResultHandle;
     }
 	public static JobHandle lastHeatmapJob;
     const int k_Obstacle = int.MaxValue;
