@@ -27,18 +27,12 @@ public class TileSystem : JobComponentSystem
 {
     static uint s_QueryHandle = 0;
 
-    [Inject]
-    EndFrameBarrier m_EndFrameBarrier;
-
-    [Inject]
-    Agent.Group.Selected m_Selected;
-
-    [Inject]
-    Agent.Group.SelectedWithQuery m_SelectedWithQuery;
+    [Inject] EndFrameBarrier m_EndFrameBarrier;
+    [Inject] Agent.Group.Selected m_Selected;
+    [Inject] Agent.Group.SelectedWithQuery m_SelectedWithQuery;
+    [Inject] ECSInput.InputDataGroup m_input;
 
     NativeArray<int2> m_Offsets;
-
-    JobHandle m_JobHandle;
 
     int2 m_Goal = new int2(197, 232);
 
@@ -57,29 +51,19 @@ public class TileSystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        if (Input.GetMouseButtonDown(StandardInput.RIGHT_MOUSE_BUTTON))
-        {
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity))
-            {
-                m_Goal = GridUtilties.World2Grid(InitializationData.Instance.m_grid, hit.point);
-            }
-        }
+        if (m_input.Buttons[0].Values["CreateGoal"].Status != ECSInput.InputButtons.UP)
+            return inputDeps;
 
-        if (m_JobHandle.IsCompleted)
-            m_JobHandle = CreateJobs(inputDeps);
+        if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_input.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity))
+            return inputDeps;
 
-        return m_JobHandle;
+        m_Goal = GridUtilties.World2Grid(Main.ActiveInitParams.m_grid, hit.point);
+        return CreateJobs(inputDeps);
     }
 
     JobHandle CreateJobs(JobHandle inputDeps)
     {
-        if (!Input.GetMouseButtonDown(StandardInput.RIGHT_MOUSE_BUTTON))
-            return inputDeps;
-
-        if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity))
-            return inputDeps;
-
-        GridSettings gridSettings = InitializationData.Instance.m_grid;
+        GridSettings gridSettings = Main.ActiveInitParams.m_grid;
         int numTiles = gridSettings.cellCount.x * gridSettings.cellCount.y;
 
         uint queryHandle = s_QueryHandle++;

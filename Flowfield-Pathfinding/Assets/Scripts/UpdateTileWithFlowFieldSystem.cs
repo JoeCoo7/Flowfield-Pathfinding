@@ -52,7 +52,7 @@ namespace System
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            if (m_Results.flowFieldData.Length == 0 || !InitializationData.Instance.m_drawFlowField)
+            if (m_Results.flowFieldData.Length == 0 || !Main.ActiveInitParams.m_drawFlowField)
                 return inputDeps;
             var update = new UpdateJob
             {

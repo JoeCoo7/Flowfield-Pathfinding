@@ -9,17 +9,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3cdd9d14d7a7498494735bc15f0b3818, type: 3}
-  m_Name: AgentSteerData
+  m_Name: AgentSteerDataPaulTest
   m_EditorClassIdentifier: 
   m_Data:
-    MaxSpeed: 7.92
-    Acceleration: 10
-    TerrainFieldWeight: 23
-    TargetFieldWeight: 26.91
-    SeparationRadius: 1.38
-    SeparationWeight: 123.3
-    AlignmentWeight: 16.71
-    CohesionWeight: 0.77
-    NeighbourHashCellSize: 47.38
-    AlignmentRadius: 3.51
-    AlignmentHashCellSize: 78.05
+    MaxSpeed: 645
+    Acceleration: 388
+    TerrainFieldWeight: 1.39
+    TargetFieldWeight: 1.92
+    SeparationRadius: 1.85
+    SeparationWeight: 2.43
+    AlignmentWeight: 1
+    CohesionWeight: 1.74
+    NeighbourHashCellSize: 10
+    AlignmentRadius: 5
+    RotationSpeed: 4.82

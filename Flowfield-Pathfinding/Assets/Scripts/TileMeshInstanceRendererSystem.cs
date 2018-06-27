@@ -50,7 +50,7 @@ public class TileMeshInstanceRendererSystem : ComponentSystem
 	protected override void OnUpdate()
 	{
         // Early out if we have disabled flow field rendering
-        if (!InitializationData.Instance.m_drawFlowField)
+        if (!Main.ActiveInitParams.m_drawFlowField)
             return;
 
 		// We want to iterate over all unique MeshInstanceRenderer shared component data,
