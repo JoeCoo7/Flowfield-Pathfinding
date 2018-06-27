@@ -1,5 +1,4 @@
-﻿using Unity.Burst;
-using Unity.Entities;
+﻿using Unity.Entities;
 using Unity.Jobs;
 
 namespace System
@@ -8,7 +7,6 @@ namespace System
     [UpdateAfter(typeof(TileSystem))]
     public class UpdateAgentWithQuerySystem : JobComponentSystem
     {
-        [BurstCompile]
         struct UpdateJob : IJobParallelFor
         {
             public Agent.Group.WithQuery units;

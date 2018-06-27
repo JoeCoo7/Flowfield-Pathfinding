@@ -21,4 +21,9 @@ public class Main : MonoBehaviour
 		main.m_AgentSpawnData.Initalize();
 		main.m_AgentSteerData.Initalize();
 	}
+
+	private void OnDisable()
+	{
+		m_InitData.Shutdown();
+	}
 }

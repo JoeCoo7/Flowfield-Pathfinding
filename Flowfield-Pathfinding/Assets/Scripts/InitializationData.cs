@@ -49,6 +49,11 @@ public class InitializationData : ScriptableObject
 		CreateGridView();
 	}
 
+	public void Shutdown()
+	{
+		m_initialFlow.Dispose();
+	}
+
 	byte GridFunc(GridSettings grid, int2 coord)
 	{
 		float2 per = new float2(coord) / grid.cellCount;
