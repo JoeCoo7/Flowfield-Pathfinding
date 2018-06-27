@@ -4,8 +4,8 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "InputSettings", menuName = "Pathfinding/InputSettings")]
 public class InputSettings : ScriptableObject
 {
-	public Dictionary<string, string> Commands { get; set; }
-	public Dictionary<string, string> Mods { get; set; }
+	public Dictionary<string, string> Commands;
+	public Dictionary<string, string> Mods;
 
 	//-----------------------------------------------------------------------------
 	private void OnEnable()
@@ -16,3 +16,4 @@ public class InputSettings : ScriptableObject
 		};
 	}
 }
+ 
