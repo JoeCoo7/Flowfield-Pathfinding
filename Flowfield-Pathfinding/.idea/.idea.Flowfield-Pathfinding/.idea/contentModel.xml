@@ -3,11 +3,15 @@
   <component name="ContentModelStore">
     <e p="C:\Users\JoeCool\.Rider2018.1\system\resharper-host\Local\Transient\ReSharperHost\v12\SolutionCaches\_Flowfield-Pathfinding.167461676.00" t="ExcludeRecursive" />
     <e p="D:\GameDev\Flowfield-Pathfinding\Flowfield-Pathfinding" t="IncludeRecursive">
+      <e p="Assembly-CSharp-Editor.csproj" t="IncludeRecursive" />
       <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
       <e p="Assets" t="Include">
         <e p="compute.compute" t="Include" />
         <e p="Scripts" t="Include">
+          <e p="AgentComponents.cs" t="Include" />
           <e p="AgentSpawingSystem.cs" t="Include" />
+          <e p="AgentSpawnData.cs" t="Include" />
+          <e p="AgentSteerData.cs" t="Include" />
           <e p="AgentSystem.cs" t="Include" />
           <e p="ArchetypeManager.cs" t="Include" />
           <e p="Camera" t="Include">
@@ -26,10 +30,17 @@
           </e>
           <e p="ComputeFlowFieldJob.cs" t="Include" />
           <e p="DebugHeatmapComponent.cs" t="Include" />
+          <e p="Editor" t="Include">
+            <e p="GridUtiltiesTests.cs" t="Include" />
+          </e>
           <e p="GridDataView.cs" t="Include" />
           <e p="GridUtilities.cs" t="Include" />
           <e p="HashUtility.cs" t="Include" />
           <e p="InitializationData.cs" t="Include" />
+          <e p="Input" t="Include">
+            <e p="InputSettings.cs" t="Include" />
+            <e p="PlayerInputSystem.cs" t="Include" />
+          </e>
           <e p="lib" t="Include">
             <e p="Camera" t="Include">
               <e p="CameraExtensions.cs" t="Include" />
@@ -45,6 +56,8 @@
           <e p="MathExt.cs" t="Include" />
           <e p="MathUtility.cs" t="Include" />
           <e p="RenderSystem.cs" t="Include" />
+          <e p="SystemOrder.cs" t="Include" />
+          <e p="TileMeshInstanceRendererSystem.cs" t="Include" />
           <e p="TileSystem.cs" t="Include" />
           <e p="UpdateAgentWithQuerySystem.cs" t="Include" />
         </e>

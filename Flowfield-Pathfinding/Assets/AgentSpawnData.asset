@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7307d1c85b7d4cfc939b6bcf6813a73b, type: 3}
+  m_Name: AgentSpawnData
+  m_EditorClassIdentifier: 
+  AgentMesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+  AgentMaterial: {fileID: 2100000, guid: d7743bd95fc0f9d4d9cdcd412a5ba84f, type: 2}
+  AgentDistSize:
+    x: 30
+    y: 30
+  AgentDistMaxTries: 30
+  AgentDistCellSize: 1
+  AgentDistNumPerClick: 1000
+  AgentDistSpawningThreshold: 128

@@ -21,6 +21,8 @@ public struct GridSettings : ISharedComponentData
     public float agentRadius;
 }
 
+[UpdateInGroup(typeof(ProcessGroup))]
+[UpdateAfter(typeof(AgentSystem))]
 public class TileSystem : JobComponentSystem
 {
     static uint s_QueryHandle = 0;

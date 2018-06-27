@@ -34,21 +34,8 @@ public class InitializationData : ScriptableObject
 	public GameObject m_cameraObject;
 	[NonSerialized]
 	public GridSettings m_grid;
-	public Mesh AgentMesh;
-	public Material AgentMaterial;
     public Mesh TileDirectionMesh;
     public Material TileDirectionMaterial;
-    public float2 m_unitDistSize = new float2(30, 30);
-	public int m_unitDistMaxTries = 30;
-	public int m_unitDistCellSize = 1;
-	public int m_unitDistNumPerClick = 100;
-	public int m_unitDistSpawningThreshold = 128;
-	public int m_unitSeparationWeight;
-	public int m_unitFlowFieldWeight;
-	
-	public float m_unitMaxSpeed = 25;
-	public float m_unitMaxForce = 1000;
-
     public bool m_drawFlowField = false;
 	
 	static public InitializationData Instance;
@@ -60,6 +47,11 @@ public class InitializationData : ScriptableObject
 		Instantiate(m_cameraObject);
 		m_grid = GridUtilties.CreateGrid(ref m_initialFlow, m_worldWidth, m_worldHeight, m_cellSize, m_cellsPerBlock, GridFunc);
 		CreateGridView();
+	}
+
+	public void Shutdown()
+	{
+		m_initialFlow.Dispose();
 	}
 
 	byte GridFunc(GridSettings grid, int2 coord)
