@@ -5,7 +5,6 @@ using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Jobs;
 using Unity.Burst;
-using RSGLib;
 
 [System.Serializable]
 public struct GridSettings : ISharedComponentData
@@ -102,16 +101,16 @@ public class TileSystem : JobComponentSystem
         // Compute heatmap from goals
         var goals = new NativeArray<int2>(1, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         goals[0] = m_Goal;
+        var floodQueue = new NativeArray<int>(heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         var computeHeatmapJobHandle = new ComputeHeatmapJob()
         {
             settings = gridSettings,
             goals = goals,
             heatmap = heatmap,
             offsets = m_Offsets,
-            openSet = new NativeArray<int>(heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory)
+            floodQueue = floodQueue
         }.Schedule(initializeHeatmapJobHandle);
 
-        // Convert flowfield from heatmap
         var flowField = new NativeArray<float3>(heatmap.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
         var computeFlowFieldJobHandle = new FlowField.ComputeFlowFieldJob
         {
@@ -121,10 +120,18 @@ public class TileSystem : JobComponentSystem
             offsets = m_Offsets
         }.Schedule(heatmap.Length, 64, computeHeatmapJobHandle);
 
+        var smoothFlowFieldJobHandle = new FlowField.SmoothFlowFieldJob
+        {
+            settings = gridSettings,
+            flowfield = flowField,
+            floodQueue = floodQueue,
+            offsets = m_Offsets
+        }.Schedule(computeFlowFieldJobHandle);
+
         m_PendingJobs.Add(new PendingJob
         {
             queryHandle = queryHandle,
-            jobHandle = computeFlowFieldJobHandle,
+            jobHandle = smoothFlowFieldJobHandle,
             cacheEntry = new CacheEntry
             {
                 heatmap = heatmap,
@@ -132,7 +139,7 @@ public class TileSystem : JobComponentSystem
             }
         });
 
-        return computeFlowFieldJobHandle;
+        return smoothFlowFieldJobHandle;
     }
 
     void ProcessPendingJobs(EntityCommandBuffer commandBuffer)
@@ -201,46 +208,25 @@ public class TileSystem : JobComponentSystem
         [ReadOnly]
         public NativeArray<int2> offsets;
 
-        //[ReadOnly]
-        //public NativeArray<int> values;
-
         public NativeArray<int> heatmap;
 
-        [DeallocateOnJobCompletion]
-        public NativeArray<int> openSet;
-
-        int queueStart;
-        int queueEnd;
-        int queueLength;
-
-        void Enqueue(NativeArray<int> queue, int value)
-        {
-            queue[queueEnd] = value;
-            queueEnd = (queueEnd + 1) % queue.Length;
-            ++queueLength;
-        }
-
-        int Dequeue(NativeArray<int> queue)
-        {
-            var retVal = queue[queueStart];
-            queueStart = (queueStart + 1) % queue.Length;
-            --queueLength;
-            return retVal;
-        }
+        public NativeArray<int> floodQueue;
 
         public void Execute()
         {
+            BurstQueue queue = new BurstQueue(floodQueue);
+
             for (int i = 0; i < goals.Length; ++i)
             {
                 var tileIndex = GridUtilties.Grid2Index(settings, goals[i]);
-                heatmap[tileIndex] = 0;//values[i];
-                Enqueue(openSet, tileIndex);
+                heatmap[tileIndex] = 0;
+                queue.Enqueue(tileIndex);
             }
 
             // Search!
-            while (queueLength > 0)
+            while (queue.Length > 0)
             {
-                var index = Dequeue(openSet);
+                var index = queue.Dequeue();
                 var distance = heatmap[index];
                 var newDistance = distance + 1;
                 var grid = GridUtilties.Index2Grid(settings, index);
@@ -253,7 +239,7 @@ public class TileSystem : JobComponentSystem
                     if (neighborIndex != -1 && heatmap[neighborIndex] != k_Obstacle && newDistance < heatmap[neighborIndex])
                     {
                         heatmap[neighborIndex] = newDistance;
-                        Enqueue(openSet, neighborIndex);
+                        queue.Enqueue(neighborIndex);
                     }
                 }
             }
