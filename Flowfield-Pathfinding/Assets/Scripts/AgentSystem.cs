@@ -166,11 +166,12 @@ public class AgentSystem : JobComponentSystem
 			var myPosition = positions[index].Value;
 			var myVelocity = velocities[index].Value;
 			var closestDistance = float.MaxValue;
-			float3 closestVecFromNeighbor = 0;
+			float3 closestVecFromNeighbor = float.MaxValue;
 			var hash = hashes[index];
 			var totalPosition = myPosition;
 			var totalVelocity = myVelocity;
-			var count = 1;
+			var foundCount = 1;
+			var checkedCount = 0;
 			if (cellHash.TryGetFirstValue(hash, out int item, out NativeMultiHashMapIterator<int> it))
 			{
 				do
@@ -189,15 +190,17 @@ public class AgentSystem : JobComponentSystem
 						{
 							totalVelocity += velocities[item].Value;
 							totalPosition += neighborPosition;
-							count++;
+							foundCount++;
 						}
 					}
-
+					checkedCount++;
+					if (checkedCount > steerParams.MaxNeighborChecks && foundCount > 1)
+						break;
 				} while (cellHash.TryGetNextValue(out item, ref it));
 			}
 			closestNeighbor[index] = closestVecFromNeighbor;
-			avgNeighborPositions[index] = totalPosition / count;
-			avgNeighborVelocities[index] = totalVelocity / count;
+			avgNeighborPositions[index] = totalPosition / foundCount;
+			avgNeighborVelocities[index] = totalVelocity / foundCount;
 		}
 	}
 	
@@ -240,7 +243,7 @@ public class AgentSystem : JobComponentSystem
 			return steerParams.AlignmentWeight * (velDiff / diffLen) * strength * strength;
 		}
 
-		float3 Separation(int index, float3 position)
+		float3 Separation(int index)
 		{
 			var nVec = vecFromNearestNeighbor[index];
 			var nDist = math.length(nVec);
@@ -294,7 +297,7 @@ public class AgentSystem : JobComponentSystem
 				(
 				Alignment(index, velocity) +
 				Cohesion(index, position) +
-				Separation(index, position) +
+				Separation(index) +
 				FlowField(position, velocity, terrainFlowfield, steerParams.TerrainFieldWeight) +
 				FlowField(position, velocity, targetFlowfield, steerParams.TargetFieldWeight)
 				);

@@ -15,7 +15,7 @@ public class AgentSpawnData : ScriptableObject
 
 	public Mesh AgentMesh;
 	public Material AgentMaterial;
-	public float2 AgentDistSize = new float2(30, 30);
+	public float AgentSpawnRadius = 50;
 	public int AgentDistMaxTries = 30;
 	public int AgentDistCellSize = 1;
 	public int AgentDistNumPerClick = 100;
