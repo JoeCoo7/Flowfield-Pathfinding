@@ -147,7 +147,7 @@ public class TileSystem : JobComponentSystem
         [WriteOnly]
         public NativeArray<int> heatmap;
 
-        public void Execute(ref Tile.Cost cost, ref Tile.Position position)
+        public void Execute([ReadOnly] ref Tile.Cost cost, [ReadOnly] ref Tile.Position position)
         {
             var outputIndex = GridUtilties.Grid2Index(settings, position.Value);
             heatmap[outputIndex] = math.select(k_Unvisited, k_Obstacle, cost.Value == byte.MaxValue);
