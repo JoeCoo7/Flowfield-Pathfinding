@@ -40,6 +40,17 @@ public class TileSystem : JobComponentSystem
 
     int2 m_Goal = new int2(197, 232);
 
+    protected override void OnCreateManager(int capacity)
+    {
+        m_Offsets = new NativeArray<int2>(GridUtilties.Offset.Length, Allocator.Persistent);
+        m_Offsets.CopyFrom(GridUtilties.Offset);
+    }
+
+    protected override void OnDestroyManager()
+    {
+        m_Offsets.Dispose();
+    }
+
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
         if (Input.GetMouseButtonDown(StandardInput.RIGHT_MOUSE_BUTTON))
@@ -60,12 +71,6 @@ public class TileSystem : JobComponentSystem
     {
         GridSettings gridSettings = InitializationData.Instance.m_grid;
         int numTiles = gridSettings.cellCount.x * gridSettings.cellCount.y;
-
-        if (!m_Offsets.IsCreated)
-        {
-            m_Offsets = new NativeArray<int2>(GridUtilties.Offset.Length, Allocator.Persistent);
-            m_Offsets.CopyFrom(GridUtilties.Offset);
-        }
 
         uint queryHandle = s_QueryHandle++;
         var buffer = m_EndFrameBarrier.CreateCommandBuffer();
