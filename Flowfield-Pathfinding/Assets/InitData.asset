@@ -11,8 +11,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2613051fc61152c4fbcce528d29d3e25, type: 3}
   m_Name: InitData
   m_EditorClassIdentifier: 
-  m_worldWidth: 512
-  m_worldHeight: 512
+  m_worldWidth: 1024
+  m_worldHeight: 1024
   m_cellSize: 2
   m_cellsPerBlock: 8
   m_noiseScale: 7

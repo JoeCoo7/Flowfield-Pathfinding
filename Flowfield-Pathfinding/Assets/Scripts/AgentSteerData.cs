@@ -19,23 +19,25 @@ public class AgentSteerData : ScriptableObject
 [System.Serializable]
 public struct AgentSteerParams
 {
-	[Range(.1f, 100)]
+	[Range(0, 100)]
 	public float MaxSpeed;
 	[Range(0, 100)]
 	public float Acceleration;
-	[Range(0, 10)]
+	[Range(0, 2)]
+	public float Drag;
+	[Range(0, 100)]
 	public float TerrainFieldWeight;
-	[Range(0, 10)]
+	[Range(0, 100)]
 	public float TargetFieldWeight;
-	[Range(.1f, 10)]
+	[Range(.1f, 100)]
 	public float SeparationRadius;
-	[Range(0, 10)]
+	[Range(0, 100)]
 	public float SeparationWeight;
-	[Range(0, 10)]
+	[Range(0, 100)]
 	public float AlignmentWeight;
-	[Range(0, 10)]
+	[Range(0, 100)]
 	public float CohesionWeight;
-	[Range(1, 20)]
+	[Range(1, 100)]
 	public float NeighbourHashCellSize;
 	[Range(1, 10)]
 	public float AlignmentRadius;
