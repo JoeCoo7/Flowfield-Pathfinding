@@ -27,18 +27,12 @@ public class TileSystem : JobComponentSystem
 {
     static uint s_QueryHandle = 0;
 
-    [Inject]
-    EndFrameBarrier m_EndFrameBarrier;
-
-    [Inject]
-    Agent.Group.Selected m_Selected;
-
-    [Inject]
-    Agent.Group.SelectedWithQuery m_SelectedWithQuery;
+    [Inject] EndFrameBarrier m_EndFrameBarrier;
+    [Inject] Agent.Group.Selected m_Selected;
+    [Inject] Agent.Group.SelectedWithQuery m_SelectedWithQuery;
+    [Inject] ECSInput.InputDataGroup m_input;
 
     NativeArray<int2> m_Offsets;
-
-    JobHandle m_JobHandle;
 
     int2 m_Goal = new int2(197, 232);
 
@@ -57,28 +51,18 @@ public class TileSystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        if (Input.GetMouseButtonDown(StandardInput.RIGHT_MOUSE_BUTTON))
-        {
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity))
-            {
-                m_Goal = GridUtilties.World2Grid(Main.ActiveInitParams.m_grid, hit.point);
-            }
-        }
+        if (m_input.Buttons[0].Values["CreateGoal"].Status != ECSInput.InputButtons.UP)
+            return inputDeps;
 
-        if (m_JobHandle.IsCompleted)
-            m_JobHandle = CreateJobs(inputDeps);
+        if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_input.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity))
+            return inputDeps;
 
-        return m_JobHandle;
+        m_Goal = GridUtilties.World2Grid(Main.ActiveInitParams.m_grid, hit.point);
+        return CreateJobs(inputDeps);
     }
 
     JobHandle CreateJobs(JobHandle inputDeps)
     {
-        if (!Input.GetMouseButtonDown(StandardInput.RIGHT_MOUSE_BUTTON))
-            return inputDeps;
-
-        if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity))
-            return inputDeps;
-
         GridSettings gridSettings = Main.ActiveInitParams.m_grid;
         int numTiles = gridSettings.cellCount.x * gridSettings.cellCount.y;
 
@@ -110,16 +94,23 @@ public class TileSystem : JobComponentSystem
             goals = new NativeArray<int2>(1, Allocator.TempJob),
             heatmap = initializeHeatmapJob.heatmap,
             offsets = m_Offsets,
-            openSet = new NativeArray<int>(initializeHeatmapJob.heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory)
+            floodQueue = new NativeArray<int>(initializeHeatmapJob.heatmap.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory)
         };
         computeHeatmapJob.goals[0] = m_Goal;
 
-        // Convert flowfield from heatmap
         var computeFlowFieldJob = new FlowField.ComputeFlowFieldJob
         {
             settings = gridSettings,
             heatmap = computeHeatmapJob.heatmap,
             flowfield = new NativeArray<float3>(numTiles, Allocator.Persistent, NativeArrayOptions.UninitializedMemory),
+            offsets = m_Offsets
+        };
+
+        var smoothFlowFieldJob = new FlowField.SmoothFlowFieldJob
+        {
+            settings = gridSettings,
+            flowfield = computeFlowFieldJob.flowfield,
+            floodQueue = computeHeatmapJob.floodQueue,
             offsets = m_Offsets
         };
 
@@ -134,7 +125,8 @@ public class TileSystem : JobComponentSystem
         var initializeHeatmapHandle = initializeHeatmapJob.Schedule(this, 64, inputDeps);
         var computeHeatmapHandle = computeHeatmapJob.Schedule(initializeHeatmapHandle);
         var flowFieldHandle = computeFlowFieldJob.Schedule(numTiles, 64, computeHeatmapHandle);
-        var createResultHandle = createResultJob.Schedule(flowFieldHandle);
+        var smoothFieldHandle = smoothFlowFieldJob.Schedule(flowFieldHandle);
+        var createResultHandle = createResultJob.Schedule(smoothFieldHandle);
         return createResultHandle;
     }
 
@@ -170,46 +162,25 @@ public class TileSystem : JobComponentSystem
         [ReadOnly]
         public NativeArray<int2> offsets;
 
-        //[ReadOnly]
-        //public NativeArray<int> values;
-
         public NativeArray<int> heatmap;
 
-        [DeallocateOnJobCompletion]
-        public NativeArray<int> openSet;
-
-        int queueStart;
-        int queueEnd;
-        int queueLength;
-
-        void Enqueue(NativeArray<int> queue, int value)
-        {
-            queue[queueEnd] = value;
-            queueEnd = (queueEnd + 1) % queue.Length;
-            ++queueLength;
-        }
-
-        int Dequeue(NativeArray<int> queue)
-        {
-            var retVal = queue[queueStart];
-            queueStart = (queueStart + 1) % queue.Length;
-            --queueLength;
-            return retVal;
-        }
+        public NativeArray<int> floodQueue;
 
         public void Execute()
         {
+            BurstQueue queue = new BurstQueue(floodQueue);
+
             for (int i = 0; i < goals.Length; ++i)
             {
                 var tileIndex = GridUtilties.Grid2Index(settings, goals[i]);
-                heatmap[tileIndex] = 0;//values[i];
-                Enqueue(openSet, tileIndex);
+                heatmap[tileIndex] = 0;
+                queue.Enqueue(tileIndex);
             }
 
             // Search!
-            while (queueLength > 0)
+            while (queue.Length > 0)
             {
-                var index = Dequeue(openSet);
+                var index = queue.Dequeue();
                 var distance = heatmap[index];
                 var newDistance = distance + 1;
                 var grid = GridUtilties.Index2Grid(settings, index);
@@ -222,7 +193,7 @@ public class TileSystem : JobComponentSystem
                     if (neighborIndex != -1 && heatmap[neighborIndex] != k_Obstacle && newDistance < heatmap[neighborIndex])
                     {
                         heatmap[neighborIndex] = newDistance;
-                        Enqueue(openSet, neighborIndex);
+                        queue.Enqueue(neighborIndex);
                     }
                 }
             }

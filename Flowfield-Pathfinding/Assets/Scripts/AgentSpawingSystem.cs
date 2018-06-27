@@ -1,6 +1,4 @@
-﻿using RSGLib;
-using RSGLib.ECS;
-using TMPro;
+﻿using RSGLib.ECS;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -17,14 +15,8 @@ public class AgentSpawingSystem : ComponentSystem
         [ReadOnly] public ComponentDataArray<Tile.Cost> TileCost;
 	}
 	
-	struct InputData
-	{
-		[ReadOnly] public SharedComponentDataArray<InputButtons> Buttons;
-		[ReadOnly] public ComponentDataArray<MousePosition> MousePos;
-	}
-	
 	[Inject] private AgentData m_agentData;
-	[Inject] private InputData m_inputData;
+	[Inject] private ECSInput.InputDataGroup m_inputData;
 	private Rect m_DistributionRect;
 	private int m_DistHeight;
 	private int m_DistWidth;
@@ -37,7 +29,7 @@ public class AgentSpawingSystem : ComponentSystem
 	//-----------------------------------------------------------------------------
 	protected override void OnUpdate()
 	{
-		if (m_inputData.Buttons[0].Values["SpawnAgents"].Status != InputButtons.PRESSED) return;
+		if (m_inputData.Buttons[0].Values["SpawnAgents"].Status != ECSInput.InputButtons.PRESSED) return;
 		if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_inputData.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity)) return;
 
 		var spawnData = Main.ActiveSpawnParams;
@@ -45,7 +37,6 @@ public class AgentSpawingSystem : ComponentSystem
 		m_DistHeight = (int)math.floor(spawnData.AgentDistSize.x / spawnData.AgentDistCellSize);
 		m_DistWidth = (int)math.floor(spawnData.AgentDistSize.y / spawnData.AgentDistCellSize);
 		m_Grid = new NativeArray<float3>(m_DistWidth * m_DistHeight, Allocator.Temp);
-
 		InitSampler(spawnData);
 
 		for (int index = 0; index < spawnData.AgentDistNumPerClick; index++)

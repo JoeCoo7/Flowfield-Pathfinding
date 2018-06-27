@@ -7,7 +7,6 @@ namespace System
 {
     public class UpdateTileWithFlowFieldSystem : JobComponentSystem
     {
-        [BurstCompile]
         struct UpdateJob : IJobParallelFor
         {
             public Tile.Group.AllTiles tiles;
@@ -39,7 +38,10 @@ namespace System
 
                 tileTransform.Value = 
                     math.lookRotationToMatrix(
-                        new float3(position.Value.x - settings.worldSize.x / 2.0f - 0.5f, 0.0f, position.Value.y - settings.worldSize.y / 2.0f - 0.5f),
+                        new float3(
+                            position.Value.x * settings.cellSize.x - settings.worldSize.x / 2.0f + settings.cellSize.x / 2.0f, 
+                            0.0f, 
+                            position.Value.y * settings.cellSize.y - settings.worldSize.y / 2.0f + settings.cellSize.y / 2.0f),
                         flowDirection, new float3(0.0f, 1.0f, 0.0f));
                 tiles.transforms[index] = tileTransform;
             }
