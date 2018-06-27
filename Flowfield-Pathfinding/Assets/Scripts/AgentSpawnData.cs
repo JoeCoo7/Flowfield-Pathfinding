@@ -13,8 +13,6 @@ public class AgentSpawnData : ScriptableObject
 	}
 #endif
 
-	static public AgentSpawnData Instance;
-	
 	public Mesh AgentMesh;
 	public Material AgentMaterial;
 	public float2 AgentDistSize = new float2(30, 30);
@@ -22,10 +20,4 @@ public class AgentSpawnData : ScriptableObject
 	public int AgentDistCellSize = 1;
 	public int AgentDistNumPerClick = 100;
 	public int AgentDistSpawningThreshold = 128;
-
-	public void Initalize()
-	{
-		Instance = this;
-	}
-
 }

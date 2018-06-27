@@ -33,7 +33,7 @@ public class GridDataView : MonoBehaviour
 
 	private void OnDrawGizmosSelected()
 	{
-		var grid = InitializationData.Instance.m_grid;
+		var grid = Main.ActiveInitParams.m_grid;
 		float2 cellSize = grid.worldSize / grid.cellCount;
 		for (int y = 0; y < grid.blockCount.y; y++)
 		{

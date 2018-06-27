@@ -12,12 +12,5 @@ public class AgentSteerData : ScriptableObject
 		UnityEditor.AssetDatabase.Refresh();
 	}
 #endif
-	static public AgentSteerData Instance;
 	public AgentSteerParams m_Data;
-
-	public void Initalize()
-	{
-		Instance = this;
-	}
-
 }

@@ -13,14 +13,6 @@ public class InitializationData : ScriptableObject
 		UnityEditor.AssetDatabase.CreateAsset(obj, "Assets/InitData.asset");
 		UnityEditor.AssetDatabase.Refresh();
 	}
-
-	[UnityEditor.MenuItem("Pathfinding/Create Grid View")]
-	static void CreateGridView()
-	{
-		var view = Instantiate(Instance.m_gridPrefab).GetComponent<GridDataView>();
-		view.Init(Instance);
-	}
-
 #endif
 
 	public float m_worldWidth = 100;
@@ -38,15 +30,14 @@ public class InitializationData : ScriptableObject
     public Material TileDirectionMaterial;
     public bool m_drawFlowField = false;
 	
-	static public InitializationData Instance;
 	static public NativeArray<float3> m_initialFlow;
 
 	public void Initalize()
 	{
-		Instance = this;
 		Instantiate(m_cameraObject);
 		m_grid = GridUtilties.CreateGrid(ref m_initialFlow, m_worldWidth, m_worldHeight, m_cellSize, m_cellsPerBlock, GridFunc);
-		CreateGridView();
+		var view = Instantiate(m_gridPrefab).GetComponent<GridDataView>();
+		view.Init(this);
 	}
 
 	public void Shutdown()

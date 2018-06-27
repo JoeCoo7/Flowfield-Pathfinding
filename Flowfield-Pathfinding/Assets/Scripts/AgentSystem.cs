@@ -61,7 +61,7 @@ public class AgentSystem : JobComponentSystem
 		var neighborHashes = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 		var avgNeighborPositions = new NativeArray<float3>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 		var avgNeighborVelocities = new NativeArray<float3>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-		var steerParams = AgentSteerData.Instance.m_Data;
+		var steerParams = Main.ActiveSteeringParams;
 		var neighborCellSize = steerParams.NeighbourHashCellSize;
 
 		var hashNeighborPositionsJob = new HashPositionsWidthSavedHash

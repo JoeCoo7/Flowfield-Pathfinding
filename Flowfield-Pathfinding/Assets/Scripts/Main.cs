@@ -3,9 +3,29 @@ using UnityEngine;
 
 public class Main : MonoBehaviour
 {
+	public int m_activeSteerData = 0;
 	public InitializationData m_InitData;
 	public AgentSpawnData m_AgentSpawnData;
-	public AgentSteerData m_AgentSteerData;
+	public AgentSteerData[] m_AgentSteerData;
+	public static Main Instance;
+
+	public static AgentSteerParams ActiveSteeringParams
+	{
+		get
+		{
+			return Instance.m_AgentSteerData[Instance.m_activeSteerData].m_Data;
+		}
+	}
+
+	public static AgentSpawnData ActiveSpawnParams
+	{
+		get { return Instance.m_AgentSpawnData; }
+	}
+
+	public static InitializationData ActiveInitParams
+	{
+		get { return Instance.m_InitData; }
+	}
 
 	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
 	static void Initialize()
@@ -15,11 +35,9 @@ public class Main : MonoBehaviour
 
         var debugEntity = entityManager.CreateEntity(Manager.Archetype.DebugHeatmapType);
         entityManager.SetSharedComponentData(debugEntity, new DebugHeatmap.Component());
-		
-		var main = FindObjectOfType<Main>();
-		main.m_InitData.Initalize();
-		main.m_AgentSpawnData.Initalize();
-		main.m_AgentSteerData.Initalize();
+
+		Instance = FindObjectOfType<Main>();
+		Instance.m_InitData.Initalize();
 	}
 
 	private void OnDisable()
