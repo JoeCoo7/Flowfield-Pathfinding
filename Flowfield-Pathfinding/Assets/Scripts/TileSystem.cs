@@ -27,14 +27,10 @@ public class TileSystem : JobComponentSystem
 {
     static uint s_QueryHandle = 0;
 
-    [Inject]
-    EndFrameBarrier m_EndFrameBarrier;
-
-    [Inject]
-    Agent.Group.Selected m_Selected;
-
-    [Inject]
-    Agent.Group.SelectedWithQuery m_SelectedWithQuery;
+    [Inject] EndFrameBarrier m_EndFrameBarrier;
+    [Inject] Agent.Group.Selected m_Selected;
+    [Inject] Agent.Group.SelectedWithQuery m_SelectedWithQuery;
+    [Inject] ECSInput.InputDataGroup m_input;
 
     NativeArray<int2> m_Offsets;
 
@@ -73,10 +69,10 @@ public class TileSystem : JobComponentSystem
 
     JobHandle CreateJobs(JobHandle inputDeps)
     {
-        if (!Input.GetMouseButtonDown(StandardInput.RIGHT_MOUSE_BUTTON))
+        if (m_input.Buttons[0].Values["CreateGoal"].Status == ECSInput.InputButtons.UP)
             return inputDeps;
 
-        if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity))
+        if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_input.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity))
             return inputDeps;
 
         GridSettings gridSettings = Main.ActiveInitParams.m_grid;
