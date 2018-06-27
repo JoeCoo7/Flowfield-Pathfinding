@@ -28,14 +28,6 @@ public class TileSystem : JobComponentSystem
 {
     static uint s_QueryHandle = 0;
 
-    struct TileCostAndPositionGroup
-    {
-        [ReadOnly] public ComponentDataArray<Tile.Cost> cost;
-        [ReadOnly] public ComponentDataArray<Tile.Position> position;
-        public readonly int Length;
-    }
-
-    [Inject] TileCostAndPositionGroup m_TileCostAndPositionGroup;
     [Inject] EndFrameBarrier m_EndFrameBarrier;
     [Inject] Agent.Group.Selected m_Selected;
     [Inject] Agent.Group.SelectedWithQuery m_SelectedWithQuery;
@@ -97,32 +89,15 @@ public class TileSystem : JobComponentSystem
         for (var i = 0; i < m_Selected.entity.Length; ++i)
             buffer.AddComponent(m_Selected.entity[i], newQuery);
 
-        // Copy inputs
-        var costsCopy = new NativeArray<Tile.Cost>(m_TileCostAndPositionGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        var copyTileCostsJobHandle = new CopyComponentData<Tile.Cost>
-        {
-            Source = m_TileCostAndPositionGroup.cost,
-            Results = costsCopy
-        }.Schedule(m_TileCostAndPositionGroup.Length, 64, inputDeps);
-
-        var positionsCopy = new NativeArray<Tile.Position>(m_TileCostAndPositionGroup.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        var copyTilePositionsJobHandle = new CopyComponentData<Tile.Position>
-        {
-            Source = m_TileCostAndPositionGroup.position,
-            Results = positionsCopy
-        }.Schedule(m_TileCostAndPositionGroup.Length, 64, inputDeps);
-
-        var copyTileInputsBarrierHandle = JobHandle.CombineDependencies(copyTileCostsJobHandle, copyTilePositionsJobHandle);
-
         // Create & Initialize heatmap
-        var heatmap = new NativeArray<int>(m_TileCostAndPositionGroup.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+        var heatmap = new NativeArray<int>(gridSettings.cellCount.x * gridSettings.cellCount.y,
+            Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+
         var initializeHeatmapJobHandle = new InitializeHeatmapJob()
         {
             settings = gridSettings,
-            costs = costsCopy,
-            positions = positionsCopy,
             heatmap = heatmap
-        }.Schedule(m_TileCostAndPositionGroup.Length, 64, copyTileInputsBarrierHandle);
+        }.Schedule(this, 64, inputDeps);
 
         // Compute heatmap from goals
         var goals = new NativeArray<int2>(1, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -199,24 +174,18 @@ public class TileSystem : JobComponentSystem
     const int k_Unvisited = k_Obstacle - 1;
 
     [BurstCompile]
-    struct InitializeHeatmapJob : IJobParallelFor
+    struct InitializeHeatmapJob : IJobProcessComponentData<Tile.Cost, Tile.Position>
     {
         [ReadOnly]
         public GridSettings settings;
 
-        [ReadOnly, DeallocateOnJobCompletion]
-        public NativeArray<Tile.Cost> costs;
-
-        [ReadOnly, DeallocateOnJobCompletion]
-        public NativeArray<Tile.Position> positions;
-
         [WriteOnly]
         public NativeArray<int> heatmap;
 
-        public void Execute(int index)
+        public void Execute([ReadOnly] ref Tile.Cost cost, [ReadOnly] ref Tile.Position position)
         {
-            var outputIndex = GridUtilties.Grid2Index(settings, positions[index].Value);
-            heatmap[outputIndex] = math.select(k_Unvisited, k_Obstacle, costs[index].Value == byte.MaxValue);
+            var outputIndex = GridUtilties.Grid2Index(settings, position.Value);
+            heatmap[outputIndex] = math.select(k_Unvisited, k_Obstacle, cost.Value == byte.MaxValue);
         }
     }
 
