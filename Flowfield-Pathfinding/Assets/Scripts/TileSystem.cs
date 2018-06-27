@@ -73,16 +73,28 @@ public class TileSystem : JobComponentSystem
 
     JobHandle CreateJobs(JobHandle inputDeps)
     {
+        if (!Input.GetMouseButtonDown(StandardInput.RIGHT_MOUSE_BUTTON))
+            return inputDeps;
+
+        if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity))
+            return inputDeps;
+
         GridSettings gridSettings = InitializationData.Instance.m_grid;
         int numTiles = gridSettings.cellCount.x * gridSettings.cellCount.y;
 
         uint queryHandle = s_QueryHandle++;
-        var buffer = m_EndFrameBarrier.CreateCommandBuffer();
-        var query = new FlowField.Query { Handle = queryHandle };
-        for (var i = 0; i < m_Selected.entity.Length; ++i)
-            buffer.AddComponent(m_Selected.entity[i], query);
+
         for (var i = 0; i < m_SelectedWithQuery.entity.Length; ++i)
-            buffer.SetComponent(m_SelectedWithQuery.entity[i], query);
+        {
+            var query = m_SelectedWithQuery.flowFieldQuery[i];
+            query.Handle = queryHandle;
+            m_SelectedWithQuery.flowFieldQuery[i] = query;
+        }
+
+        var buffer = m_EndFrameBarrier.CreateCommandBuffer();
+        var newQuery = new FlowField.Query { Handle = queryHandle };
+        for (var i = 0; i < m_Selected.entity.Length; ++i)
+            buffer.AddComponent(m_Selected.entity[i], newQuery);
 
         // Create & Initialize heatmap
         var initializeHeatmapJob = new InitializeHeatmapJob()

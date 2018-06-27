@@ -23,9 +23,9 @@ namespace Agent.Group
 
     public struct SelectedWithQuery
     {
+        [ReadOnly] public EntityArray entity;
         [ReadOnly] public SharedComponentDataArray<FlowField.Data> flowFieldData;
 
-        public EntityArray entity;
         //ComponentDataArray<SelectedUnit> selected;
         public ComponentDataArray<FlowField.Query> flowFieldQuery;
     }
