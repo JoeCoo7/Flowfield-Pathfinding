@@ -7,7 +7,6 @@ namespace System
 {
     public class UpdateTileWithFlowFieldSystem : JobComponentSystem
     {
-        [BurstCompile]
         struct UpdateJob : IJobParallelFor
         {
             public Tile.Group.AllTiles tiles;
