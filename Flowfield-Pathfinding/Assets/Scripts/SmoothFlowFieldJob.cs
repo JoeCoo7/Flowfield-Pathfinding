@@ -2,6 +2,7 @@
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Mathematics.Experimental;
 
 namespace FlowField
 {
@@ -11,71 +12,33 @@ namespace FlowField
         [ReadOnly]
         public GridSettings settings;
 
-        [ReadOnly, DeallocateOnJobCompletion]
-        public NativeArray<int2> goals;
-
         [ReadOnly]
         public NativeArray<int2> offsets;
+
+        [ReadOnly, DeallocateOnJobCompletion]
+        public NativeArray<int> floodQueue;
 
         public NativeArray<float3> flowfield;
 
         public void Execute()
         {
-            /*
-            BurstQueue queue = new BurstQueue(flowfield.Length);
-
-            for (int i = 0; i < goals.Length; ++i)
+            for (int i = 0; i < flowfield.Length; ++i)
             {
-                var tileIndex = GridUtilties.Grid2Index(settings, goals[i]);
-                queue.Enqueue(tileIndex);
-            }
-
-            // Search!
-            while (queue.Length > 0)
-            {
-                var index = queue.Dequeue();
-                var distance = flowfield[index];
-                var newDistance = distance + 1;
-                var grid = GridUtilties.Index2Grid(settings, index);
-
-                for (GridUtilties.Direction dir = GridUtilties.Direction.N; dir <= GridUtilties.Direction.W; ++dir)
-                {
-                    var neighborGrid = grid + offsets[(int)dir];
-                    var neighborIndex = GridUtilties.Grid2Index(settings, neighborGrid);
-
-                    if (neighborIndex != -1 && heatmap[neighborIndex] != k_Obstacle && newDistance < heatmap[neighborIndex])
-                    {
-                        //heatmap[neighborIndex] = newDistance;
-
-                        queue.Enqueue(neighborIndex);
-                    }
-                }
-            }
-
-            queue.Dispose();
-            */
-
-            /*
-            int2 grid = GridUtilties.Index2Grid(settings, index);
-            int weight = heatmap[index];
-            flowfield[index] = new float3();
-
-            for (GridUtilties.Direction dir = 0; dir < GridUtilties.Direction.MAX; ++dir)
-            {
-                int2 dirOffset = offsets[(int)dir];
-                int neigborIndex = GridUtilties.Grid2Index(settings, grid + dirOffset);
-                if (neigborIndex == -1)
+                var cellIndex = floodQueue[i];
+                if (cellIndex < 0 || cellIndex > flowfield.Length)
                     continue;
 
-                int neighborWeight = heatmap[neigborIndex];
-                if (weight <= neighborWeight)
-                    continue;
+                var flowDirection = flowfield[cellIndex];
+                var cellGrid = GridUtilties.Index2Grid(settings, cellIndex);
+                var cellDirectionCeiling = new int2((int)math.sign(flowDirection.x), (int)math.sign(flowDirection.z));
+                var backPropagationCellGrid = cellGrid + cellDirectionCeiling;
+                var backPropagationCellIndex = GridUtilties.Grid2Index(settings, backPropagationCellGrid);
+                var backPropagationCellDirection = flowfield[backPropagationCellIndex];
 
-                weight = neighborWeight;
-                float3 direction = new float3(dirOffset.x, 0, dirOffset.y);
-                flowfield[index] = math.normalize(direction);
+                float smoothAmount = 0.9f;
+                flowfield[cellIndex] = math_experimental.normalizeSafe(
+                    flowDirection * (1.0f - smoothAmount) + backPropagationCellDirection * smoothAmount);
             }
-            */
         }
     }
 }

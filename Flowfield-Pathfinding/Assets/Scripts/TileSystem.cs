@@ -94,16 +94,23 @@ public class TileSystem : JobComponentSystem
             goals = new NativeArray<int2>(1, Allocator.TempJob),
             heatmap = initializeHeatmapJob.heatmap,
             offsets = m_Offsets,
-            floodQueue = new NativeArray<int>(initializeHeatmapJob.heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory)
+            floodQueue = new NativeArray<int>(initializeHeatmapJob.heatmap.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory)
         };
         computeHeatmapJob.goals[0] = m_Goal;
 
-        // Convert flowfield from heatmap
         var computeFlowFieldJob = new FlowField.ComputeFlowFieldJob
         {
             settings = gridSettings,
             heatmap = computeHeatmapJob.heatmap,
             flowfield = new NativeArray<float3>(numTiles, Allocator.Persistent, NativeArrayOptions.UninitializedMemory),
+            offsets = m_Offsets
+        };
+
+        var smoothFlowFieldJob = new FlowField.SmoothFlowFieldJob
+        {
+            settings = gridSettings,
+            flowfield = computeFlowFieldJob.flowfield,
+            floodQueue = computeHeatmapJob.floodQueue,
             offsets = m_Offsets
         };
 
@@ -118,7 +125,8 @@ public class TileSystem : JobComponentSystem
         var initializeHeatmapHandle = initializeHeatmapJob.Schedule(this, 64, inputDeps);
         var computeHeatmapHandle = computeHeatmapJob.Schedule(initializeHeatmapHandle);
         var flowFieldHandle = computeFlowFieldJob.Schedule(numTiles, 64, computeHeatmapHandle);
-        var createResultHandle = createResultJob.Schedule(flowFieldHandle);
+        var smoothFieldHandle = smoothFlowFieldJob.Schedule(flowFieldHandle);
+        var createResultHandle = createResultJob.Schedule(smoothFieldHandle);
         return createResultHandle;
     }
 
@@ -156,7 +164,6 @@ public class TileSystem : JobComponentSystem
 
         public NativeArray<int> heatmap;
 
-        [DeallocateOnJobCompletion]
         public NativeArray<int> floodQueue;
 
         public void Execute()
