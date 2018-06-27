@@ -95,7 +95,7 @@ public class AgentSpawingSystem : ComponentSystem
 				{
 					var agentPos = new float3(candidate.x + _hit.x, 0, candidate.z + _hit.z);
 					var gridIndex = GridUtilties.WorldToIndex(m_agentData.GridSettings[0], agentPos);
-					if (m_agentData.TileCost[gridIndex].Value > spawnData.AgentDistSpawningThreshold)
+					if (gridIndex < 0 || m_agentData.TileCost[gridIndex].Value > spawnData.AgentDistSpawningThreshold)
 						continue;
 					
 					AddSample(candidate, spawnData.AgentDistCellSize);

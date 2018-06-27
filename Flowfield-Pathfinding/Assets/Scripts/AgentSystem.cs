@@ -239,9 +239,9 @@ public class AgentSystem : JobComponentSystem
 			}
 
 			var gridIndex = GridUtilties.WorldToIndex(settings, position);
-			var terrainFlowFieldResult = terrainFlowfield[gridIndex] * steerParams.TerrainFieldWeight;
+			var terrainFlowFieldResult = gridIndex>-1?terrainFlowfield[gridIndex] * steerParams.TerrainFieldWeight:new float3(0,0,0);
 			terrainFlowFieldResult.y = 0;
-			var targetFlowFieldResult = targetFlowfield[gridIndex] * steerParams.TargetFieldWeight;
+			var targetFlowFieldResult = gridIndex > -1 ? targetFlowfield[gridIndex] * steerParams.TargetFieldWeight:new float3(0, 0, 0);
 			targetFlowFieldResult.y = 0;
 
 

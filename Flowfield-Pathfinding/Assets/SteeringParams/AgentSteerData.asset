@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Name: AgentSteerData
   m_EditorClassIdentifier: 
   m_Data:
-    MaxSpeed: 7.92
+    MaxSpeed: 0
     Acceleration: 10
     TerrainFieldWeight: 23
     TargetFieldWeight: 26.91
