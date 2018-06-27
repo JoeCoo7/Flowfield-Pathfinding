@@ -72,7 +72,7 @@ namespace Assets.Scripts
 
                 if (math.greaterThan(start.x, screenPoint.x) || math.greaterThan(screenPoint.x, stop.x) ||
                     math.greaterThan(start.x, screenPoint.x) || math.greaterThan(screenPoint.x, stop.x))
-                    PostUpdateCommands.RemoveComponent<Agent.Selection>(m_UnselectedAgents.entity[index]);
+                    PostUpdateCommands.RemoveComponent<Agent.Selection>(m_SelectedAgents.entity[index]);
             }
         }
     }
