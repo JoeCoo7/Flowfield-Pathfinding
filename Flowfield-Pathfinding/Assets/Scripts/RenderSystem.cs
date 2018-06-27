@@ -44,8 +44,10 @@ public class RenderSystem : JobComponentSystem
 
 	protected override void OnStartRunning()
 	{
-		var grid = InitializationData.Instance.m_grid;
+		var grid = Main.ActiveInitParams.m_grid;
 		EmptyHeatMap = new NativeArray<int>(grid.cellCount.x * grid.cellCount.y, Allocator.Persistent);
+		for (int i = 0; i < EmptyHeatMap.Length; i++)
+			EmptyHeatMap[i] = int.MaxValue;
 		Render[0] = new NativeArray<RenderData>(grid.cellCount.x * grid.cellCount.y, Allocator.Persistent);
 		Render[1] = new NativeArray<RenderData>(grid.cellCount.x * grid.cellCount.y, Allocator.Persistent);
 	}

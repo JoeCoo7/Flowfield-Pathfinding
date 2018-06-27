@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_worldWidth: 512
   m_worldHeight: 512
-  m_cellSize: 1
+  m_cellSize: 2
   m_cellsPerBlock: 8
   m_noiseScale: 7
   m_noiseMultiplier: 20

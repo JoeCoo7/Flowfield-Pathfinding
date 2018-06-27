@@ -32,12 +32,7 @@ public class AgentSpawingSystem : ComponentSystem
 	private NativeArray<float3> m_Grid;
 	private NativeList<float3> m_activeSamples;
 	static FlowField.Data m_flowField;
-	private AgentSpawnData m_SpawnData;
 
-	protected override void OnCreateManager(int capacity)
-	{
-		base.OnCreateManager(capacity);
-	}
 
 	//-----------------------------------------------------------------------------
 	protected override void OnUpdate()
@@ -45,22 +40,19 @@ public class AgentSpawingSystem : ComponentSystem
 		if (m_inputData.Buttons[0].Values["SpawnAgents"].Status != InputButtons.PRESSED) return;
 		if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_inputData.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity)) return;
 
-		if (m_SpawnData == null)
-		{
-			m_SpawnData = AgentSpawnData.Instance;
-		}
-
+		var spawnData = Main.ActiveSpawnParams;
 		m_activeSamples = new NativeList<float3>(Allocator.Temp);
-		m_DistHeight = (int)math.floor(m_SpawnData.AgentDistSize.x / m_SpawnData.AgentDistCellSize);
-		m_DistWidth = (int)math.floor(m_SpawnData.AgentDistSize.y / m_SpawnData.AgentDistCellSize);
+		m_DistHeight = (int)math.floor(spawnData.AgentDistSize.x / spawnData.AgentDistCellSize);
+		m_DistWidth = (int)math.floor(spawnData.AgentDistSize.y / spawnData.AgentDistCellSize);
 		m_Grid = new NativeArray<float3>(m_DistWidth * m_DistHeight, Allocator.Temp);
 
-		for (int index = 0; index < m_SpawnData.AgentDistNumPerClick; index++)
+		InitSampler(spawnData);
+
+		for (int index = 0; index < spawnData.AgentDistNumPerClick; index++)
 		{
-			InitSampler();
-			float3? pos = Sample(hit.point);
+			float3? pos = Sample(spawnData, hit.point);
 			if (pos != null)
-				CreateAgent(pos.Value);
+				CreateAgent(spawnData, pos.Value);
 		}
 
 		m_Grid.Dispose();
@@ -68,27 +60,27 @@ public class AgentSpawingSystem : ComponentSystem
 	}
 
 	//-----------------------------------------------------------------------------
-	private void CreateAgent(float3 _pos)
+	private void CreateAgent(AgentSpawnData spawnData, float3 _pos)
 	{
 		if (!m_flowField.Value.IsCreated)
             m_flowField = new FlowField.Data() { Value = InitializationData.m_initialFlow };
 
-        Manager.Archetype.CreateAgent(PostUpdateCommands, _pos, m_SpawnData.AgentMesh, m_SpawnData.AgentMaterial, m_agentData.GridSettings[0], m_flowField);
+        Manager.Archetype.CreateAgent(PostUpdateCommands, _pos, spawnData.AgentMesh, spawnData.AgentMaterial, m_agentData.GridSettings[0], m_flowField);
 	}
 
 	//-----------------------------------------------------------------------------
-	public void InitSampler()
+	public void InitSampler(AgentSpawnData spawnData)
 	{
-		var initData = InitializationData.Instance;
-		m_DistributionRect = new Rect(0, 0, m_SpawnData.AgentDistSize.x, m_SpawnData.AgentDistSize.y);
+		var initData = Main.Instance.m_InitData;
+		m_DistributionRect = new Rect(0, 0, spawnData.AgentDistSize.x, spawnData.AgentDistSize.y);
 		m_RadiusSquared = initData.m_cellSize * initData.m_cellSize;
 	}
 
 	//-----------------------------------------------------------------------------
-	public float3? Sample(float3 _hit)
+	public float3? Sample(AgentSpawnData spawnData, float3 _hit)
 	{
 		// First sample is choosen randomly
-		AddSample(new float3(Random.value * m_DistributionRect.width, 0, Random.value * m_DistributionRect.height), m_SpawnData.AgentDistCellSize);
+		AddSample(new float3(Random.value * m_DistributionRect.width, 0, Random.value * m_DistributionRect.height), spawnData.AgentDistCellSize);
 		while (m_activeSamples.Length > 0)
 		{
 			// Pick a random active sample
@@ -96,7 +88,7 @@ public class AgentSpawingSystem : ComponentSystem
 			float3 sample = m_activeSamples[i];
 
 			// Try random candidates between [radius, 2 * radius] from that sample.
-			for (int j = 0; j < m_SpawnData.AgentDistMaxTries; ++j)
+			for (int j = 0; j < spawnData.AgentDistMaxTries; ++j)
 			{
 				float angle = 2 * Mathf.PI * Random.value;
 				// See: http://stackoverflow.com/questions/9048095/create-random-number-within-an-annulus/9048443#9048443
@@ -104,14 +96,14 @@ public class AgentSpawingSystem : ComponentSystem
 				var candidate = sample + randomNumber * new float3(math.cos(angle), 0, math.sin(angle));
 
 				// Accept candidates if it's inside the rect and farther than 2 * radius to any existing sample.
-				if (m_DistributionRect.Contains(new float2(candidate.x, candidate.z)) && IsFarEnough(candidate, m_SpawnData.AgentDistCellSize))
+				if (m_DistributionRect.Contains(new float2(candidate.x, candidate.z)) && IsFarEnough(candidate, spawnData.AgentDistCellSize))
 				{
 					var agentPos = new float3(candidate.x + _hit.x, 0, candidate.z + _hit.z);
 					var gridIndex = GridUtilties.WorldToIndex(m_agentData.GridSettings[0], agentPos);
-					if (m_agentData.TileCost[gridIndex].Value > m_SpawnData.AgentDistSpawningThreshold)
+					if (m_agentData.TileCost[gridIndex].Value > spawnData.AgentDistSpawningThreshold)
 						continue;
 					
-					AddSample(candidate, m_SpawnData.AgentDistCellSize);
+					AddSample(candidate, spawnData.AgentDistCellSize);
 					return agentPos;
 				}
 			}
