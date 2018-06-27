@@ -29,7 +29,6 @@ namespace Manager
                     ComponentType.Create<GridSettings>());
 
             Agent = entityManager.CreateArchetype(
-                ComponentType.Create<AgentSteerParams>(),
                 ComponentType.Create<Position>(),
                 ComponentType.Create<Rotation>(),
                 ComponentType.Create<TransformMatrix>(),
@@ -39,7 +38,6 @@ namespace Manager
                 ComponentType.Create<FlowField.Data>());
 
             AgentWithQuery = entityManager.CreateArchetype(
-                ComponentType.Create<AgentSteerParams>(),
                 ComponentType.Create<Position>(),
                 ComponentType.Create<Rotation>(),
                 ComponentType.Create<TransformMatrix>(),
@@ -62,12 +60,11 @@ namespace Manager
             em.SetSharedComponentData(e, settings);
         }
 
-        public static void CreateAgent(EntityCommandBuffer ecb, float3 pos, Mesh mesh, Material mat, GridSettings settings, FlowField.Data flowField, AgentSteerParams steerData)
+        public static void CreateAgent(EntityCommandBuffer ecb, float3 pos, Mesh mesh, Material mat, GridSettings settings, FlowField.Data flowField)
         {
             ecb.CreateEntity(Agent);
             ecb.SetComponent(new Position { Value = pos });
             ecb.SetSharedComponent(new MeshInstanceRenderer { mesh = mesh, material = mat });
-            ecb.SetSharedComponent(steerData);
             ecb.SetSharedComponent(settings);
             ecb.SetSharedComponent(flowField);
         }

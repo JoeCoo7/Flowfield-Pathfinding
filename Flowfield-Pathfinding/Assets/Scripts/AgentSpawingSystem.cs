@@ -24,7 +24,6 @@ public class AgentSpawingSystem : ComponentSystem
 	private NativeList<float3> m_activeSamples;
 	static FlowField.Data m_flowField;
 	private AgentSpawnData m_SpawnData;
-	private AgentSteerParams m_steerParams;
 
 	protected override void OnCreateManager(int capacity)
 	{
@@ -40,7 +39,6 @@ public class AgentSpawingSystem : ComponentSystem
 		if (m_SpawnData == null)
 		{
 			m_SpawnData = AgentSpawnData.Instance;
-			CreateAgentSteerData();
 		}
 
 		m_activeSamples = new NativeList<float3>(Allocator.Temp);
@@ -66,7 +64,7 @@ public class AgentSpawingSystem : ComponentSystem
 		if (!m_flowField.Value.IsCreated)
             m_flowField = new FlowField.Data() { Value = InitializationData.m_initialFlow };
 
-        Manager.Archetype.CreateAgent(PostUpdateCommands, _pos, m_SpawnData.AgentMesh, m_SpawnData.AgentMaterial, m_agentData.GridSettings[0], m_flowField, m_steerParams);
+        Manager.Archetype.CreateAgent(PostUpdateCommands, _pos, m_SpawnData.AgentMesh, m_SpawnData.AgentMaterial, m_agentData.GridSettings[0], m_flowField);
 	}
 
 	//-----------------------------------------------------------------------------
@@ -151,24 +149,5 @@ public class AgentSpawingSystem : ComponentSystem
 		var z = (int)(sample.z / cellSize);
 		var index = z * m_DistWidth + x;
 		m_Grid[index] = sample;
-	}
-	
-	//-----------------------------------------------------------------------------
-	private void CreateAgentSteerData()
-	{
-		var steerData = AgentSteerData.Instance;
-		m_steerParams = new AgentSteerParams
-		{
-			MaxSpeed = steerData.MaxSpeed,
-			Acceleration = steerData.Acceleration,
-			TerrainFieldWeight = steerData.TerrainFieldWeight,
-			TargetFieldWeight = steerData.TargetFieldWeight,
-			SeparationRadius = steerData.SeparationRadius,
-			SeparationWeight = steerData.SeparationWeight,
-			AlignmentWeight = steerData.AlignmentWeight,
-			CohesionWeight = steerData.CohesionWeight,
-			NeighbourHashCellSize = steerData.NeighbourHashCellSize,
-			AlignmentHashCellSize = steerData.AlignmentHashCellSize,
-		};
 	}
 }

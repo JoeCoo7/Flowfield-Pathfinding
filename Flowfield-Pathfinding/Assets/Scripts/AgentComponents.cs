@@ -6,7 +6,8 @@ public struct Velocity : IComponentData
 	public float3 Value;
 }
 
-public struct AgentSteerParams : ISharedComponentData
+[System.Serializable]
+public struct AgentSteerParams
 {
 	public float MaxSpeed;
 	public float Acceleration;
@@ -17,6 +18,7 @@ public struct AgentSteerParams : ISharedComponentData
 	public float AlignmentWeight;
 	public float CohesionWeight;
 	public float NeighbourHashCellSize;
+	public float AlignmentRadius;
 	public float AlignmentHashCellSize;
 }
 

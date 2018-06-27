@@ -13,17 +13,7 @@ public class AgentSteerData : ScriptableObject
 	}
 #endif
 	static public AgentSteerData Instance;
-
-	public float MaxSpeed;
-	public float Acceleration;
-	public float TerrainFieldWeight;
-	public float TargetFieldWeight;
-	public float SeparationRadius;
-	public float SeparationWeight;
-	public float AlignmentWeight;
-	public float CohesionWeight;
-	public float NeighbourHashCellSize;
-	public float AlignmentHashCellSize;
+	public AgentSteerParams m_Data;
 
 	public void Initalize()
 	{
