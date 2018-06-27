@@ -42,6 +42,8 @@ public class TileSystem : JobComponentSystem
 
     protected override void OnCreateManager(int capacity)
     {
+        base.OnCreateManager(capacity);
+
         m_Offsets = new NativeArray<int2>(GridUtilties.Offset.Length, Allocator.Persistent);
         m_Offsets.CopyFrom(GridUtilties.Offset);
     }
