@@ -112,6 +112,9 @@ public class TileSystem : JobComponentSystem
             s_QueryHandle = 0;
         }
 
+        // Ensure goal is on the map
+        m_Goal = math.clamp(m_Goal, new int2(0, 0), gridSettings.cellCount - new int2(1, 1));
+
         int queryHandle = s_QueryHandle;
         s_QueryHandle = (s_QueryHandle + 1) % k_MaxNumFlowFields;
 
@@ -146,7 +149,7 @@ public class TileSystem : JobComponentSystem
             {
                 var p = new int2(x, y);
                 if (math.distance(p, m_Goal) <= radiusAsFloat)
-                    goals[goalIndex++] = new int2(x, y);
+                    goals[goalIndex++] = p;
             }
         }
 
