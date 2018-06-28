@@ -47,7 +47,7 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
     protected override void OnCreateManager(int capacity)
     {
         // We want to find all AgentMeshInstanceRenderer & TransformMatrix combinations and render them
-        m_InstanceRendererGroup = GetComponentGroup(typeof(AgentMeshInstanceRenderer), typeof(Agent.Velocity), typeof(TransformMatrix), typeof(Agent.Selection), ComponentType.Subtractive<MeshCulledComponent>(), ComponentType.Subtractive<MeshLODInactive>());
+        m_InstanceRendererGroup = GetComponentGroup(typeof(AgentMeshInstanceRenderer), typeof(TransformMatrix), typeof(Agent.Selection), ComponentType.Subtractive<MeshCulledComponent>(), ComponentType.Subtractive<MeshLODInactive>());
     }
 
     protected override void OnDestroyManager()
@@ -73,7 +73,6 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
             // As a result the copy of the matrices out is internally done via memcpy.
             var renderer = m_CacheduniqueRendererTypes[i];
             var transforms = m_InstanceRendererGroup.GetComponentDataArray<TransformMatrix>(forEachFilter, i);
-            var velocities = m_InstanceRendererGroup.GetComponentDataArray<Agent.Velocity>(forEachFilter, i);
             var selection = m_InstanceRendererGroup.GetComponentDataArray<Agent.Selection>(forEachFilter, i);
 
             // Graphics.DrawMeshInstanced has a set of limitations that are not optimal for working with ECS.
