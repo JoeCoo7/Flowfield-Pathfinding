@@ -22,8 +22,9 @@ public struct GridSettings : ISharedComponentData
 public class TileSystem : JobComponentSystem
 {
     public const int k_MaxNumFlowFields = 10;
+	public System.Action<NativeArray<int>> OnNewHeatMap;
 
-    public const int k_InvalidHandle = -1;
+	public const int k_InvalidHandle = -1;
 
     static int s_QueryHandle = k_InvalidHandle;
 
@@ -224,7 +225,7 @@ public class TileSystem : JobComponentSystem
     {
         var availableGoals = new NativeArray<int>(m_PendingJobs.Count, Allocator.TempJob);
         var numAvailableGoals = 0;
-
+		var newHeatMap = false;
         for (int i = m_PendingJobs.Count - 1; i >= 0; --i)
         {
             var pendingJob = m_PendingJobs[i];
@@ -244,8 +245,8 @@ public class TileSystem : JobComponentSystem
                     lastGeneratedHeatmap.Dispose();
 
                 lastGeneratedHeatmap = heatmap;
-
-                availableGoals[numAvailableGoals++] = pendingJob.queryHandle;
+				newHeatMap = true;
+				availableGoals[numAvailableGoals++] = pendingJob.queryHandle;
 
                 lastGeneratedQueryHandle = queryHandle;
                 m_PendingJobs.RemoveAt(i);
@@ -259,13 +260,19 @@ public class TileSystem : JobComponentSystem
             return false;
         }
 
-        updateAgentsJobHandle = new UpdateAgentsCurrentGoalJob
+		if (newHeatMap && OnNewHeatMap != null)
+			OnNewHeatMap(lastGeneratedHeatmap);
+
+
+
+		updateAgentsJobHandle = new UpdateAgentsCurrentGoalJob
         {
             availableGoals = availableGoals,
             numAvailableGoals = numAvailableGoals
         }.Schedule(this, inputDeps);
         return true;
     }
+
 
     struct PendingJob
     {

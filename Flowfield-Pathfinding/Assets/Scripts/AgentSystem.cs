@@ -365,8 +365,49 @@ public class AgentSystem : JobComponentSystem
 
 
 	//-----------------------------------------------------------------------------
-	//	[BurstCompile]
+	[BurstCompile]
 	struct PositionRotationJob : IJobParallelFor
+	{
+		[ReadOnly] public ComponentDataArray<Velocity> Velocity;
+		[ReadOnly] public float TimeDelta;
+		public ComponentDataArray<Position> Positions;
+		public ComponentDataArray<Rotation> Rotations;
+		[ReadOnly] public NativeArray<float> Heights;
+		[ReadOnly] public NativeArray<float3> Normals;
+		public AgentSteerParams steerParams;
+		public GridSettings grid;
+		public void Execute(int i)
+		{
+			var pos = Positions[i];
+			pos.Value += Velocity[i].Value * TimeDelta;
+			var speed = math.length(Velocity[i].Value);
+			if (speed > .1f)
+			{
+				var index = GridUtilties.WorldToIndex(grid, pos.Value);
+				var h = index < 0 ? pos.Value.y : Heights[index] + 5;
+				pos.Value.y += (h - pos.Value.y) * math.min(TimeDelta * 10, 1);
+				Positions[i] = pos;
+
+				var rot = Rotations[i];
+				var currDir = math.forward(Rotations[i].Value);
+				var currUp = math.up(Rotations[i].Value);
+				var normal = index < 0 ? currUp : Normals[index];
+				var normalDiff = normal - currUp;
+				var newUp = math.normalize(currUp + normalDiff * math.min(TimeDelta * 10, 1));
+
+				var speedPer = speed / steerParams.MaxSpeed;
+				var desiredDir = math.normalize(Velocity[i].Value);
+				var dirDiff = desiredDir - currDir;
+				var newDir = math.normalize(currDir + dirDiff * math.min(TimeDelta * steerParams.RotationSpeed * (.5f + speedPer * .5f), 1));
+				rot.Value = math.lookRotationToQuaternion(newDir, newUp);
+				Rotations[i] = rot;
+			}
+		}
+	}
+
+	//-----------------------------------------------------------------------------
+	[BurstCompile]
+	struct PositionRotationJobBroke : IJobParallelFor
 	{
 		[ReadOnly] public ComponentDataArray<Velocity> Velocity;
 		[ReadOnly] public float TimeDelta;
