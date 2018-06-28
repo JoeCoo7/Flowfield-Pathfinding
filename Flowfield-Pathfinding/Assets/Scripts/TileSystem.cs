@@ -143,23 +143,45 @@ public class TileSystem : JobComponentSystem
             offsets = m_Offsets
         }.Schedule(heatmap.Length, 64, computeHeatmapJobHandle);
 
-        var smoothFlowFieldJobHandle = new FlowField.SmoothFlowFieldJob
+        JobHandle finalJobHandle;
+        if (Main.ActiveInitParams.m_smoothFlowField)
         {
-            settings = gridSettings,
-            flowfield = flowField,
-            floodQueue = floodQueue,
-            offsets = m_Offsets
-        }.Schedule(computeFlowFieldJobHandle);
+            finalJobHandle = new FlowField.SmoothFlowFieldJob
+            {
+                settings = gridSettings,
+                flowfield = flowField,
+                floodQueue = floodQueue,
+                offsets = m_Offsets
+            }.Schedule(computeFlowFieldJobHandle);
+        }
+        else
+        {
+            finalJobHandle = new DeallocFloodQueue
+            {
+                floodQueue = floodQueue
+            }.Schedule(computeFlowFieldJobHandle);
+        }
 
         m_PendingJobs.Add(new PendingJob
         {
             queryHandle = queryHandle,
-            jobHandle = smoothFlowFieldJobHandle,
+            jobHandle = finalJobHandle,
             flowField = flowField,
             heatmap = heatmap
         });
 
         return JobHandle.CombineDependencies(initializeHeatmapJobHandle, updateAgentsTargetGoalJobHandle);
+    }
+
+    struct DeallocFloodQueue : IJob
+    {
+        [ReadOnly, DeallocateOnJobCompletion]
+        public NativeArray<int> floodQueue;
+
+        public void Execute()
+        {
+            // This page intentionally left blank.
+        }
     }
 
     int m_FlowFieldLength;
