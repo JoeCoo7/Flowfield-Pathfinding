@@ -12,7 +12,7 @@ namespace System
         {
             public Tile.Group.AllTiles tiles;
 
-            [ReadOnly]
+            [ReadOnly, DeallocateOnJobCompletion]
             public NativeArray<float3> flowField;
 
             public int handle;
@@ -50,14 +50,14 @@ namespace System
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             var tileSystem = m_TileSystem;
-            if (tileSystem.cachedFlowFields.Length == 0 || !Main.ActiveInitParams.m_drawFlowField)
+            if (tileSystem.lastGeneratedQueryHandle == TileSystem.k_InvalidHandle || !Main.ActiveInitParams.m_drawFlowField)
                 return inputDeps;
 
             var update = new UpdateJob
             {
                 tiles = m_Tiles,
                 handle = tileSystem.lastGeneratedQueryHandle,
-                flowField = tileSystem.GetFlowField(tileSystem.lastGeneratedQueryHandle)
+                flowField = tileSystem.GetFlowFieldCopy(tileSystem.lastGeneratedQueryHandle, Allocator.TempJob)
             };
 
             return update.Schedule(update.tiles.transforms.Length, 64, inputDeps);
