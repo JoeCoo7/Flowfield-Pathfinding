@@ -57,58 +57,6 @@ public static class GridUtilties
     {
         return data[Grid2Index(grid, cell + new int2(dx, dz))];
     }
-    public static GridSettings CreateGrid(ref NativeArray<float3> initialFlow, float worldWidth, float worldHeight, float cellSize, int cellsPerBlock, Func<GridSettings, int2, byte> func)
-    {
-        var width = (int)(worldWidth / cellSize);
-        var height = (int)(worldHeight / cellSize);
-        var cellCount = new int2(width, height);
-
-        var grid = new GridSettings()
-        {
-            worldSize = new float2(worldWidth, worldHeight),
-            cellCount = cellCount,
-            cellsPerBlock = cellsPerBlock,
-            blockCount = cellCount / cellsPerBlock,
-            cellSize = new float2(cellSize, cellSize)
-        };
-
-        var entityManager = World.Active.GetOrCreateManager<EntityManager>();
-        var entities = new NativeArray<Entity>(width * height, Allocator.Persistent);
-
-        entityManager.CreateEntity(Manager.Archetype.Tile, entities);
-        var costs = new byte[entities.Length];
-
-        for (int ii = 0; ii < entities.Length; ii++)
-        {
-            int2 pos = GridUtilties.Index2Grid(grid, ii);
-            costs[ii] = func(grid, pos);
-            Manager.Archetype.SetupTile(entityManager, entities[ii], Main.ActiveInitParams.TileDirectionMesh, Main.ActiveInitParams.TileDirectionMaterial, pos, costs[ii], new float3(), grid);
-        }
-
-        initialFlow = new NativeArray<float3>(costs.Length, Allocator.Persistent);
-
-        float inv255 = 1f / 255f;
-        for (int ii = 0; ii < initialFlow.Length; ii++)
-        {
-            int2 coord = Index2Grid(grid, ii);
-            float[] s = new float[8];
-            for (int i = 0; i < Offset.Length; ++i)
-            {
-                var index = Grid2Index(grid, coord + Offset[i]);
-                if (index != -1)
-                    s[i] = costs[index] * inv255;
-                else
-                    s[i] = 0.5f;
-            }
-            initialFlow[ii] = new float3(
-                -(s[4] - s[6] + 2 * (s[2] - s[3]) + s[5] - s[7]) * 2, 
-                .2f,
-                -(s[7] - s[6] + 2 * (s[1] - s[0]) + s[5] - s[4]) * 2) ;
-        }
-        entities.Dispose();
-
-        return grid;
-    }
 
     public static readonly int2[] Offset = new[] {
         new int2(0, -1),    // N,0

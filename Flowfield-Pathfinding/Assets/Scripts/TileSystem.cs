@@ -12,13 +12,6 @@ public struct GridSettings : ISharedComponentData
     public float2 worldSize;
     public float2 cellSize;
     public int2 cellCount;
-    public int2 cellsPerBlock;
-    public int2 blockCount;
-    public float agentSeparationWeight;
-    public float agentAlignmentWeight;
-    public float agentTargetFlowfieldWeight;
-    public float agentTerrainFlowfieldWeight;
-    public float agentRadius;
 }
 
 [UpdateInGroup(typeof(ProcessGroup))]

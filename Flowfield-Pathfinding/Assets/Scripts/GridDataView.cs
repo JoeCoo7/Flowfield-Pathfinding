@@ -30,7 +30,7 @@ public class GridDataView : MonoBehaviour
 		m_computeShader.SetInt("Stride", m_width);
 		m_computeBuffer = new ComputeBuffer(m_width * m_height, 4 * 3);
 	}
-
+	/*
 	private void OnDrawGizmosSelected()
 	{
 		var grid = Main.ActiveInitParams.m_grid;
@@ -47,7 +47,7 @@ public class GridDataView : MonoBehaviour
 			}
 		}
 	}
-
+	*/
 	private void LateUpdate()
 	{
 		var rs = World.Active.GetOrCreateManager<RenderSystem>();

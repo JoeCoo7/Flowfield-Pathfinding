@@ -237,3 +237,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1f1ebaf805961345a80086eb86bb4ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  selectionColor: {r: 0, g: 1, b: 0, a: 1}
+  selectionWeight: 2
