@@ -19,11 +19,9 @@ public class PlayerSelectionSystem : JobComponentSystem
             float4 agentVector = math.mul(world2Clip, new float4(position.x, position.y, position.z, 1));
             float2 screenPoint = (agentVector / -agentVector.w).xy;
 
-            if (math.lessThanEqual(start.x, screenPoint.x) && math.lessThanEqual(screenPoint.x, stop.x) &&
-                math.lessThanEqual(start.y, screenPoint.y) && math.lessThanEqual(screenPoint.y, stop.y))
-                agentSelection.selection[index] = new Agent.Selection { Value = 1 };
-            else
-                agentSelection.selection[index] = new Agent.Selection { Value = 0 };
+            var result = math.all(start <= screenPoint) && math.all(screenPoint <= stop);
+            var selectionValue = math.select(0, 1, result);
+            agentSelection.selection[index] = new Agent.Selection { Value = (byte)selectionValue };
         }
     }
 
