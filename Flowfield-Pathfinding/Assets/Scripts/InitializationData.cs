@@ -21,7 +21,7 @@ public class InitializationData : ScriptableObject
 	public float m_worldHeight = 100;
 	public float m_heightScale = 10;
 	public float m_cellSize;
-	public int m_goalAgentFactor = 100;
+	public float m_goalAgentFactor = 0.5f;
 	public int m_cellsPerBlock = 8;
 	public float m_noiseScale = 3;
 	public float m_noiseMultiplier = 4;
@@ -53,11 +53,12 @@ public class InitializationData : ScriptableObject
 		var height = (int)(m_worldHeight / m_cellSize);
 		var cellCount = new int2(width, height);
 
-		m_grid = new GridSettings()
-		{
-			worldSize = new float2(m_worldWidth, m_worldHeight),
-			cellCount = cellCount,
-			cellSize = new float2(m_cellSize, m_cellSize)
+        m_grid = new GridSettings()
+        {
+            worldSize = new float2(m_worldWidth, m_worldHeight),
+            cellCount = cellCount,
+            cellSize = new float2(m_cellSize, m_cellSize),
+            heightScale = m_heightScale
 		};
 
 		m_terrainHeights = new NativeArray<float>(width * height, Allocator.Persistent);
