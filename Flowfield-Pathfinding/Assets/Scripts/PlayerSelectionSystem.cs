@@ -7,14 +7,18 @@ using Unity.Mathematics;
 public class PlayerSelectionSystem : JobComponentSystem
 {
     [BurstCompile]
-    struct SelectionJob : IJobProcessComponentData<Unity.Transforms.Position, Agent.Selection>
+    struct SelectionJob : IJobParallelFor
     {
         public float2 start;
         public float2 stop;
         public float4x4 world2Clip;
+        public Agent.Group.AgentSelection agentSelection;
 
-        public void Execute([ReadOnly] ref Unity.Transforms.Position position, [WriteOnly] ref Agent.Selection selection)
+        public void Execute(int index)
         {
+            var position = agentSelection.position[index];
+            var selection = agentSelection.selection[index];
+
             float4 agentVector = math.mul(world2Clip, new float4(position.Value, 1));
             float2 screenPoint = (agentVector / -agentVector.w).xy;
 
@@ -80,9 +84,10 @@ public class PlayerSelectionSystem : JobComponentSystem
                 start = Normalize(math.min(m_Start, m_Stop), UnityEngine.Screen.width, UnityEngine.Screen.height),
                 stop = Normalize(math.max(m_Start, m_Stop), UnityEngine.Screen.width, UnityEngine.Screen.height),
                 world2Clip = UnityEngine.Camera.main.projectionMatrix *
-                    UnityEngine.Camera.main.GetComponent<UnityEngine.Transform>().worldToLocalMatrix
+                    UnityEngine.Camera.main.GetComponent<UnityEngine.Transform>().worldToLocalMatrix,
+                agentSelection = m_AgentSelection
             };
-            return job.Schedule(this, inputDeps);
+            return job.Schedule(m_AgentSelection.Length, 64, inputDeps);
         }
 
         return inputDeps;
