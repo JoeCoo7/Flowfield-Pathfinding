@@ -15,7 +15,7 @@ public class InputSettings : ScriptableObject
 			{"SpawnAgents", "right shift|left shift;mouse 0"},
 			{"CreateGoal", ";mouse 1"},
             {"SelectAgents", "~right shift|~left shift;mouse 0" },
-            {"SelectAll", "right ctrl|left ctrl;a" },
+            {"SelectAll", "right shift|left shift;v" },
             {"ShowFlowfield", "left shift|right shift;x" },
             {"ShowHeatmap", "left shift|right shift;y" },
             {"SmoothFlowfield", "left shift|right shift;c" }
