@@ -47,7 +47,7 @@ public class AgentSpawingSystem : ComponentSystem
 		{
 			var ws = Main.ActiveInitParams.m_grid.worldSize;
 			var spawnThisFrame = (int)(demoSpawnRate * Time.deltaTime);
-			Spawn(new float3(Random.Range(30, ws.x - 60) - ws.x * .5f, 0, ws.y - ws.y * .5f - 50), 50, spawnThisFrame);
+			Spawn(new float3(Random.Range(30, ws.x - 60) - ws.x * .5f, 0, ws.y - ws.y * .5f - 50), 50, spawnThisFrame, false);
 			demoSpawnRate += demoSpawnRateAccel * Time.deltaTime;
 			demoSpawnRateAccel += demoSpawnRateAccelAccel * Time.deltaTime;
 		}
@@ -55,7 +55,7 @@ public class AgentSpawingSystem : ComponentSystem
 
 		if (spawnDebugAgentsOnNextFrame)
         {
-            Spawn(0, 500, 10000);
+            Spawn(0, 500, 10000, true);
             spawnDebugAgentsOnNextFrame = false;
         }
         else
@@ -64,21 +64,35 @@ public class AgentSpawingSystem : ComponentSystem
                 return;
             if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_inputData.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity))
                 return;
-            Spawn(hit.point, spawnData.AgentSpawnRadius, spawnData.AgentDistNumPerClick);
+            Spawn(hit.point, spawnData.AgentSpawnRadius, spawnData.AgentDistNumPerClick, true);
         }
     }
 
-    void Spawn(float3 point, float radius, int count)
+    void Spawn(float3 point, float radius, int count, bool check)
     {
         point.y = 0;
 
         var spawnData = Main.ActiveSpawnParams;
-        m_activeSamples = new NativeList<float3>(Allocator.Temp);
         m_DistHeight = (int)math.floor(radius / spawnData.AgentDistCellSize);
         m_DistWidth = (int)math.floor(radius / spawnData.AgentDistCellSize);
-        m_Grid = new NativeArray<float3>(m_DistWidth * m_DistHeight, Allocator.Temp);
+		var spawnPoint = point - new float3(radius, 0, radius) * .5f;
+		if (!check)
+		{
+			for (int index = 0; index < count; index++)
+			{
+				var r = new float3(Random.insideUnitSphere);
+				r.y = 0;
+				var p = spawnPoint + r * radius;
+				CreateAgent(spawnData, p);
+			}
+			return;
+		}
+
+
+		m_activeSamples = new NativeList<float3>(Allocator.Temp);
+		m_Grid = new NativeArray<float3>(m_DistWidth * m_DistHeight, Allocator.Temp);
         InitSampler(spawnData, radius);
-        var spawnPoint = point - new float3(radius, 0, radius) * .5f;
+        
         for (int index = 0; index < count; index++)
         {
             float3? pos = Sample(spawnData, spawnPoint);
