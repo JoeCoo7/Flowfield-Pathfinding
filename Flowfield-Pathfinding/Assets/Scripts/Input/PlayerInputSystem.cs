@@ -180,15 +180,22 @@ namespace ECSInput
         {
             bool mod = true;
             if (!string.IsNullOrEmpty(_command.Mod))
-                mod = Input.GetKey(_command.Mod);
+                mod = _command.Mod.Contains("~") ? !Input.GetKey(_command.Mod.Replace("~", "")) : Input.GetKey(_command.Mod);
+
             if (!string.IsNullOrEmpty(_command.AltMod))
-                mod |= Input.GetKey(_command.AltMod);
+            {
+                if (_command.AltMod.Contains("~"))
+                    mod &= !Input.GetKey(_command.AltMod.Replace("~", ""));
+                else
+                    mod |= Input.GetKey(_command.AltMod);
+            }
 
             if (!mod)
             {
                 _command.Status = InputButtons.NONE;
                 return;
             }
+            
 
             int status = GetMainKeyStatus(_command.Key);
             if (status == InputButtons.NONE && !string.IsNullOrEmpty(_command.AltKey))
