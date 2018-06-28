@@ -11,7 +11,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7307d1c85b7d4cfc939b6bcf6813a73b, type: 3}
   m_Name: AgentSpawnData
   m_EditorClassIdentifier: 
-  AgentMesh: {fileID: 4300000, guid: d2b9f4e38d54c4e43858946e825d3346, type: 3}
+  AgentMesh: {fileID: 4300002, guid: d2b9f4e38d54c4e43858946e825d3346, type: 3}
   AgentMaterial: {fileID: 2100000, guid: d7743bd95fc0f9d4d9cdcd412a5ba84f, type: 2}
   AgentSpawnRadius: 50
   AgentDistMaxTries: 30
