@@ -31,7 +31,7 @@ public class FlyCam : MonoBehaviour
  
 	void Start ()
 	{
-		Screen.lockCursor = true;
+		Cursor.visible = false;
 	}
  
 	void Update ()
@@ -64,7 +64,7 @@ public class FlyCam : MonoBehaviour
  
 		if (Input.GetKeyDown (KeyCode.End))
 		{
-			Screen.lockCursor = (Screen.lockCursor == false) ? true : false;
+			Cursor.visible = (Cursor.visible == false) ? true : false;
 		}
 	}
 }

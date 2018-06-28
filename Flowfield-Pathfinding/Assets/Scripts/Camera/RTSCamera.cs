@@ -28,7 +28,6 @@ namespace WT
         private float m_followVeloctiyX;
         private float m_followVeloctiyZ;
         private float m_currentShakeTime;
-        private bool m_movingToTarget;
         private bool m_followingTarget;
 
         private Vector3 m_lastPosition;
@@ -43,7 +42,6 @@ namespace WT
             m_lastZoom = m_zoom = m_settings.Zoom;
             m_lastRotiation = m_rotation = m_settings.Rotation;
             m_lastPosition = m_settings.StartPosition;
-            m_movingToTarget = false;
             m_cameraChangeFlags = 0;
         }
 

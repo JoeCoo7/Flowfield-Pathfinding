@@ -4,13 +4,12 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Collections;
-using UnityEngine;
 
 namespace System
 {
     public class UpdateTileWithFlowFieldSystem : JobComponentSystem
     {
-        
+        [BurstCompile]
         struct UpdateJob : IJobParallelFor
         {
             public Tile.Group.AllTiles tiles;
@@ -61,7 +60,11 @@ namespace System
         {
             if (m_input.Buttons[0].Values["ShowFlowfield"].Status == InputButtons.UP)
                 Main.ActiveInitParams.m_drawFlowField = !Main.ActiveInitParams.m_drawFlowField; 
-                
+            if (m_input.Buttons[0].Values["ShowHeatmap"].Status == InputButtons.UP)
+                Main.ActiveInitParams.m_drawHeatField = !Main.ActiveInitParams.m_drawHeatField;
+            if (m_input.Buttons[0].Values["SmoothFlowfield"].Status == InputButtons.UP)
+                Main.ActiveInitParams.m_smoothFlowField = !Main.ActiveInitParams.m_smoothFlowField;
+            
             var tileSystem = m_TileSystem;
             if (tileSystem.lastGeneratedQueryHandle == TileSystem.k_InvalidHandle || !Main.ActiveInitParams.m_drawFlowField)
                 return inputDeps;
