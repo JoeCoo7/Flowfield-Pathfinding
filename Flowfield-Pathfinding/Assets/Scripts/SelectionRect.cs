@@ -6,7 +6,8 @@ public class SelectionRect : MonoBehaviour
     [Range(1f, 10f)]
     public float selectionWeight = 2.0f;
 
-    Vector3 m_Start;
+    public Vector3 start { get; set; }
+    public Vector3 stop { get; set; }
     Texture2D m_Texture;
 
     void Awake()
@@ -16,14 +17,9 @@ public class SelectionRect : MonoBehaviour
         m_Texture.Apply();
     }
 
-    void OnEnable()
-    {
-        m_Start = Input.mousePosition;
-    }
-
     void OnGUI()
     {
-        Rect rect = GetScreenRect(m_Start, Input.mousePosition);
+        Rect rect = GetScreenRect(start, stop);
         selectionColor.a = 0.25f;
         DrawScreenRect(rect, selectionColor);
         selectionColor.a = 1f;

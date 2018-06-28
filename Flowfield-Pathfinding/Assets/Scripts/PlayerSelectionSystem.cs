@@ -50,14 +50,20 @@ public class PlayerSelectionSystem : JobComponentSystem
         if (status == ECSInput.InputButtons.DOWN)
         {
             m_Start = m_Input.MousePos[0].Value;
+            m_Selection.start = m_Start;
+            m_Selection.stop = m_Stop;
             m_Selection.enabled = true;
         }
         m_Stop = m_Input.MousePos[0].Value;
+        m_Selection.stop = m_Stop;
 
         if (status == ECSInput.InputButtons.UP)
         {
             m_Selection.enabled = false;
+        }
 
+        if (m_Selection.enabled)
+        {
             var job = new SelectionJob
             {
                 start = Normalize(math.min(m_Start, m_Stop), UnityEngine.Screen.width, UnityEngine.Screen.height),
