@@ -38,7 +38,11 @@ public class InitializationData : ScriptableObject
 	[NonSerialized]
 	public NativeArray<float3> m_terrainFlow;
 	[NonSerialized]
-	public NativeArray<float> m_heightmap;
+	public NativeArray<float3> m_terrainNormals;
+	[NonSerialized]
+	public NativeArray<float3> m_terrainColors;
+	[NonSerialized]
+	public NativeArray<float> m_terrainHeights;
 
 	Terrain m_terrain;
 	public void Initalize()
@@ -56,31 +60,28 @@ public class InitializationData : ScriptableObject
 			cellSize = new float2(m_cellSize, m_cellSize)
 		};
 
-		m_heightmap = new NativeArray<float>(width * height, Allocator.Persistent);
+		m_terrainHeights = new NativeArray<float>(width * height, Allocator.Persistent);
 		m_terrainFlow = new NativeArray<float3>(width * height, Allocator.Persistent);
+		m_terrainNormals = new NativeArray<float3>(width * height, Allocator.Persistent);
+		m_terrainColors = new NativeArray<float3>(width * height, Allocator.Persistent);
 		BuildWorld();
 	}
 
-	internal void BuildWorld()
+	public void BuildWorld()
 	{
-		NativeArray<Color32> colormap = new NativeArray<Color32>(m_grid.cellCount.x * m_grid.cellCount.y, Allocator.Temp);
-		NativeArray<float3> normalmap = new NativeArray<float3>(m_grid.cellCount.x * m_grid.cellCount.y, Allocator.Temp);
-
-		CreateGrid(m_grid, m_heightmap, colormap, normalmap, m_terrainFlow, GridFunc);
+		CreateGrid(m_grid, m_terrainHeights, m_terrainColors, m_terrainNormals, m_terrainFlow, GridFunc);
 
 		if (m_terrain == null)
 			m_terrain = Instantiate(m_terrainPrefab).GetComponent<Terrain>();
-		m_terrain.Init(m_heightmap, normalmap, colormap, new float3(m_worldWidth, m_heightScale, m_worldHeight), m_cellSize);
-
-		colormap.Dispose();
-		normalmap.Dispose();
-
+		m_terrain.Init(m_terrainHeights, m_terrainNormals, m_terrainColors, new float3(m_worldWidth, m_heightScale, m_worldHeight), m_cellSize);
 	}
 
 	public void Shutdown()
 	{
-		m_heightmap.Dispose();
+		m_terrainHeights.Dispose();
 		m_terrainFlow.Dispose();
+		m_terrainNormals.Dispose();
+		m_terrainColors.Dispose();
 	}
 
 
@@ -94,19 +95,19 @@ public class InitializationData : ScriptableObject
 		var cost = (byte)math.clamp((noise * m_noiseMultiplier + m_noiseShift) * 255, 0, 255);
 		Color color = terrainColor.Evaluate(math.clamp(noise,0 ,1));
 		var height = math.clamp(terrainHeightCurve.Evaluate(noise * .9f + noise2 * .1f), 0, 1);
-		return new CellData() { cost = cost, height = height * m_heightScale, color = color };
+		return new CellData() { cost = cost, height = height * m_heightScale, color = new float3(color.r, color.g, color.b) };
 	}
 
 	public struct CellData
 	{
 		public byte cost;
 		public float height;
-		public Color32 color;
+		public float3 color;
 	}
 
 	public static void CreateGrid(GridSettings grid, 
 		NativeArray<float> heightmap,
-		NativeArray<Color32> colormap,
+		NativeArray<float3> colormap,
 		NativeArray<float3> normalmap,
 		NativeArray<float3> flowMap,
 		Func<float2, int2, CellData> func)
@@ -141,7 +142,7 @@ public class InitializationData : ScriptableObject
 			}
 			var normal = new float3(
 				-(s[4] - s[6] + 2 * (s[2] - s[3]) + s[5] - s[7]),
-				.25f,//.2f,
+				cd.height,//.2f,
 				-(s[7] - s[6] + 2 * (s[1] - s[0]) + s[5] - s[4]));
 
 			normalmap[ii] = math.normalize(normal);

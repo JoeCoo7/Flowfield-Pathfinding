@@ -23,7 +23,7 @@ namespace Tile
 
     public struct FlowFieldHandle : IComponentData
     {
-        public uint Handle;
+        public int Handle;
     }
 
     public struct TileMeshInstanceRenderer : ISharedComponentData

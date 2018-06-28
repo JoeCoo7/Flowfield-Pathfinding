@@ -6,11 +6,15 @@ using System.Collections.Generic;
 
 public class Terrain : MonoBehaviour
 {
-	public void Init(NativeArray<float> heightMap, NativeArray<float3> normalmap, NativeArray<Color32> colormap, float3 size, float cellSize)
+	public void Init(NativeArray<float> heightMap, NativeArray<float3> normalmap, NativeArray<float3> colormap, float3 size, float cellSize)
 	{
 		int width = (int)(size.x / cellSize);
 		int depth = (int)(size.z / cellSize);
-		var colorTexture = new Texture2D(width, depth);		colorTexture.SetPixels32(colormap.ToArray());
+		var colorTexture = new Texture2D(width, depth);
+		Color32[] colors = new Color32[width * depth];
+		for (int i = 0; i < colors.Length; i++)
+			colors[i] = new Color(colormap[i].x, colormap[i].y, colormap[i].z);
+		colorTexture.SetPixels32(colors);
 		colorTexture.Apply();
 
 		var mat = GetComponent<MeshRenderer>().sharedMaterial;
@@ -19,6 +23,7 @@ public class Terrain : MonoBehaviour
 		var mesh = GenerateMesh(heightMap, normalmap, size, cellSize);
 		GetComponent<MeshFilter>().sharedMesh = mesh;
 		GetComponent<MeshCollider>().sharedMesh = mesh;
+		GetComponent<MeshRenderer>().receiveShadows = true;
 	}
 
 	Mesh GenerateMesh(NativeArray<float> data, NativeArray<float3> normalmap, float3 size, float cellSize)
