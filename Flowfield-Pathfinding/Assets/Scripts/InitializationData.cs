@@ -35,9 +35,12 @@ public class InitializationData : ScriptableObject
     public Material TileDirectionMaterial;
     public bool m_drawFlowField = false;
 
-	static public NativeArray<float3> m_initialFlow;
-	static public NativeArray<float> m_heightmap;
+	[NonSerialized]
+	public NativeArray<float3> m_terrainFlow;
+	[NonSerialized]
+	public NativeArray<float> m_heightmap;
 
+	Terrain m_terrain;
 	public void Initalize()
 	{
 		Instantiate(m_cameraObject);
@@ -54,23 +57,30 @@ public class InitializationData : ScriptableObject
 		};
 
 		m_heightmap = new NativeArray<float>(width * height, Allocator.Persistent);
-		m_initialFlow = new NativeArray<float3>(width * height, Allocator.Persistent);
-		NativeArray<Color32> colormap = new NativeArray<Color32>(width * height, Allocator.Temp);
-		NativeArray<float3> normalmap = new NativeArray<float3>(width * height, Allocator.Temp);
+		m_terrainFlow = new NativeArray<float3>(width * height, Allocator.Persistent);
+		BuildWorld();
+	}
 
-		CreateGrid(m_grid, m_heightmap, colormap, normalmap, m_initialFlow, GridFunc);
+	internal void BuildWorld()
+	{
+		NativeArray<Color32> colormap = new NativeArray<Color32>(m_grid.cellCount.x * m_grid.cellCount.y, Allocator.Temp);
+		NativeArray<float3> normalmap = new NativeArray<float3>(m_grid.cellCount.x * m_grid.cellCount.y, Allocator.Temp);
 
-		var terrain = Instantiate(m_terrainPrefab).GetComponent<Terrain>();
-		terrain.Init(m_heightmap, normalmap, colormap, new float3(m_worldWidth, m_heightScale, m_worldHeight), m_cellSize);
+		CreateGrid(m_grid, m_heightmap, colormap, normalmap, m_terrainFlow, GridFunc);
+
+		if (m_terrain == null)
+			m_terrain = Instantiate(m_terrainPrefab).GetComponent<Terrain>();
+		m_terrain.Init(m_heightmap, normalmap, colormap, new float3(m_worldWidth, m_heightScale, m_worldHeight), m_cellSize);
 
 		colormap.Dispose();
 		normalmap.Dispose();
+
 	}
 
 	public void Shutdown()
 	{
 		m_heightmap.Dispose();
-		m_initialFlow.Dispose();
+		m_terrainFlow.Dispose();
 	}
 
 
@@ -131,15 +141,13 @@ public class InitializationData : ScriptableObject
 			}
 			var normal = new float3(
 				-(s[4] - s[6] + 2 * (s[2] - s[3]) + s[5] - s[7]),
-				.5f,//.2f,
+				.25f,//.2f,
 				-(s[7] - s[6] + 2 * (s[1] - s[0]) + s[5] - s[4]));
 
 			normalmap[ii] = math.normalize(normal);
 			normal.y = 0;
 			math.normalize(normal);
 			flowMap[ii] = normal * cd.cost * inv255;
-//			colormap[ii] = new Color(normalmap[ii].x, normalmap[ii].y, normalmap[ii].z);
-//			colormap[ii] = new Color(1 - cd.cost * inv255, 1 - cd.cost * inv255, 1 - cd.cost * inv255);
 			Manager.Archetype.SetupTile(entityManager, entities[ii], Main.ActiveInitParams.TileDirectionMesh, Main.ActiveInitParams.TileDirectionMaterial, coord, cd.cost, new float3(), grid);
 		}
 		entities.Dispose();

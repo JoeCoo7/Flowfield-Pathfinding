@@ -10,16 +10,11 @@ public class Terrain : MonoBehaviour
 	{
 		int width = (int)(size.x / cellSize);
 		int depth = (int)(size.z / cellSize);
-		var colorTexture = new Texture2D(width, depth);//, UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_UInt, UnityEngine.Experimental.Rendering.TextureCreationFlags.None);
-		//var normalTexture = new Texture2D(width, depth);//, UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_UInt, UnityEngine.Experimental.Rendering.TextureCreationFlags.None);
-		colorTexture.SetPixels32(colormap.ToArray());
+		var colorTexture = new Texture2D(width, depth);		colorTexture.SetPixels32(colormap.ToArray());
 		colorTexture.Apply();
-		//normalTexture.SetPixels32(normalmap.ToArray());
-		//normalTexture.Apply();
 
 		var mat = GetComponent<MeshRenderer>().sharedMaterial;
 		mat.SetTexture("_MainTex", colorTexture);
-	//	mat.SetTexture("_BumpMap", normalTexture);
 
 		var mesh = GenerateMesh(heightMap, normalmap, size, cellSize);
 		GetComponent<MeshFilter>().sharedMesh = mesh;
