@@ -1,22 +1,22 @@
-﻿using Unity.Burst;
+﻿using ECSInput;
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Collections;
+using UnityEngine;
 
 namespace System
 {
     public class UpdateTileWithFlowFieldSystem : JobComponentSystem
     {
+        
         struct UpdateJob : IJobParallelFor
         {
             public Tile.Group.AllTiles tiles;
-
-            [ReadOnly, DeallocateOnJobCompletion]
-            public NativeArray<float3> flowField;
-
-            [ReadOnly]
-            public NativeArray<float> terrainHeight;
+            
+            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<float3> flowField;
+            [ReadOnly] public NativeArray<float> terrainHeight;
 
             public int handle;
 
@@ -50,14 +50,20 @@ namespace System
             }
         }
 
-        [Inject]
-        Tile.Group.AllTiles m_Tiles;
+        [Inject] Tile.Group.AllTiles m_Tiles;
+        [Inject] InputDataGroup m_input;
+
 
         [Inject]
         TileSystem m_TileSystem;
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            if (m_input.Buttons[0].Values["ShowFlowfield"].Status == InputButtons.UP)
+                Main.ActiveInitParams.m_drawFlowField = !Main.ActiveInitParams.m_drawFlowField; 
+            if (m_input.Buttons[0].Values["ShowHeatmap"].Status == InputButtons.UP)
+                Main.ActiveInitParams.m_drawHeatField = !Main.ActiveInitParams.m_drawHeatField;
+            
             var tileSystem = m_TileSystem;
             if (tileSystem.lastGeneratedQueryHandle == TileSystem.k_InvalidHandle || !Main.ActiveInitParams.m_drawFlowField)
                 return inputDeps;

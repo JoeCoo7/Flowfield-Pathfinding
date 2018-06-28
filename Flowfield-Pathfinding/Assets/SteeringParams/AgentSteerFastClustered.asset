@@ -19,9 +19,9 @@ MonoBehaviour:
     TerrainFieldWeight: 3
     TargetFieldWeight: 10
     SeparationRadius: 7.4
-    SeparationWeight: 40
-    CohesionWeight: 10
-    AlignmentWeight: 6.8
+    SeparationWeight: 44.4
+    CohesionWeight: 11
+    AlignmentWeight: 34.4
     AlignmentRadius: 4.54
     MaxNeighborChecks: 2
     NeighbourHashCellSize: 3

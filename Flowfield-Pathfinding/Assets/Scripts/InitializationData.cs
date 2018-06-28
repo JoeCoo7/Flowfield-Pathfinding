@@ -34,7 +34,11 @@ public class InitializationData : ScriptableObject
     public Mesh TileDirectionMesh;
     public Material TileDirectionMaterial;
     public bool m_drawFlowField = false;
+	public bool m_drawHeatField = false;
     public bool m_smoothFlowField = true;
+
+    [Range(0, 1)]
+    public float m_smoothAmount = 0.9f;
 
 	[NonSerialized]
 	public NativeArray<float3> m_terrainFlow;
@@ -45,7 +49,7 @@ public class InitializationData : ScriptableObject
 	[NonSerialized]
 	public NativeArray<float> m_terrainHeights;
 
-	Terrain m_terrain;
+	TerrainColoring m_terrain;
 	public void Initalize()
 	{
 		Instantiate(m_cameraObject);
@@ -74,7 +78,7 @@ public class InitializationData : ScriptableObject
 		CreateGrid(m_grid, m_terrainHeights, m_terrainColors, m_terrainNormals, m_terrainFlow, GridFunc);
 
 		if (m_terrain == null)
-			m_terrain = Instantiate(m_terrainPrefab).GetComponent<Terrain>();
+			m_terrain = Instantiate(m_terrainPrefab).GetComponent<TerrainColoring>();
 		m_terrain.Init(m_terrainHeights, m_terrainNormals, m_terrainColors, new float3(m_worldWidth, m_heightScale, m_worldHeight), m_cellSize);
 	}
 
