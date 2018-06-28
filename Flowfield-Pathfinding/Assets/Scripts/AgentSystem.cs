@@ -112,7 +112,7 @@ public class AgentSystem : JobComponentSystem
 			positions = positions,
 			velocities = velocities,
 			targetFlowfield = m_agents.TargetFlowfield[0].Value,
-			terrainFlowfield = InitializationData.m_initialFlow,
+			terrainFlowfield = Main.TerrainFlow,
 			 steerParams = steerParams
 		};
 
@@ -124,7 +124,7 @@ public class AgentSystem : JobComponentSystem
 			TimeDelta = Time.deltaTime,
 			steerParams = steerParams,
 			 grid = settings,
-			  Heights = InitializationData.m_heightmap
+			  Heights = Main.TerrainHeight
 		};
 
 		var steerJobHandle = steerJob.Schedule(agentCount, 64, closestNeighborJobHandle);
@@ -331,7 +331,8 @@ public class AgentSystem : JobComponentSystem
 		{
 			var pos = Positions[i];
 			pos.Value += Velocity[i].Value * TimeDelta;
-			var h = Heights[GridUtilties.WorldToIndex(grid, pos.Value)];
+			var index = GridUtilties.WorldToIndex(grid, pos.Value);
+			var h = index < 0 ? pos.Value.y : Heights[index];
 			pos.Value.y += (h - pos.Value.y) * math.min(TimeDelta * 20, 1);
 			Positions[i] = pos;
 
