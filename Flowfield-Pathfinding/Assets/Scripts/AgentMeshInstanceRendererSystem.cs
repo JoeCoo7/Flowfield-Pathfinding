@@ -24,6 +24,7 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
     List<AgentMeshInstanceRenderer> m_CacheduniqueRendererTypes = new List<AgentMeshInstanceRenderer>(10);
     ComponentGroup m_InstanceRendererGroup;
     List<ComputeBuffer> m_ComputeBuffers = new List<ComputeBuffer>();
+    List<Material> m_Materials = new List<Material>();
 
     // This is the ugly bit, necessary until Graphics.DrawMeshInstanced supports NativeArrays pulling the data in from a job.
     public unsafe static void CopyMatrices(ComponentDataArray<TransformMatrix> transforms, int beginIndex, int length, Matrix4x4[] outMatrices)
@@ -47,19 +48,6 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
     {
         // We want to find all AgentMeshInstanceRenderer & TransformMatrix combinations and render them
         m_InstanceRendererGroup = GetComponentGroup(typeof(AgentMeshInstanceRenderer), typeof(Agent.Velocity), typeof(TransformMatrix), typeof(Agent.Selection), ComponentType.Subtractive<MeshCulledComponent>(), ComponentType.Subtractive<MeshLODInactive>());
-
-        // Start with random colors for units
-        /*
-        int maxUnitLength = 1024 * 1024;
-        m_ComputeBuffer = new ComputeBuffer(maxUnitLength, 4 * 3);
-        Vector3[] colors = new Vector3[maxUnitLength];
-        for (int c = 0; c < maxUnitLength; c++)
-        {
-            var color = Random.ColorHSV();
-            colors[c] = new Vector3(color.r, color.g, color.b);
-        }
-        m_ComputeBuffer.SetData(colors);
-        */
     }
 
     protected override void OnDestroyManager()
@@ -77,6 +65,7 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
         EntityManager.GetAllUniqueSharedComponentDatas(m_CacheduniqueRendererTypes);
         var forEachFilter = m_InstanceRendererGroup.CreateForEachFilter(m_CacheduniqueRendererTypes);
 
+        int drawIdx = 0;
         for (int i = 0; i != m_CacheduniqueRendererTypes.Count; i++)
         {
             // For each unique MeshInstanceRenderer data, we want to get all entities with a TransformMatrix
@@ -109,24 +98,26 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
                     m_MatricesArray[j].m23 += Main.ActiveInitParams.m_cellSize / 2;
                 }
 
-                if (i >= m_ComputeBuffers.Count)
+                if (drawIdx+1 >= m_ComputeBuffers.Count)
                 {
                     var computeBuffer = new ComputeBuffer(512, 3 * sizeof(float));
                     m_ComputeBuffers.Add(computeBuffer);
+                    var material = new Material(renderer.material);
+                    m_Materials.Add(material);
                 }
 
                 Vector3[] colors = new Vector3[length];
                 for (int x = 0; x < length; ++x)
-                    colors[x] = selection[x].Value == 1 ? new Vector3(0.5f, 1f, 0.5f) : new Vector3(0.5f, 0.5f, 1f);
-                m_ComputeBuffers[i].SetData(colors);
-                renderer.material.SetBuffer("velocityBuffer", m_ComputeBuffers[i]);
+                    colors[x] = selection[beginIndex + x].Value == 1 ? new Vector3(0.5f, 1f, 0.5f) : new Vector3(0.5f, 0.5f, 1f);
+                m_ComputeBuffers[drawIdx].SetData(colors);
+                m_Materials[drawIdx].SetBuffer("velocityBuffer", m_ComputeBuffers[drawIdx]);
 
                 // !!! This will draw all meshes using the last material.  Probably need an array of materials.
-                Graphics.DrawMeshInstanced(renderer.mesh, renderer.subMesh, renderer.material, m_MatricesArray, length, null, renderer.castShadows, renderer.receiveShadows);
+                Graphics.DrawMeshInstanced(renderer.mesh, renderer.subMesh, m_Materials[drawIdx], m_MatricesArray, length, null, renderer.castShadows, renderer.receiveShadows);
 
+                drawIdx++;
                 beginIndex += length;
             }
-
         }
 
         m_CacheduniqueRendererTypes.Clear();
