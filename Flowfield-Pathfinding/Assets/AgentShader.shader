@@ -1,67 +1,78 @@
-﻿Shader "Custom/AgentShader" {
-	Properties {
-		_Color ("Color", Color) = (1,1,1,1)
-		_MainTex ("Albedo (RGB)", 2D) = "white" {}
-		_Glossiness ("Smoothness", Range(0,1)) = 0.5
-		_Metallic ("Metallic", Range(0,1)) = 0.0
+﻿Shader "AgentShader"
+{
+    Properties
+    {
+        _Color ("Color", Color) = (1, 1, 1, 1)
+    }
 
-	}
-	SubShader {
-		Tags { "RenderType"="Opaque" }
-		LOD 200
+    SubShader
+    {
+        Tags { "RenderType"="Opaque" }
+        LOD 100
 
-		CGPROGRAM
-		// Physically based Standard lighting model, and enable shadows on all light types
-		#pragma surface surf Standard fullforwardshadows
-		#pragma multi_compile_instancing
-		#pragma instancing_options procedural:setup
+        Pass
+        {
+			Tags{ "LightMode" = "ForwardBase" }
 
-		// Use shader model 3.0 target, to get nicer looking lighting
-		#pragma target 3.0
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+			#pragma multi_compile_instancing
+			#pragma instancing_options procedural:setup
+            #include "UnityCG.cginc"
+			#include "UnityLightingCommon.cginc"
+            #include "AutoLight.cginc"
 
-		sampler2D _MainTex;
+			StructuredBuffer<float3> velocityBuffer;
 
-#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-		StructuredBuffer<float3> velocityBuffer;
-#endif
+			void setup()
+			{
+			}
 
-		void setup()
-		{
-#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-			//_Velocity.rgb = velocityBuffer[unity_InstanceID];
-#endif
-		}
+            struct v2f
+            {
+                float4 vertex : SV_POSITION;
+				fixed4 diff : COLOR0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID // necessary only if you want to access instanced properties in fragment Shader.
+				LIGHTING_COORDS(0, 1)
+            };
 
-		struct Input {
-			float2 uv_MainTex;
-			UNITY_VERTEX_INPUT_INSTANCE_ID
-		};
+            UNITY_INSTANCING_BUFFER_START(Props)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _Color)
+            UNITY_INSTANCING_BUFFER_END(Props)
+           
+            v2f vert(appdata_base v)
+            {
+				v2f o;
 
-		half _Glossiness;
-		half _Metallic;
-		fixed4 _Color;
+				TRANSFER_VERTEX_TO_FRAGMENT(o);
+				UNITY_SETUP_INSTANCE_ID(v);
+				UNITY_TRANSFER_INSTANCE_ID(v, o); // necessary only if you want to access instanced properties in the fragment Shader.
 
-		// Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
-		// See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
-		// #pragma instancing_options assumeuniformscaling
-		UNITY_INSTANCING_BUFFER_START(Props)
-			UNITY_DEFINE_INSTANCED_PROP(float4, _Velocity)
-		UNITY_INSTANCING_BUFFER_END(Props)
+				o.vertex = UnityObjectToClipPos(v.vertex);
+				half3 worldNormal = UnityObjectToWorldNormal(v.normal);
+				half nl = max(0, dot(worldNormal, _WorldSpaceLightPos0.xyz));
+				o.diff = nl * _LightColor0;
 
-		void surf (Input IN, inout SurfaceOutputStandard o) {
-			// Albedo comes from a texture tinted by color
-			fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
-#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-			o.Albedo = c.rgb *velocityBuffer[unity_InstanceID];// UNITY_ACCESS_INSTANCED_PROP(Props, _Velocity).rgb;
-#else
-			o.Albedo = c.rgb;
-#endif
-			// Metallic and smoothness come from slider variables
-			o.Metallic = _Metallic;
-			o.Smoothness = _Glossiness;
-			o.Alpha = c.a;
-		}
-		ENDCG
-	}
-	FallBack "Diffuse"
+				// the only difference from previous shader:
+				// in addition to the diffuse lighting from the main light,
+				// add illumination from ambient or light probes
+				// ShadeSH9 function from UnityCG.cginc evaluates it,
+				// using world space normal
+				o.diff.rgb += ShadeSH9(half4(worldNormal, 1));
+				return o;
+            }
+           
+            fixed4 frag(v2f i, uint instanceID : SV_InstanceID) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(i); // necessary only if any instanced properties are going to be accessed in the fragment Shader.
+				float attenuation = LIGHT_ATTENUATION(i);
+				fixed3 vel = velocityBuffer[instanceID] * i.diff * attenuation;
+				return fixed4(vel, 1.0);
+			}
+            ENDCG
+        }
+    }
+
+		Fallback "VertexLit"
 }
