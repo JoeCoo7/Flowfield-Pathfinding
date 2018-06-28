@@ -9,16 +9,11 @@ namespace Manager
         public static EntityArchetype FlowFieldResult;
         public static EntityArchetype Tile;
         public static EntityArchetype Agent;
-        public static EntityArchetype AgentWithQuery;
         public static EntityArchetype DebugHeatmapType;
         public static EntityArchetype PlayerInput;
 
         public static void Initialize(EntityManager entityManager)
         {
-            FlowFieldResult = entityManager.CreateArchetype(
-                    ComponentType.Create<FlowField.Result>(),
-                    ComponentType.Create<FlowField.Data>());
-
             Tile = entityManager.CreateArchetype(
                     ComponentType.Create<Unity.Transforms.TransformMatrix>(),
                     ComponentType.Create<Tile.TileMeshInstanceRenderer>(),
@@ -35,19 +30,8 @@ namespace Manager
                 ComponentType.Create<Unity.Rendering.MeshInstanceRenderer>(),
                 ComponentType.Create<Agent.Velocity>(),
                 ComponentType.Create<Agent.Selection>(),
-                ComponentType.Create<GridSettings>(),
-                ComponentType.Create<FlowField.Data>());
-
-            AgentWithQuery = entityManager.CreateArchetype(
-                ComponentType.Create<Unity.Transforms.Position>(),
-                ComponentType.Create<Unity.Transforms.Rotation>(),
-                ComponentType.Create<Unity.Transforms.TransformMatrix>(),
-                ComponentType.Create<Unity.Rendering.MeshInstanceRenderer>(),
-                ComponentType.Create<Agent.Velocity>(),
-                ComponentType.Create<Agent.Selection>(),
-                ComponentType.Create<GridSettings>(),
-                ComponentType.Create<FlowField.Data>(),
-                ComponentType.Create<FlowField.Query>());
+                ComponentType.Create<Agent.Goal>(),
+                ComponentType.Create<GridSettings>());
 
             DebugHeatmapType = entityManager.CreateArchetype(
                 ComponentType.Create<DebugHeatmap.Component>());
@@ -69,13 +53,13 @@ namespace Manager
             em.SetSharedComponentData(e, settings);
         }
 
-        public static void CreateAgent(EntityCommandBuffer ecb, float3 pos, Mesh mesh, Material mat, GridSettings settings, FlowField.Data flowField)
+        public static void CreateAgent(EntityCommandBuffer ecb, float3 pos, Mesh mesh, Material mat, GridSettings settings)
         {
             ecb.CreateEntity(Agent);
             ecb.SetComponent(new Unity.Transforms.Position { Value = pos });
             ecb.SetSharedComponent(new Unity.Rendering.MeshInstanceRenderer { mesh = mesh, material = mat, castShadows = UnityEngine.Rendering.ShadowCastingMode.On });
             ecb.SetSharedComponent(settings);
-            ecb.SetSharedComponent(flowField);
+            ecb.SetComponent(new Agent.Goal { Current = TileSystem.k_InvalidGoal, Target = TileSystem.k_InvalidGoal });
         }
 
         public static void CreateInputSystem(EntityManager entityManager)
@@ -85,13 +69,6 @@ namespace Manager
             entityManager.SetComponentData(inputSystemEntity, new ECSInput.MouseDoubleClick());
             entityManager.SetComponentData(inputSystemEntity, new ECSInput.MousePosition());
             entityManager.SetSharedComponentData(inputSystemEntity, ECSInput.PlayerInputSystem.ProcessInputSettings());
-        }
-        
-        public static void CreateFlowFieldResult(EntityCommandBuffer ecb, uint handle, FlowField.Data flowFieldData)
-        {
-            ecb.CreateEntity(FlowFieldResult);
-            ecb.SetComponent(new FlowField.Result { Handle = handle });
-            ecb.SetSharedComponent(flowFieldData);
         }
     }
 }

@@ -6,6 +6,7 @@ using Unity.Mathematics;
 using Unity.Jobs;
 using Unity.Burst;
 using Agent;
+using UnityEngine.Assertions;
 
 [System.Serializable]
 public struct GridSettings : ISharedComponentData
@@ -21,10 +22,17 @@ public class TileSystem : JobComponentSystem
 {
     static uint s_QueryHandle = uint.MaxValue;
 
-    [Inject] EndFrameBarrier m_EndFrameBarrier;
-    [Inject] Agent.Group.Selected m_Selected;
-    [Inject] Agent.Group.SelectedWithQuery m_SelectedWithQuery;
+    public static readonly int2 k_InvalidGoal = new int2(-1, -1);
+
+    public static bool IsGoalValid(int2 goal)
+    {
+        var result = (goal != k_InvalidGoal);
+        return result.x && result.y;
+    }
+
     [Inject] ECSInput.InputDataGroup m_input;
+
+    [Inject] AgentSystem m_AgentSystem;
 
     NativeArray<int2> m_Offsets;
 
@@ -37,7 +45,12 @@ public class TileSystem : JobComponentSystem
         m_Offsets = new NativeArray<int2>(GridUtilties.Offset.Length, Allocator.Persistent);
         m_Offsets.CopyFrom(GridUtilties.Offset);
         lastGeneratedQueryHandle = s_QueryHandle;
+        cachedFlowFields = new NativeHashMap<int2, NativeArray<float3>>(16, Allocator.Persistent);
+        m_CompletedFlowFields = new List<GoalFlowFieldPair>();
+        latestFlowField = m_EmptyFlowField = new NativeArray<float3>(0, Allocator.Persistent);
     }
+
+    NativeArray<float3> m_EmptyFlowField;
 
     protected override void OnDestroyManager()
     {
@@ -48,33 +61,29 @@ public class TileSystem : JobComponentSystem
             entry.heatmap.Dispose();
             entry.flowField.Dispose();
         }
+        if (m_EmptyFlowField.IsCreated)
+            m_EmptyFlowField.Dispose();
+
+        cachedFlowFields.Dispose();
         m_Cache.Clear();
+        m_CompletedFlowFields.Clear();
     }
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        ProcessPendingJobs(m_EndFrameBarrier.CreateCommandBuffer());
+        JobHandle updateAgentsJobHandle;
+        var wasJobScheduled = ProcessPendingJobs(inputDeps, out updateAgentsJobHandle);
 
         if (m_input.Buttons[0].Values["CreateGoal"].Status != ECSInput.InputButtons.UP)
-            return inputDeps;
+            return wasJobScheduled ? updateAgentsJobHandle : inputDeps;
 
         if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_input.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity))
-            return inputDeps;
+            return wasJobScheduled ? updateAgentsJobHandle : inputDeps;
 
         m_Goal = GridUtilties.World2Grid(Main.ActiveInitParams.m_grid, hit.point);
 
-        return CreateJobs(inputDeps);
-    }
-
-    [BurstCompile]
-    struct UpdateAgentsGoalJob : IJobProcessComponentData<Selection, Goal>
-    {
-        public int2 newGoal;
-
-        public void Execute([ReadOnly] ref Selection selectionFlag, ref Goal goal)
-        {
-            goal.Value = math.select(newGoal, goal.Value, selectionFlag.Value == 0);
-        }
+        var flowFieldJobHandle = CreateJobs(inputDeps);
+        return wasJobScheduled ? JobHandle.CombineDependencies(updateAgentsJobHandle, flowFieldJobHandle) : flowFieldJobHandle;
     }
 
     JobHandle CreateJobs(JobHandle inputDeps)
@@ -82,25 +91,10 @@ public class TileSystem : JobComponentSystem
         GridSettings gridSettings = Main.ActiveInitParams.m_grid;
         uint queryHandle = ++s_QueryHandle;
 
-        for (var i = 0; i < m_SelectedWithQuery.Length; ++i)
+        var updateAgentsTargetGoalJobHandle = new UpdateAgentsTargetGoalJob
         {
-            if (m_SelectedWithQuery.selection[i].Value != 1)
-                continue;
-
-            var query = m_SelectedWithQuery.flowFieldQuery[i];
-            query.Handle = queryHandle;
-            m_SelectedWithQuery.flowFieldQuery[i] = query;
-        }
-
-        var buffer = m_EndFrameBarrier.CreateCommandBuffer();
-        var newQuery = new FlowField.Query { Handle = queryHandle };
-        for (var i = 0; i < m_Selected.entity.Length; ++i)
-        { 
-            if (m_Selected.selection[i].Value != 1)
-                continue;
-
-            buffer.AddComponent(m_Selected.entity[i], newQuery);
-        }
+            newGoal = m_Goal
+        }.Schedule(this, inputDeps);
 
         // Create & Initialize heatmap
         var heatmap = new NativeArray<int>(gridSettings.cellCount.x * gridSettings.cellCount.y,
@@ -113,13 +107,13 @@ public class TileSystem : JobComponentSystem
         }.Schedule(this, 64, inputDeps);
 
         // Compute heatmap from goals
-        var numAgents = 1000;
+        var numAgents = m_AgentSystem.numAgents;
         var radius = numAgents / Main.ActiveInitParams.m_goalAgentFactor;
         var goalMin = math.max(new int2(m_Goal.x - radius, m_Goal.y - radius), new int2(0, 0));
         var goalMax = math.min(new int2(m_Goal.x + radius, m_Goal.y + radius), gridSettings.cellCount - new int2(1, 1));
         var dims = goalMax - goalMin;
-        var maxLength = dims.x * dims.y;
-        var goals = new NativeArray<int2>(maxLength, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        var maxNumGoals = math.max(1, dims.x * dims.y);
+        var goals = new NativeArray<int2>(maxNumGoals, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
         // TODO: Change to circle
         var goalIndex = 0;
@@ -130,6 +124,9 @@ public class TileSystem : JobComponentSystem
                 goals[goalIndex++] = new int2(x, y);
             }
         }
+
+        if (goalIndex == 0)
+            goals[goalIndex++] = m_Goal;
 
         var floodQueue = new NativeArray<int>(heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         var computeHeatmapJobHandle = new ComputeHeatmapJob()
@@ -161,6 +158,7 @@ public class TileSystem : JobComponentSystem
         m_PendingJobs.Add(new PendingJob
         {
             queryHandle = queryHandle,
+            goal = m_Goal,
             jobHandle = smoothFlowFieldJobHandle,
             cacheEntry = new CacheEntry
             {
@@ -169,26 +167,52 @@ public class TileSystem : JobComponentSystem
             }
         });
 
-        return smoothFlowFieldJobHandle;
+        return JobHandle.CombineDependencies(smoothFlowFieldJobHandle, updateAgentsTargetGoalJobHandle);
     }
 
-    void ProcessPendingJobs(EntityCommandBuffer commandBuffer)
+    bool ProcessPendingJobs(JobHandle inputDeps, out JobHandle updateAgentsJobHandle)
     {
+        var availableGoals = new NativeArray<int2>(m_PendingJobs.Count, Allocator.TempJob);
+        var numAvailableGoals = 0;
+
         for (int i = m_PendingJobs.Count - 1; i >= 0; --i)
         {
-            if (m_PendingJobs[i].jobHandle.IsCompleted)
+            var pendingJob = m_PendingJobs[i];
+            if (pendingJob.jobHandle.IsCompleted)
             {
-                var queryHandle = m_PendingJobs[i].queryHandle;
-                m_Cache.Add(queryHandle, m_PendingJobs[i].cacheEntry);
+                var queryHandle = pendingJob.queryHandle;
+                m_Cache.Add(queryHandle, pendingJob.cacheEntry);
 
-                Manager.Archetype.CreateFlowFieldResult(commandBuffer, queryHandle,
-                    new FlowField.Data { Value = m_PendingJobs[i].cacheEntry.flowField });
+                m_CompletedFlowFields.Add(new GoalFlowFieldPair
+                {
+                    goal = pendingJob.goal,
+                    flowField = pendingJob.cacheEntry.flowField
+                });
+
+                cachedFlowFields.Remove(pendingJob.goal);
+                cachedFlowFields.TryAdd(pendingJob.goal, pendingJob.cacheEntry.flowField);
+                availableGoals[numAvailableGoals++] = pendingJob.goal;
 
                 lastGeneratedQueryHandle = queryHandle;
-
                 m_PendingJobs.RemoveAt(i);
+
+                latestFlowField = pendingJob.cacheEntry.flowField;
             }
         }
+
+        if (numAvailableGoals == 0)
+        {
+            availableGoals.Dispose();
+            updateAgentsJobHandle = new JobHandle();
+            return false;
+        }
+
+        updateAgentsJobHandle = new UpdateAgentsCurrentGoalJob
+        {
+            availableGoals = availableGoals,
+            numAvailableGoals = numAvailableGoals
+        }.Schedule(this, inputDeps);
+        return true;
     }
 
     struct CacheEntry
@@ -200,11 +224,35 @@ public class TileSystem : JobComponentSystem
     struct PendingJob
     {
         public uint queryHandle;
+        public int2 goal;
         public JobHandle jobHandle;
         public CacheEntry cacheEntry;
     }
 
+    struct GoalFlowFieldPair
+    {
+        public int2 goal;
+        public NativeArray<float3> flowField;
+    }
+
+    List<GoalFlowFieldPair> m_CompletedFlowFields;
+
     List<PendingJob> m_PendingJobs = new List<PendingJob>();
+
+    public NativeHashMap<int2, NativeArray<float3>> cachedFlowFields { get; private set; }
+
+    public NativeArray<float3> latestFlowField { get; private set; }
+
+    public NativeHashMap<int2, NativeArray<float3>> CopyFlowFieldCache(Allocator allocator)
+    {
+        var copy = new NativeHashMap<int2, NativeArray<float3>>(m_CompletedFlowFields.Count, allocator);
+        foreach (var pair in m_CompletedFlowFields)
+        {
+            copy.Remove(pair.goal);
+            copy.TryAdd(pair.goal, pair.flowField);
+        }
+        return copy;
+    }
 
     Dictionary<uint, CacheEntry> m_Cache = new Dictionary<uint, CacheEntry>();
 
@@ -286,6 +334,35 @@ public class TileSystem : JobComponentSystem
                         queue.Enqueue(neighborIndex);
                     }
                 }
+            }
+        }
+    }
+
+    [BurstCompile]
+    struct UpdateAgentsTargetGoalJob : IJobProcessComponentData<Selection, Goal>
+    {
+        public int2 newGoal;
+
+        public void Execute([ReadOnly] ref Selection selectionFlag, ref Goal goal)
+        {
+            goal.Target = math.select(newGoal, goal.Target, selectionFlag.Value == 0);
+        }
+    }
+
+    [BurstCompile]
+    struct UpdateAgentsCurrentGoalJob : IJobProcessComponentData<Goal>
+    {
+        [ReadOnly, DeallocateOnJobCompletion]
+        public NativeArray<int2> availableGoals;
+
+        public int numAvailableGoals;
+
+        public void Execute(ref Goal agentGoal)
+        {
+            for (int i = 0; i < numAvailableGoals; ++i)
+            {
+                var result = agentGoal.Target == availableGoals[i];
+                agentGoal.Current = math.select(agentGoal.Current, agentGoal.Target, result.x && result.y);
             }
         }
     }

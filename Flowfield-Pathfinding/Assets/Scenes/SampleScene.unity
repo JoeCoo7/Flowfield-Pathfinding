@@ -144,8 +144,8 @@ Light:
   m_SpotAngle: 30
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 1
-    m_Resolution: 0
+    m_Type: 2
+    m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
     m_Bias: 0.05
@@ -165,7 +165,7 @@ Light:
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
   m_ShadowRadius: 0
-  m_ShadowAngle: 0
+  m_ShadowAngle: 17.5
 --- !u!4 &170076735
 Transform:
   m_ObjectHideFlags: 0
@@ -189,6 +189,7 @@ GameObject:
   - component: {fileID: 708304320}
   - component: {fileID: 708304319}
   - component: {fileID: 708304321}
+  - component: {fileID: 708304322}
   m_Layer: 0
   m_Name: Main
   m_TagString: Untagged
@@ -214,6 +215,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0a93aa877a56406429b23395f89177ce, type: 2}
   - {fileID: 11400000, guid: 73e88fb22f7cf6648aa84b056b1476f5, type: 2}
   - {fileID: 11400000, guid: b3335dcc8bea867459031bd38e117830, type: 2}
+  - {fileID: 11400000, guid: d307b90c04e75414f905513bf7f9349d, type: 2}
+  - {fileID: 11400000, guid: 9bd3ce7e88db8467c921b844e6217e42, type: 2}
+  - {fileID: 11400000, guid: 3e53ec792bb5a4b30ba8c221c96ebfa9, type: 2}
 --- !u!4 &708304320
 Transform:
   m_ObjectHideFlags: 0
@@ -240,6 +244,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   selectionColor: {r: 0, g: 1, b: 0, a: 1}
   selectionWeight: 2
+--- !u!114 &708304322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 708304318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b16ad8fda614be9438cfe9caac62ce71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1225020946
 GameObject:
   m_ObjectHideFlags: 0

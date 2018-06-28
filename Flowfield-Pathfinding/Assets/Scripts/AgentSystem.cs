@@ -16,7 +16,7 @@ public class AgentSystem : JobComponentSystem
 	struct AgentData
 	{
 		[ReadOnly] public SharedComponentDataArray<GridSettings> GridSettings;
-		[ReadOnly] public SharedComponentDataArray<FlowField.Data> TargetFlowfield;
+		[ReadOnly] public ComponentDataArray<Agent.Goal> Goals;
 		public ComponentDataArray<Velocity> Velocities;
 		public ComponentDataArray<Position> Positions;
         public ComponentDataArray<Rotation> Rotations;
@@ -26,6 +26,8 @@ public class AgentSystem : JobComponentSystem
 	
 	[Inject] AgentData m_agents;
 	private NativeMultiHashMap<int, int> m_neighborHashMap;
+
+    [Inject, ReadOnly] TileSystem m_tileSystem;
 
     public int numAgents
     {
@@ -58,8 +60,10 @@ public class AgentSystem : JobComponentSystem
         var rotations = m_agents.Rotations;
 		var velocities = m_agents.Velocities;
 		var agentCount = positions.Length;
+        var goals = m_agents.Goals;
+        //var flowFields = m_tileSystem.CopyFlowFieldCache(Allocator.TempJob);
 
-		m_neighborHashMap = new NativeMultiHashMap<int, int>(agentCount, Allocator.TempJob);
+        m_neighborHashMap = new NativeMultiHashMap<int, int>(agentCount, Allocator.TempJob);
 		var vecFromNearestNeighbor = new NativeArray<float3>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 		var cellNeighborIndices = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 		var neighborHashes = new NativeArray<int>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -103,7 +107,6 @@ public class AgentSystem : JobComponentSystem
 
 		var steerJob = new Steer
 		{
-			
 			settings = settings,
 			avgVelocities = avgNeighborVelocities,
 			avgPositions = avgNeighborPositions,
@@ -111,8 +114,9 @@ public class AgentSystem : JobComponentSystem
 			vecFromNearestNeighbor = vecFromNearestNeighbor,
 			positions = positions,
 			velocities = velocities,
-			targetFlowfield = m_agents.TargetFlowfield[0].Value,
 			terrainFlowfield = Main.TerrainFlow,
+            goals = goals,
+            targetFlowField = m_tileSystem.latestFlowField,
 			 steerParams = steerParams
 		};
 
@@ -221,9 +225,11 @@ public class AgentSystem : JobComponentSystem
 		[DeallocateOnJobCompletion] [ReadOnly] public NativeArray<float3> vecFromNearestNeighbor;
 		[ReadOnly] public AgentSteerParams steerParams;
 
-		[ReadOnly] public NativeArray<float3> targetFlowfield;
+        [ReadOnly] public ComponentDataArray<Goal> goals;
 		[ReadOnly] public NativeArray<float3> terrainFlowfield;
 		[ReadOnly] public ComponentDataArray<Position> positions;
+        //[ReadOnly] public NativeHashMap<int2, NativeArray<float3>> flowFields;
+        [ReadOnly] public NativeArray<float3> targetFlowField;
 		public float deltaTime;
 		public ComponentDataArray<Velocity> velocities;
 
@@ -299,15 +305,28 @@ public class AgentSystem : JobComponentSystem
 		{
 			var velocity = velocities[index].Value;
 			var position = positions[index].Value;
+            var goal = goals[index].Current;
 
-			var normalizedForces = math_experimental.normalizeSafe
-				(
+            float3 targetFlowFieldContribution = new float3(0, 0, 0);
+            // This is what we want to do, but the targetFlowField is marked as [WriteOnly],
+            // which feels like a bug in the JobSystem
+            //NativeArray<float3> targetFlowField;
+            //if (flowFields.TryGetValue(goal, out targetFlowField))
+            //{
+            //    targetFlowFieldContribution =
+            //        FlowField(position, velocity, targetFlowField, steerParams.TargetFieldWeight);
+            //}
+            if (targetFlowField.Length > 0)
+                targetFlowFieldContribution = FlowField(position, velocity, targetFlowField, steerParams.TargetFieldWeight);
+
+            var normalizedForces = math_experimental.normalizeSafe
+			(
 				Alignment(index, velocity) +
 				Cohesion(index, position) +
 				Separation(index) +
 				FlowField(position, velocity, terrainFlowfield, steerParams.TerrainFieldWeight) +
-				FlowField(position, velocity, targetFlowfield, steerParams.TargetFieldWeight)
-				);
+				targetFlowFieldContribution
+			);
 			var newVelocity = Velocity(velocity, normalizedForces);
 
 			velocities[index] = new Velocity { Value = newVelocity};

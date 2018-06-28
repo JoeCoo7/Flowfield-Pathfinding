@@ -33,7 +33,6 @@ public class AgentSpawingSystem : ComponentSystem
 	private float m_RadiusSquared; 
 	private NativeArray<float3> m_Grid;
 	private NativeList<float3> m_activeSamples;
-	static FlowField.Data m_flowField;
 	bool spawnDebugAgentsOnNextFrame = false;
 
 	//-----------------------------------------------------------------------------
@@ -78,9 +77,9 @@ public class AgentSpawingSystem : ComponentSystem
 	//-----------------------------------------------------------------------------
 	private void CreateAgent(AgentSpawnData spawnData, float3 _pos)
 	{
-		if (!m_flowField.Value.IsCreated)
-			m_flowField = new FlowField.Data() { Value = Main.TerrainFlow };
-        Manager.Archetype.CreateAgent(PostUpdateCommands, _pos, spawnData.AgentMesh, spawnData.AgentMaterial, m_agentData.GridSettings[0], m_flowField);
+        Manager.Archetype.CreateAgent(
+            PostUpdateCommands, _pos, spawnData.AgentMesh,
+            spawnData.AgentMaterial, m_agentData.GridSettings[0]);
 	}
 
 	//-----------------------------------------------------------------------------
