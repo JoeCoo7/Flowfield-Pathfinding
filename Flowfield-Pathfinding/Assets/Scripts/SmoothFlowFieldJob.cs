@@ -25,7 +25,7 @@ namespace FlowField
             for (int i = 0; i < flowfield.Length; ++i)
             {
                 var cellIndex = floodQueue[i];
-                if (cellIndex < 0 || cellIndex > flowfield.Length)
+                if (cellIndex < 0 || cellIndex >= flowfield.Length)
                     continue;
 
                 var flowDirection = flowfield[cellIndex];
