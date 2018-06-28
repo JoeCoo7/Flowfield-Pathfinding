@@ -15,6 +15,9 @@ namespace System
             [ReadOnly, DeallocateOnJobCompletion]
             public NativeArray<float3> flowField;
 
+            [ReadOnly]
+            public NativeArray<float> terrainHeight;
+
             public int handle;
 
             public void Execute(int index)
@@ -27,16 +30,22 @@ namespace System
                 var tileTransform = tiles.transforms[index];
                 var position = tiles.position[index];
                 var settings = tiles.settings[index];
-                var flowFieldIndex = GridUtilties.Grid2Index(settings, position.Value);
-                var flowDirection = flowField[flowFieldIndex];
+                var tileIndex = GridUtilties.Grid2Index(settings, position.Value);
+                var flowDirection = flowField[tileIndex];
+                var height = terrainHeight[tileIndex];
 
-                tileTransform.Value = 
-                    math.lookRotationToMatrix(
-                        new float3(
-                            position.Value.x * settings.cellSize.x - settings.worldSize.x / 2.0f + settings.cellSize.x / 2.0f, 
-                            0.0f, 
-                            position.Value.y * settings.cellSize.y - settings.worldSize.y / 2.0f + settings.cellSize.y / 2.0f),
-                        flowDirection, new float3(0.0f, 1.0f, 0.0f));
+                var scale = height < settings.heightScale * 0.4f ? new float3(settings.cellSize.x * 2.0f, settings.cellSize.x * 2.0f, settings.cellSize.x * 1.0f) : new float3(0);
+
+                tileTransform.Value =
+                    math.mul(
+                        math.lookRotationToMatrix(
+                            new float3(
+                                position.Value.x * settings.cellSize.x - settings.worldSize.x / 2.0f + settings.cellSize.x / 2.0f,
+                                height + 5.0f,
+                                position.Value.y * settings.cellSize.y - settings.worldSize.y / 2.0f + settings.cellSize.y / 2.0f),
+                            flowDirection, new float3(0.0f, 1.0f, 0.0f)),
+                        math.scale(scale)
+                        );
                 tiles.transforms[index] = tileTransform;
             }
         }
@@ -57,7 +66,8 @@ namespace System
             {
                 tiles = m_Tiles,
                 handle = tileSystem.lastGeneratedQueryHandle,
-                flowField = tileSystem.GetFlowFieldCopy(tileSystem.lastGeneratedQueryHandle, Allocator.TempJob)
+                flowField = tileSystem.GetFlowFieldCopy(tileSystem.lastGeneratedQueryHandle, Allocator.TempJob),
+                terrainHeight = Main.TerrainHeight
             };
 
             return update.Schedule(update.tiles.transforms.Length, 64, inputDeps);
