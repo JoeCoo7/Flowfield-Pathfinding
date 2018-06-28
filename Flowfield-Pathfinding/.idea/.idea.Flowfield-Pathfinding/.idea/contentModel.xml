@@ -6,10 +6,13 @@
       <e p="Assembly-CSharp-Editor.csproj" t="IncludeRecursive" />
       <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
       <e p="Assets" t="Include">
+        <e p="AgentShader.shader" t="Include" />
+        <e p="AgentVertexShader.shader" t="Include" />
         <e p="compute.compute" t="Include" />
         <e p="LowPolyShader.shader" t="Include" />
         <e p="Scripts" t="Include">
           <e p="AgentChangeMaterialJob.cs" t="Include" />
+          <e p="AgentMeshInstanceRendererSystem.cs" t="Include" />
           <e p="AgentSpawingSystem.cs" t="Include" />
           <e p="AgentSpawnData.cs" t="Include" />
           <e p="AgentSteerData.cs" t="Include" />
