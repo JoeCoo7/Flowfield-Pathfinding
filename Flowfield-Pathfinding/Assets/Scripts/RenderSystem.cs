@@ -6,7 +6,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Rendering;
-
+/*
 [System.Serializable]
 public struct RenderData : IComponentData
 {
@@ -74,7 +74,7 @@ public class RenderSystem : JobComponentSystem
 			Render = Render[renderingJobIndex],
 			Heat = m_Data2.Heat[0].Value.IsCreated ? m_Data2.Heat[0].Value : EmptyHeatMap,
 			HeatAlpha = 1,//(m_Data2.Heat[0].Value.IsCreated ? math.clamp(1 - (Time.realtimeSinceStartup - m_Data2.Heat[0].Time), 0, 1) : 0),
-			Flow = InitializationData.m_initialFlow,
+			Flow = Main.TerrainFlow,
 			Grid = m_Data.Grid[0],
 			HeatScale = 1f / m_Data.Grid[0].cellCount.x
 		}.Schedule(m_Data.Length, 64, inputDeps);
@@ -112,4 +112,4 @@ public class RenderSystem : JobComponentSystem
 
 	}
 
-}
+}*/

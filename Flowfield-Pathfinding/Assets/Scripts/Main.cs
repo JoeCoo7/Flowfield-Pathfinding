@@ -1,4 +1,6 @@
-﻿using Unity.Entities;
+﻿using Unity.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class Main : MonoBehaviour
@@ -11,10 +13,7 @@ public class Main : MonoBehaviour
 
 	public static AgentSteerParams ActiveSteeringParams
 	{
-		get
-		{
-			return Instance.m_AgentSteerData[Instance.m_activeSteerData].m_Data;
-		}
+		get { return Instance.m_AgentSteerData[Instance.m_activeSteerData].m_Data; }
 	}
 
 	public static AgentSpawnData ActiveSpawnParams
@@ -25,6 +24,25 @@ public class Main : MonoBehaviour
 	public static InitializationData ActiveInitParams
 	{
 		get { return Instance.m_InitData; }
+	}
+
+	public static NativeArray<float3> TerrainFlow
+	{
+		get { return Instance.m_InitData.m_terrainFlow; }
+	}
+
+	public static NativeArray<float3> TerrainColors
+	{
+		get { return Instance.m_InitData.m_terrainColors; }
+	}
+	public static NativeArray<float3> TerrainNormals
+	{
+		get { return Instance.m_InitData.m_terrainNormals; }
+	}
+
+	public static NativeArray<float> TerrainHeight
+	{
+		get { return Instance.m_InitData.m_terrainHeights; }
 	}
 
 	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -46,4 +64,10 @@ public class Main : MonoBehaviour
 	{
 		m_InitData.Shutdown();
 	}
+
+	private void LateUpdate()
+	{
+		//m_InitData.LateUpdate();
+	}
+
 }

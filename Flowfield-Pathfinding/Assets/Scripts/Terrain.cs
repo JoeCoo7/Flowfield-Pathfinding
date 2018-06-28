@@ -6,20 +6,19 @@ using System.Collections.Generic;
 
 public class Terrain : MonoBehaviour
 {
-	public void Init(NativeArray<float> heightMap, NativeArray<float3> normalmap, NativeArray<Color32> colormap, float3 size, float cellSize)
+	public void Init(NativeArray<float> heightMap, NativeArray<float3> normalmap, NativeArray<float3> colormap, float3 size, float cellSize)
 	{
 		int width = (int)(size.x / cellSize);
 		int depth = (int)(size.z / cellSize);
-		var colorTexture = new Texture2D(width, depth);//, UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_UInt, UnityEngine.Experimental.Rendering.TextureCreationFlags.None);
-		//var normalTexture = new Texture2D(width, depth);//, UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_UInt, UnityEngine.Experimental.Rendering.TextureCreationFlags.None);
-		colorTexture.SetPixels32(colormap.ToArray());
+		var colorTexture = new Texture2D(width, depth);
+		Color32[] colors = new Color32[width * depth];
+		for (int i = 0; i < colors.Length; i++)
+			colors[i] = new Color(colormap[i].x, colormap[i].y, colormap[i].z);
+		colorTexture.SetPixels32(colors);
 		colorTexture.Apply();
-		//normalTexture.SetPixels32(normalmap.ToArray());
-		//normalTexture.Apply();
 
 		var mat = GetComponent<MeshRenderer>().sharedMaterial;
 		mat.SetTexture("_MainTex", colorTexture);
-	//	mat.SetTexture("_BumpMap", normalTexture);
 
 		var mesh = GenerateMesh(heightMap, normalmap, size, cellSize);
 		GetComponent<MeshFilter>().sharedMesh = mesh;

@@ -13,15 +13,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Data:
     MaxSpeed: 100
-    Acceleration: 100
+    Acceleration: 12.9
     Drag: 4.9
     RotationSpeed: 4.2
     TerrainFieldWeight: 3
     TargetFieldWeight: 10
-    SeparationRadius: 3
+    SeparationRadius: 7.4
     SeparationWeight: 40
     CohesionWeight: 10
     AlignmentWeight: 6.8
     AlignmentRadius: 4.54
-    MaxNeighborChecks: 14
-    NeighbourHashCellSize: 15.5
+    MaxNeighborChecks: 2
+    NeighbourHashCellSize: 3

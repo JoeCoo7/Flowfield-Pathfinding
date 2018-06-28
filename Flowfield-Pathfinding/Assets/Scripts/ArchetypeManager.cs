@@ -27,7 +27,7 @@ namespace Manager
                 ComponentType.Create<Unity.Transforms.Position>(),
                 ComponentType.Create<Unity.Transforms.Rotation>(),
                 ComponentType.Create<Unity.Transforms.TransformMatrix>(),
-                ComponentType.Create<Unity.Rendering.MeshInstanceRenderer>(),
+                ComponentType.Create<Agent.AgentMeshInstanceRenderer>(),
                 ComponentType.Create<Agent.Velocity>(),
                 ComponentType.Create<Agent.Selection>(),
                 ComponentType.Create<Agent.Goal>(),
@@ -57,7 +57,7 @@ namespace Manager
         {
             ecb.CreateEntity(Agent);
             ecb.SetComponent(new Unity.Transforms.Position { Value = pos });
-            ecb.SetSharedComponent(new Unity.Rendering.MeshInstanceRenderer { mesh = mesh, material = mat, castShadows = UnityEngine.Rendering.ShadowCastingMode.On });
+            ecb.SetSharedComponent(new Agent.AgentMeshInstanceRenderer { mesh = mesh, material = mat, castShadows = UnityEngine.Rendering.ShadowCastingMode.On });
             ecb.SetSharedComponent(settings);
             ecb.SetComponent(new Agent.Goal { Current = TileSystem.k_InvalidGoal, Target = TileSystem.k_InvalidGoal });
         }
