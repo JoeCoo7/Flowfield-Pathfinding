@@ -34,7 +34,7 @@ namespace System
                 var flowDirection = flowField[tileIndex];
                 var height = terrainHeight[tileIndex];
 
-                var scale = height < settings.heightScale * 0.4f ? new float3(settings.cellSize.x * 2.0f, settings.cellSize.x * 2.0f, settings.cellSize.x) : new float3(0);
+                var scale = height < settings.heightScale * 0.4f ? new float3(settings.cellSize.x * 2.0f, settings.cellSize.x * 2.0f, settings.cellSize.x * 1.0f) : new float3(0);
 
                 tileTransform.Value =
                     math.mul(

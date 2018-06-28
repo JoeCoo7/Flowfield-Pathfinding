@@ -337,7 +337,19 @@ public class TileSystem : JobComponentSystem
         public void Execute(ref Goal agentGoal)
         {
             for (int i = 0; i < numAvailableGoals; ++i)
-                agentGoal.Current = math.select(agentGoal.Current, agentGoal.Target, agentGoal.Target == availableGoals[i]);
+            {
+                var newGoal = availableGoals[i];
+                var targetEqualsNewGoal = (agentGoal.Target == newGoal);
+
+                // If the current goal is equal to the new goal, then invalid the current goal
+                agentGoal.Current = math.select(agentGoal.Current, k_InvalidHandle, agentGoal.Current == newGoal);
+
+                // If the target is equal to the new goal, then set current to the new goal
+                agentGoal.Current = math.select(agentGoal.Current, agentGoal.Target, targetEqualsNewGoal);
+
+                // If the target is equal to the new goal, then invalidate the target
+                agentGoal.Target = math.select(agentGoal.Target, k_InvalidHandle, targetEqualsNewGoal);
+            }
         }
     }
 }
