@@ -154,7 +154,7 @@ MonoBehaviour:
   AllowWheelZooming: 1
   AllowKeyZooming: 1
   AllowZoomTilting: 1
-  AllowMouseRotation: 1
+  AllowMouseRotation: 0
   AllowMoveTo: 1
   AllowShake: 0
   AllowFollowTarget: 0

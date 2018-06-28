@@ -99,7 +99,7 @@ public class TileSystem : JobComponentSystem
 
         // Compute heatmap from goals
         var numAgents = m_AgentSystem.numAgents;
-        var radius = (int) math.log(numAgents) * Main.ActiveInitParams.m_goalAgentFactor;
+        var radius = (int)( math.log(numAgents) * Main.ActiveInitParams.m_goalAgentFactor);
         var goalMin = math.max(new int2(m_Goal.x - radius, m_Goal.y - radius), new int2(0, 0));
         var goalMax = math.min(new int2(m_Goal.x + radius, m_Goal.y + radius), gridSettings.cellCount - new int2(1, 1));
         var dims = goalMax - goalMin;

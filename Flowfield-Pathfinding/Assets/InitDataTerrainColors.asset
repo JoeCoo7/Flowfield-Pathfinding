@@ -19,7 +19,7 @@ MonoBehaviour:
   m_goalAgentFactor: 1
   m_cellsPerBlock: 8
   m_noiseScale: 6
-  m_noiseMultiplier: 1
+  m_noiseMultiplier: 20
   m_noiseShift: -10
   m_gridPrefab: {fileID: 1095766587170428, guid: 244779e4b985c974abdcabc2aee9fa20,
     type: 2}
