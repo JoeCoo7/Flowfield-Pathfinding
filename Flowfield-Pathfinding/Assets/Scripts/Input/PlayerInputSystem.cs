@@ -196,7 +196,6 @@ namespace ECSInput
                 return;
             }
             
-
             int status = GetMainKeyStatus(_command.Key);
             if (status == InputButtons.NONE && !string.IsNullOrEmpty(_command.AltKey))
                 status = GetMainKeyStatus(_command.AltKey);
@@ -208,13 +207,13 @@ namespace ECSInput
         {
             if (Input.GetKeyUp(_key))
                 return InputButtons.UP;
-
+            
             if (Input.GetKeyDown(_key))
                 return InputButtons.DOWN;
 
             if (Input.GetKey(_key))
                 return InputButtons.PRESSED;
-
+            
             return InputButtons.NONE;
         }
 

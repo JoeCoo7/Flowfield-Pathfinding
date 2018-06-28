@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2613051fc61152c4fbcce528d29d3e25, type: 3}
+  m_Name: InitDataNoObstacles
+  m_EditorClassIdentifier: 
+  m_textureResolution: 1024
+  m_worldWidth: 1024
+  m_worldHeight: 1024
+  m_heightScale: 100
+  m_cellSize: 2
+  m_goalAgentFactor: 4
+  m_cellsPerBlock: 8
+  m_noiseScale: 2
+  m_noiseMultiplier: 1
+  m_noiseShift: -10
+  m_gridPrefab: {fileID: 1095766587170428, guid: 244779e4b985c974abdcabc2aee9fa20,
+    type: 2}
+  m_terrainPrefab: {fileID: 1400044387025214, guid: 3013c661fc8de58448c6388baefaf95a,
+    type: 2}
+  m_cameraObject: {fileID: 1083118766984968, guid: a7b79582ae1595442a40029858f7555d,
+    type: 2}
+  TileDirectionMesh: {fileID: 4300000, guid: 6138750424a81274ab6dcfc8a3f3d9d1, type: 3}
+  TileDirectionMaterial: {fileID: 2100000, guid: e3c4f23818b6020418bf279d7e751149,
+    type: 2}
+  m_drawFlowField: 0
+  terrainHeightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: -0.0015992578
+      value: 0.032776535
+      inSlope: 1.3007463
+      outSlope: 1.3007463
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.06803742
+    - serializedVersion: 3
+      time: 1.0095215
+      value: 1.3719978
+      inSlope: 3.6431165
+      outSlope: 3.6431165
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.031645343
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  terrainColor:
+    serializedVersion: 2
+    key0: {r: 0.088109665, g: 0.5660378, b: 0.1892124, a: 1}
+    key1: {r: 0.13274725, g: 0.41509432, b: 0.09594162, a: 1}
+    key2: {r: 0.4245283, g: 0.30418363, b: 0.17021182, a: 0}
+    key3: {r: 0.764151, g: 0.764151, b: 0.764151, a: 0}
+    key4: {r: 1, g: 1, b: 1, a: 0}
+    key5: {r: 1, g: 1, b: 1, a: 0}
+    key6: {r: 1, g: 1, b: 1, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 25829
+    ctime2: 45682
+    ctime3: 55705
+    ctime4: 65535
+    ctime5: 65535
+    ctime6: 65535
+    ctime7: 0
+    atime0: 0
+    atime1: 57247
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_NumColorKeys: 5
+    m_NumAlphaKeys: 2
