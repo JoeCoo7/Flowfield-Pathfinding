@@ -83,7 +83,7 @@
             {
                 UNITY_SETUP_INSTANCE_ID(i); // necessary only if any instanced properties are going to be accessed in the fragment Shader.
 				fixed3 vel = normalize(velocityBuffer[instanceID]);
-				return fixed4(hsv_to_rgb(float3(atan2(vel.z, vel.x)/3.14159, 1.0, 1.0)), 1.0) * i.diff;
+				return fixed4(hsv_to_rgb(float3(atan2(vel.z, vel.x)/3.14159, 0.9, 0.9)), 1.0) * i.diff;
 			}
             ENDCG
         }

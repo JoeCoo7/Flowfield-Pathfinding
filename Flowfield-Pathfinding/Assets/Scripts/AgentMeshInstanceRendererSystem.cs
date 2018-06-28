@@ -19,7 +19,7 @@ using Unity.Rendering;
 public class AgentMeshInstanceRendererSystem : ComponentSystem
 {
     // Instance renderer takes only batches of 1023
-    Matrix4x4[] m_MatricesArray = new Matrix4x4[1023];
+    Matrix4x4[] m_MatricesArray = new Matrix4x4[512];
     List<AgentMeshInstanceRenderer> m_CacheduniqueRendererTypes = new List<AgentMeshInstanceRenderer>(10);
     ComponentGroup m_InstanceRendererGroup;
     ComputeBuffer m_ComputeBuffer;
