@@ -219,7 +219,7 @@ public class TileSystem : JobComponentSystem
 
     public NativeArray<float3> GetFlowFieldCopy(int handle, Allocator allocator)
     {
-        if (handle > -1 && handle < k_MaxNumFlowFields)
+        if (handle == -1 || handle >= k_MaxNumFlowFields)
             return new NativeArray<float3>(0, allocator);
 
         var copy = new NativeArray<float3>(m_FlowFieldLength, allocator);
