@@ -332,7 +332,7 @@ public class AgentSystem : JobComponentSystem
 			var pos = Positions[i];
 			pos.Value += Velocity[i].Value * TimeDelta;
 			var h = Heights[GridUtilties.WorldToIndex(grid, pos.Value)];
-			pos.Value.y += (h - pos.Value.y) * math.min(TimeDelta * 10, 1);
+			pos.Value.y += (h - pos.Value.y) * math.min(TimeDelta * 20, 1);
 			Positions[i] = pos;
 
             var rot = Rotations[i];
