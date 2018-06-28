@@ -120,15 +120,30 @@ public class TileSystem : JobComponentSystem
         }.Schedule(this, 64, inputDeps);
 
         // Compute heatmap from goals
-        var goals = new NativeArray<int2>(1, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        goals[0] = m_Goal;
+        var numAgents = 1000;
+        var radius = numAgents / Main.ActiveInitParams.m_goalAgentFactor;
+        var goalMin = math.max(new int2(m_Goal.x - radius, m_Goal.y - radius), new int2(0, 0));
+        var goalMax = math.min(new int2(m_Goal.x + radius, m_Goal.y + radius), gridSettings.cellCount - new int2(1, 1));
+        var dims = goalMax - goalMin;
+        var maxLength = dims.x * dims.y;
+        var goals = new NativeArray<int2>(maxLength, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+
+        // TODO: Change to circle
+        var goalIndex = 0;
+        for (int x = goalMin.x; x < goalMax.x; ++x)
+        {
+            for (int y = goalMin.y; y < goalMax.y; ++y)
+            {
+                goals[goalIndex++] = new int2(x, y);
+            }
+        }
+
         var floodQueue = new NativeArray<int>(heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         var computeHeatmapJobHandle = new ComputeHeatmapJob()
         {
             settings = gridSettings,
             goals = goals,
             heatmap = heatmap,
-            goalSize = m_Selected.entity.Length / Main.ActiveInitParams.m_goalAgentFactor, 
             offsets = m_Offsets,
             floodQueue = floodQueue
         }.Schedule(initializeHeatmapJobHandle);
@@ -246,27 +261,25 @@ public class TileSystem : JobComponentSystem
 
         public NativeArray<int> floodQueue;
 
-        public int goalSize;
-
         public void Execute()
         {
             BurstQueue queue = new BurstQueue(floodQueue);
             
-            var goalMap = new NativeArray<int>(heatmap.Length, Allocator.Temp);
             for (int i = 0; i < goals.Length; ++i)
             {
                 var tileIndex = GridUtilties.Grid2Index(settings, goals[i]);
-                heatmap[tileIndex] = 0;
-                queue.Enqueue(tileIndex);
+                if (heatmap[tileIndex] != k_Obstacle)
+                {
+                    heatmap[tileIndex] = 0;
+                    queue.Enqueue(tileIndex);
+                }
             }
-            heatmap.CopyTo(goalMap);
 
             // Search!
             while (queue.Length > 0)
             {
                 var index = queue.Dequeue();
-                var distance = goalMap[index];
-                var newDistance = distance + 1;
+                var newDistance = heatmap[index] + 1;
                 var grid = GridUtilties.Index2Grid(settings, index);
 
                 for (GridUtilties.Direction dir = GridUtilties.Direction.N; dir <= GridUtilties.Direction.W; ++dir)
@@ -274,15 +287,13 @@ public class TileSystem : JobComponentSystem
                     var neighborGrid = grid + offsets[(int)dir];
                     var neighborIndex = GridUtilties.Grid2Index(settings, neighborGrid);
 
-                    if (neighborIndex != -1 && goalMap[neighborIndex] != k_Obstacle && newDistance < goalMap[neighborIndex])
+                    if (neighborIndex != -1 && heatmap[neighborIndex] != k_Obstacle && newDistance < heatmap[neighborIndex])
                     {
-                        goalMap[neighborIndex] = newDistance;
-                        heatmap[neighborIndex] = math.max(newDistance - goalSize, 0);
+                        heatmap[neighborIndex] = newDistance;
                         queue.Enqueue(neighborIndex);
                     }
                 }
             }
-            goalMap.Dispose();
         }
     }
 }
