@@ -9,6 +9,7 @@
         <e p="AgentShader.shader" t="Include" />
         <e p="AgentVertexShader.shader" t="Include" />
         <e p="compute.compute" t="Include" />
+        <e p="FlyCam.cs" t="Include" />
         <e p="LowPolyShader.shader" t="Include" />
         <e p="Scripts" t="Include">
           <e p="AgentChangeMaterialJob.cs" t="Include" />
@@ -38,6 +39,7 @@
           <e p="DisplayInfo.cs" t="Include" />
           <e p="Editor" t="Include">
             <e p="GridUtiltiesTests.cs" t="Include" />
+            <e p="InitializationDataEditor.cs" t="Include" />
           </e>
           <e p="GridDataView.cs" t="Include" />
           <e p="GridUtilities.cs" t="Include" />
