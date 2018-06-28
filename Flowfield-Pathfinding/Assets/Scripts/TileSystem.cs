@@ -108,6 +108,7 @@ public class TileSystem : JobComponentSystem
             settings = gridSettings,
             goals = goals,
             heatmap = heatmap,
+            numAgents = m_SelectedWithQuery.entity.Length, 
             offsets = m_Offsets,
             floodQueue = floodQueue
         }.Schedule(initializeHeatmapJobHandle);
@@ -209,7 +210,7 @@ public class TileSystem : JobComponentSystem
         }
     }
 
-    [BurstCompile]
+    //[BurstCompile]
     struct ComputeHeatmapJob : IJob
     {
         [ReadOnly]
@@ -225,22 +226,27 @@ public class TileSystem : JobComponentSystem
 
         public NativeArray<int> floodQueue;
 
+        public int numAgents;
+
         public void Execute()
         {
             BurstQueue queue = new BurstQueue(floodQueue);
-
+            
+            var goalMap = new NativeArray<int>(heatmap.Length, Allocator.Temp);
             for (int i = 0; i < goals.Length; ++i)
             {
                 var tileIndex = GridUtilties.Grid2Index(settings, goals[i]);
                 heatmap[tileIndex] = 0;
                 queue.Enqueue(tileIndex);
             }
+            heatmap.CopyTo(goalMap);
+            var goalSize = numAgents / 100;
 
             // Search!
             while (queue.Length > 0)
             {
                 var index = queue.Dequeue();
-                var distance = heatmap[index];
+                var distance = goalMap[index];
                 var newDistance = distance + 1;
                 var grid = GridUtilties.Index2Grid(settings, index);
 
@@ -249,13 +255,15 @@ public class TileSystem : JobComponentSystem
                     var neighborGrid = grid + offsets[(int)dir];
                     var neighborIndex = GridUtilties.Grid2Index(settings, neighborGrid);
 
-                    if (neighborIndex != -1 && heatmap[neighborIndex] != k_Obstacle && newDistance < heatmap[neighborIndex])
+                    if (neighborIndex != -1 && goalMap[neighborIndex] != k_Obstacle && newDistance < goalMap[neighborIndex])
                     {
-                        heatmap[neighborIndex] = newDistance;
+                        goalMap[neighborIndex] = newDistance;
+                        heatmap[neighborIndex] = math.max(newDistance - goalSize, 0);
                         queue.Enqueue(neighborIndex);
                     }
                 }
             }
+            goalMap.Dispose();
         }
     }
 }
