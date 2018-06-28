@@ -189,6 +189,7 @@ GameObject:
   - component: {fileID: 708304320}
   - component: {fileID: 708304319}
   - component: {fileID: 708304321}
+  - component: {fileID: 708304322}
   m_Layer: 0
   m_Name: Main
   m_TagString: Untagged
@@ -240,6 +241,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   selectionColor: {r: 0, g: 1, b: 0, a: 1}
   selectionWeight: 2
+--- !u!114 &708304322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 708304318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b16ad8fda614be9438cfe9caac62ce71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1225020946
 GameObject:
   m_ObjectHideFlags: 0
