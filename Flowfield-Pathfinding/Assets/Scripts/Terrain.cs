@@ -6,24 +6,47 @@ using System.Collections.Generic;
 
 public class Terrain : MonoBehaviour
 {
+	Texture2D m_heatmapTexture;
+	Color32[] m_heatmapColors;
 	public void Init(NativeArray<float> heightMap, NativeArray<float3> normalmap, NativeArray<float3> colormap, float3 size, float cellSize)
 	{
 		int width = (int)(size.x / cellSize);
 		int depth = (int)(size.z / cellSize);
 		var colorTexture = new Texture2D(width, depth);
+		m_heatmapTexture = new Texture2D(width, depth);
+		m_heatmapColors = new Color32[width * depth];
 		Color32[] colors = new Color32[width * depth];
 		for (int i = 0; i < colors.Length; i++)
+		{
 			colors[i] = new Color(colormap[i].x, colormap[i].y, colormap[i].z);
+			m_heatmapColors[i] = new Color(0, 0, 0);
+		}
+		m_heatmapTexture.SetPixels32(m_heatmapColors);
+		m_heatmapTexture.Apply();
 		colorTexture.SetPixels32(colors);
 		colorTexture.Apply();
 
 		var mat = GetComponent<MeshRenderer>().sharedMaterial;
 		mat.SetTexture("_MainTex", colorTexture);
-
+		mat.SetTexture("_EmissionMap", m_heatmapTexture);
 		var mesh = GenerateMesh(heightMap, normalmap, size, cellSize);
 		GetComponent<MeshFilter>().sharedMesh = mesh;
 		GetComponent<MeshCollider>().sharedMesh = mesh;
 		GetComponent<MeshRenderer>().receiveShadows = true;
+
+		World.Active.GetOrCreateManager<TileSystem>().OnNewHeatMap += OnNewHeatMap;
+	}
+
+	void OnNewHeatMap(NativeArray<int> map)
+	{
+		var scale = 1f / Main.ActiveInitParams.m_grid.cellCount.x;
+		for (int i = 0; i < m_heatmapColors.Length; i++)
+		{
+			var c = math.clamp(1 - map[0] * scale, 0, 1);
+			m_heatmapColors[i] = new Color(c,c,c);
+		}
+		m_heatmapTexture.SetPixels32(m_heatmapColors);
+		m_heatmapTexture.Apply();
 	}
 
 	Mesh GenerateMesh(NativeArray<float> data, NativeArray<float3> normalmap, float3 size, float cellSize)
