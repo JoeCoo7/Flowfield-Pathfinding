@@ -19,6 +19,7 @@ public class Terrain : MonoBehaviour
 		var mesh = GenerateMesh(heightMap, normalmap, size, cellSize);
 		GetComponent<MeshFilter>().sharedMesh = mesh;
 		GetComponent<MeshCollider>().sharedMesh = mesh;
+		GetComponent<MeshRenderer>().receiveShadows = true;
 	}
 
 	Mesh GenerateMesh(NativeArray<float> data, NativeArray<float3> normalmap, float3 size, float cellSize)
