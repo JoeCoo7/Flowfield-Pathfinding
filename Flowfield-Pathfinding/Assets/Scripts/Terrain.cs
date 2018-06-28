@@ -6,29 +6,27 @@ using System.Collections.Generic;
 
 public class Terrain : MonoBehaviour
 {
-	Texture2D m_heatmapTexture;
+	Texture2D m_colorTexture;
+	Color32[] m_terrainColors;
 	Color32[] m_heatmapColors;
 	public void Init(NativeArray<float> heightMap, NativeArray<float3> normalmap, NativeArray<float3> colormap, float3 size, float cellSize)
 	{
 		int width = (int)(size.x / cellSize);
 		int depth = (int)(size.z / cellSize);
-		var colorTexture = new Texture2D(width, depth);
-		m_heatmapTexture = new Texture2D(width, depth);
+		m_colorTexture = new Texture2D(width, depth);
 		m_heatmapColors = new Color32[width * depth];
-		Color32[] colors = new Color32[width * depth];
-		for (int i = 0; i < colors.Length; i++)
+		m_terrainColors = new Color32[width * depth];
+		for (int i = 0; i < m_terrainColors.Length; i++)
 		{
-			colors[i] = new Color(colormap[i].x, colormap[i].y, colormap[i].z);
+			m_terrainColors[i] = new Color(colormap[i].x, colormap[i].y, colormap[i].z);
 			m_heatmapColors[i] = new Color(0, 0, 0);
 		}
-		m_heatmapTexture.SetPixels32(m_heatmapColors);
-		m_heatmapTexture.Apply();
-		colorTexture.SetPixels32(colors);
-		colorTexture.Apply();
+		m_colorTexture.SetPixels32(m_terrainColors);
+		m_colorTexture.Apply();
 
 		var mat = GetComponent<MeshRenderer>().sharedMaterial;
-		mat.SetTexture("_MainTex", colorTexture);
-		mat.SetTexture("_EmissionMap", m_heatmapTexture);
+		mat.SetTexture("_MainTex", m_colorTexture);
+		
 		var mesh = GenerateMesh(heightMap, normalmap, size, cellSize);
 		GetComponent<MeshFilter>().sharedMesh = mesh;
 		GetComponent<MeshCollider>().sharedMesh = mesh;
@@ -39,14 +37,24 @@ public class Terrain : MonoBehaviour
 
 	void OnNewHeatMap(NativeArray<int> map)
 	{
-		var scale = 1f / Main.ActiveInitParams.m_grid.cellCount.x;
+		var scale = (1f / (Main.ActiveInitParams.m_grid.cellCount.x * 1.25f));
 		for (int i = 0; i < m_heatmapColors.Length; i++)
 		{
-			var c = math.clamp(1 - map[0] * scale, 0, 1);
-			m_heatmapColors[i] = new Color(c,c,c);
+			var c = 0f;
+			if (map[i] == int.MaxValue)
+			{
+				m_heatmapColors[i] = m_terrainColors[i];
+			}
+			else
+			{
+				var h = map[i] * scale;
+				if (h < 1)
+					c = (1 - h) * (1 - h) * (1 - h);
+				m_heatmapColors[i] = new Color(c, c, c) + m_terrainColors[i];
+			}
 		}
-		m_heatmapTexture.SetPixels32(m_heatmapColors);
-		m_heatmapTexture.Apply();
+		m_colorTexture.SetPixels32(m_heatmapColors);
+		m_colorTexture.Apply();
 	}
 
 	Mesh GenerateMesh(NativeArray<float> data, NativeArray<float3> normalmap, float3 size, float cellSize)
