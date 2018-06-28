@@ -42,6 +42,7 @@ public class TileSystem : JobComponentSystem
         m_Offsets = new NativeArray<int2>(GridUtilties.Offset.Length, Allocator.Persistent);
         m_Offsets.CopyFrom(GridUtilties.Offset);
         lastGeneratedQueryHandle = -1;
+        m_SmoothingParams.Update();
     }
 
     protected override void OnDestroyManager()
@@ -55,18 +56,48 @@ public class TileSystem : JobComponentSystem
             cachedFlowFields.Dispose();
     }
 
+    struct SmoothingParams
+    {
+        public float smoothAmount;
+        public bool enableSmoothing;
+        public bool hasChanged { get; private set; }
+        private bool hasData;
+
+        public void Update()
+        {
+            if (Main.Instance == null)
+                return;
+
+            var initParams = Main.ActiveInitParams;
+            hasChanged = (enableSmoothing != initParams.m_smoothFlowField);
+            hasChanged |= (smoothAmount != initParams.m_smoothAmount);
+            hasChanged &= hasData;
+
+            enableSmoothing = initParams.m_smoothFlowField;
+            smoothAmount = initParams.m_smoothAmount;
+            hasData = true;
+        }
+    }
+
+    SmoothingParams m_SmoothingParams;
+
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
+        m_SmoothingParams.Update();
+
         JobHandle updateAgentsJobHandle;
         var wasJobScheduled = ProcessPendingJobs(inputDeps, out updateAgentsJobHandle);
 
-        if (m_input.Buttons[0].Values["CreateGoal"].Status != ECSInput.InputButtons.UP)
-            return wasJobScheduled ? updateAgentsJobHandle : inputDeps;
+        if (!m_SmoothingParams.hasChanged)
+        {
+            if (m_input.Buttons[0].Values["CreateGoal"].Status != ECSInput.InputButtons.UP)
+                return wasJobScheduled ? updateAgentsJobHandle : inputDeps;
 
-        if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_input.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity))
-            return wasJobScheduled ? updateAgentsJobHandle : inputDeps;
+            if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_input.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity))
+                return wasJobScheduled ? updateAgentsJobHandle : inputDeps;
 
-        m_Goal = GridUtilties.World2Grid(Main.ActiveInitParams.m_grid, hit.point);
+            m_Goal = GridUtilties.World2Grid(Main.ActiveInitParams.m_grid, hit.point);
+        }
 
         return wasJobScheduled ? CreateJobs(updateAgentsJobHandle) : CreateJobs(inputDeps);
     }
