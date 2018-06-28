@@ -116,7 +116,7 @@ public class TileSystem : JobComponentSystem
             settings = gridSettings,
             goals = goals,
             heatmap = heatmap,
-            numAgents = m_SelectedWithQuery.entity.Length, 
+            goalSize = m_Selected.entity.Length / Main.ActiveInitParams.m_goalAgentFactor, 
             offsets = m_Offsets,
             floodQueue = floodQueue
         }.Schedule(initializeHeatmapJobHandle);
@@ -234,7 +234,7 @@ public class TileSystem : JobComponentSystem
 
         public NativeArray<int> floodQueue;
 
-        public int numAgents;
+        public int goalSize;
 
         public void Execute()
         {
@@ -248,7 +248,6 @@ public class TileSystem : JobComponentSystem
                 queue.Enqueue(tileIndex);
             }
             heatmap.CopyTo(goalMap);
-            var goalSize = numAgents / 100;
 
             // Search!
             while (queue.Length > 0)
