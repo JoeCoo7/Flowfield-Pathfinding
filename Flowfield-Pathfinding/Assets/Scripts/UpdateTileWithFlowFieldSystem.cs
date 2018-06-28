@@ -34,15 +34,15 @@ namespace System
                 var flowDirection = flowField[tileIndex];
                 var height = terrainHeight[tileIndex];
 
-                var scale = height < settings.heightScale * 0.4f ? new float3(settings.cellSize.x * 2.0f, settings.cellSize.x * 2.0f, settings.cellSize.x * 1.0f) : new float3(0);
+                var scale = height < settings.heightScale * 0.4f ? new float3(settings.cellSize.x, settings.cellSize.x, settings.cellSize.x * 0.5f) : new float3(0);
 
                 tileTransform.Value =
                     math.mul(
                         math.lookRotationToMatrix(
                             new float3(
-                                position.Value.x * settings.cellSize.x - settings.worldSize.x / 2.0f + settings.cellSize.x / 2.0f,
+                                position.Value.x * settings.cellSize.x - settings.worldSize.x / 2.0f,
                                 height + 5.0f,
-                                position.Value.y * settings.cellSize.y - settings.worldSize.y / 2.0f + settings.cellSize.y / 2.0f),
+                                position.Value.y * settings.cellSize.y - settings.worldSize.y / 2.0f),
                             flowDirection, new float3(0.0f, 1.0f, 0.0f)),
                         math.scale(scale)
                         );

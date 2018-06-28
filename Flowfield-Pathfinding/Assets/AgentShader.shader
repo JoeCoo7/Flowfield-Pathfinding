@@ -52,9 +52,9 @@
 			// Albedo comes from a texture tinted by color
 			fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
 #ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-			//o.Albedo = velocityBuffer[unity_InstanceID];// UNITY_ACCESS_INSTANCED_PROP(Props, _Velocity).rgb;
+			o.Albedo = c.rgb *velocityBuffer[unity_InstanceID];// UNITY_ACCESS_INSTANCED_PROP(Props, _Velocity).rgb;
 #else
-			o.Albedo = c;
+			o.Albedo = c.rgb;
 #endif
 			// Metallic and smoothness come from slider variables
 			o.Metallic = _Metallic;
