@@ -20,6 +20,8 @@ namespace FlowField
 
         public NativeArray<float3> flowfield;
 
+        public float smoothAmount;
+
         public void Execute()
         {
             for (int i = 0; i < flowfield.Length; ++i)
@@ -35,7 +37,6 @@ namespace FlowField
                 var backPropagationCellIndex = GridUtilties.Grid2Index(settings, backPropagationCellGrid);
                 var backPropagationCellDirection = flowfield[backPropagationCellIndex];
 
-                float smoothAmount = 0.9f;
                 flowfield[cellIndex] = math_experimental.normalizeSafe(
                     flowDirection * (1.0f - smoothAmount) + backPropagationCellDirection * smoothAmount);
             }

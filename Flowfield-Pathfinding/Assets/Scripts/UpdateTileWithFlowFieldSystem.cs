@@ -1,22 +1,22 @@
-﻿using Unity.Burst;
+﻿using ECSInput;
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Collections;
+using UnityEngine;
 
 namespace System
 {
     public class UpdateTileWithFlowFieldSystem : JobComponentSystem
     {
+        
         struct UpdateJob : IJobParallelFor
         {
             public Tile.Group.AllTiles tiles;
-
-            [ReadOnly, DeallocateOnJobCompletion]
-            public NativeArray<float3> flowField;
-
-            [ReadOnly]
-            public NativeArray<float> terrainHeight;
+            
+            [ReadOnly, DeallocateOnJobCompletion] public NativeArray<float3> flowField;
+            [ReadOnly] public NativeArray<float> terrainHeight;
 
             public int handle;
 
@@ -34,15 +34,15 @@ namespace System
                 var flowDirection = flowField[tileIndex];
                 var height = terrainHeight[tileIndex];
 
-                var scale = height < settings.heightScale * 0.4f ? new float3(settings.cellSize.x * 2.0f, settings.cellSize.x * 2.0f, settings.cellSize.x * 1.0f) : new float3(0);
+                var scale = height < settings.heightScale * 0.4f ? new float3(settings.cellSize.x, settings.cellSize.x, settings.cellSize.x * 0.5f) : new float3(0);
 
                 tileTransform.Value =
                     math.mul(
                         math.lookRotationToMatrix(
                             new float3(
-                                position.Value.x * settings.cellSize.x - settings.worldSize.x / 2.0f + settings.cellSize.x / 2.0f,
+                                position.Value.x * settings.cellSize.x - settings.worldSize.x / 2.0f,
                                 height + 5.0f,
-                                position.Value.y * settings.cellSize.y - settings.worldSize.y / 2.0f + settings.cellSize.y / 2.0f),
+                                position.Value.y * settings.cellSize.y - settings.worldSize.y / 2.0f),
                             flowDirection, new float3(0.0f, 1.0f, 0.0f)),
                         math.scale(scale)
                         );
@@ -50,14 +50,18 @@ namespace System
             }
         }
 
-        [Inject]
-        Tile.Group.AllTiles m_Tiles;
+        [Inject] Tile.Group.AllTiles m_Tiles;
+        [Inject] InputDataGroup m_input;
+
 
         [Inject]
         TileSystem m_TileSystem;
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            if (m_input.Buttons[0].Values["ShowFlowfield"].Status == InputButtons.UP)
+                Main.ActiveInitParams.m_drawFlowField = !Main.ActiveInitParams.m_drawFlowField; 
+                
             var tileSystem = m_TileSystem;
             if (tileSystem.lastGeneratedQueryHandle == TileSystem.k_InvalidHandle || !Main.ActiveInitParams.m_drawFlowField)
                 return inputDeps;

@@ -36,6 +36,9 @@ public class InitializationData : ScriptableObject
     public bool m_drawFlowField = false;
     public bool m_smoothFlowField = true;
 
+    [Range(0, 1)]
+    public float m_smoothAmount = 0.9f;
+
 	[NonSerialized]
 	public NativeArray<float3> m_terrainFlow;
 	[NonSerialized]

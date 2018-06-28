@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Name: AgentsFastAndSeperate
   m_EditorClassIdentifier: 
   m_Data:
-    MaxSpeed: 50
-    Acceleration: 27.1
+    MaxSpeed: 35
+    Acceleration: 15
     Drag: 0.45
     RotationSpeed: 10
     TerrainFieldWeight: 1
