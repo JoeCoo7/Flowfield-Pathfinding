@@ -72,30 +72,18 @@ public class InitializationData : ScriptableObject
 		m_heightmap.Dispose();
 		m_initialFlow.Dispose();
 	}
-	public Color color1;
-	public Color color2;
-	public Color color3;
-	public Color color4;
+
+
 	public AnimationCurve terrainHeightCurve;
+	public Gradient terrainColor;
+
 	CellData GridFunc(float2 per, int2 coord)
 	{
 		var noise = Mathf.PerlinNoise(per.x * m_noiseScale, per.y * m_noiseScale);
+		var noise2 = Mathf.PerlinNoise(per.x * m_noiseScale * 3, per.y * m_noiseScale * 3);
 		var cost = (byte)math.clamp((noise * m_noiseMultiplier + m_noiseShift) * 255, 0, 255);
-		Color color;
-
-		var height = math.clamp(terrainHeightCurve.Evaluate(noise), 0, 1);
-
-		if (height < .2f)
-			color = color1;
-		else if (height < .4f)
-			color = Color.Lerp(color2, color1, (.4f - height) * 5);
-		else if (height < .6f)
-			color = Color.Lerp(color3, color2, (.6f - height) * 5);
-		else if (height < .8f)
-			color = Color.Lerp(color4, color3, (.8f - height) * 5);
-		else
-			color = color4;
-
+		Color color = terrainColor.Evaluate(math.clamp(noise,0 ,1));
+		var height = math.clamp(terrainHeightCurve.Evaluate(noise * .9f + noise2 * .1f), 0, 1);
 		return new CellData() { cost = cost, height = height * m_heightScale, color = color };
 	}
 
