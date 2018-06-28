@@ -1,5 +1,4 @@
 ﻿using Unity.Burst;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -16,25 +15,24 @@ public class PlayerSelectionSystem : JobComponentSystem
 
         public void Execute(int index)
         {
-            var position = agentSelection.position[index];
-            var selection = agentSelection.selection[index];
-
-            float4 agentVector = math.mul(world2Clip, new float4(position.Value, 1));
+            var position = agentSelection.position[index].Value;
+            float4 agentVector = math.mul(world2Clip, new float4(position.x, position.y, position.z, 1));
             float2 screenPoint = (agentVector / -agentVector.w).xy;
 
-            var selectionCopy = selection;
-            var result = math.all(math.lessThanEqual(start, screenPoint)) && math.all(math.lessThanEqual(screenPoint, stop));
-            selectionCopy.Value = (byte)math.select(0, 1, result);
-            selection = selectionCopy;
+            var result = math.all(start <= screenPoint) && math.all(screenPoint <= stop);
+            var selectionValue = math.select(0, 1, result);
+            agentSelection.selection[index] = new Agent.Selection { Value = (byte)selectionValue };
         }
     }
 
     [BurstCompile]
-    struct SelectAllJob : IJobProcessComponentData<Agent.Selection>
+    struct SelectAllJob : IJobParallelFor
     {
-        public void Execute([WriteOnly] ref Agent.Selection selection)
+        public Agent.Group.AgentSelection agentSelection;
+
+        public void Execute(int index)
         {
-            selection = new Agent.Selection { Value = 1 };
+            agentSelection.selection[index] = new Agent.Selection { Value = 1 };
         }
     }
 
@@ -56,7 +54,10 @@ public class PlayerSelectionSystem : JobComponentSystem
     {
         var status = m_Input.Buttons[0].Values["SelectAll"].Status;
         if (status == ECSInput.InputButtons.UP)
-            return new SelectAllJob().Schedule(this, inputDeps);
+        {
+            var selectionJob = new SelectAllJob { agentSelection = m_AgentSelection };
+            return selectionJob.Schedule(m_AgentSelection.Length, 64, inputDeps);
+        }
 
         status = m_Input.Buttons[0].Values["SelectAgents"].Status;
         if (status == ECSInput.InputButtons.NONE)
