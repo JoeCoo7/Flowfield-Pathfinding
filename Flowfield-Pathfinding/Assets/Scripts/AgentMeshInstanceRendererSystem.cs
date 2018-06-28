@@ -1,15 +1,14 @@
 ﻿using System.Collections.Generic;
 using Agent;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Experimental.PlayerLoop;
-using Unity.Rendering;
-using Unity.Collections;
-using Unity.Mathematics;
 
 /// <summary>
 /// Renders all Entities containing both AgentMeshInstanceRenderer & TransformMatrix components.
@@ -22,6 +21,7 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
 {
     // Instance renderer takes only batches of 1023
     Matrix4x4[] m_MatricesArray = new Matrix4x4[512];
+    NativeArray<float3> m_Colors;
     List<AgentMeshInstanceRenderer> m_CacheduniqueRendererTypes = new List<AgentMeshInstanceRenderer>(10);
     ComponentGroup m_InstanceRendererGroup;
     List<ComputeBuffer> m_ComputeBuffers = new List<ComputeBuffer>();
@@ -49,9 +49,10 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
     {
         // We want to find all AgentMeshInstanceRenderer & TransformMatrix combinations and render them
         m_InstanceRendererGroup = GetComponentGroup(
-            ComponentType.ReadOnly<AgentMeshInstanceRenderer>(), 
-            ComponentType.ReadOnly<TransformMatrix>(), 
+            ComponentType.ReadOnly<AgentMeshInstanceRenderer>(),
+            ComponentType.ReadOnly<TransformMatrix>(),
             ComponentType.ReadOnly<Agent.Selection>());
+        m_Colors = new NativeArray<float3>(512, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
     }
 
     protected override void OnDestroyManager()
@@ -60,6 +61,8 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
 
         foreach (var buffer in m_ComputeBuffers)
             buffer.Release();
+
+        m_Colors.Dispose();
     }
 
     protected override void OnUpdate()
@@ -101,7 +104,7 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
                     m_MatricesArray[j].m23 += Main.ActiveInitParams.m_cellSize / 2;
                 }
 
-                if (drawIdx+1 >= m_ComputeBuffers.Count)
+                if (drawIdx + 1 >= m_ComputeBuffers.Count)
                 {
                     var computeBuffer = new ComputeBuffer(512, 3 * sizeof(float));
                     m_ComputeBuffers.Add(computeBuffer);
@@ -109,11 +112,10 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
                     m_Materials.Add(material);
                 }
 
-                var colors = new NativeArray<float3>(length, Allocator.Temp);
+
                 for (int x = 0; x < length; ++x)
-                    colors[x] = selection[beginIndex + x].Value == 1 ? new Vector3(0.5f, 1f, 0.5f) : new Vector3(0.5f, 0.5f, 1f);
-                m_ComputeBuffers[drawIdx].SetData(colors);
-                colors.Dispose();
+                    m_Colors[x] = selection[beginIndex + x].Value == 1 ? new Vector3(0.5f, 1f, 0.5f) : new Vector3(0.5f, 0.5f, 1f);
+                m_ComputeBuffers[drawIdx].SetData(m_Colors, 0, 0, length);
                 m_Materials[drawIdx].SetBuffer("velocityBuffer", m_ComputeBuffers[drawIdx]);
 
                 // !!! This will draw all meshes using the last material.  Probably need an array of materials.
