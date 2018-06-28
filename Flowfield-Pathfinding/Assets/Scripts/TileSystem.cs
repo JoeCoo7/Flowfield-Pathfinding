@@ -20,7 +20,7 @@ public struct GridSettings : ISharedComponentData
 [UpdateAfter(typeof(AgentSystem))]
 public class TileSystem : JobComponentSystem
 {
-    static uint s_QueryHandle = uint.MaxValue;
+    static int s_QueryHandle = int.MaxValue;
 
     public static readonly int2 k_InvalidGoal = new int2(-1, -1);
 
@@ -89,7 +89,7 @@ public class TileSystem : JobComponentSystem
     JobHandle CreateJobs(JobHandle inputDeps)
     {
         GridSettings gridSettings = Main.ActiveInitParams.m_grid;
-        uint queryHandle = ++s_QueryHandle;
+        int queryHandle = ++s_QueryHandle;
 
         var updateAgentsTargetGoalJobHandle = new UpdateAgentsTargetGoalJob
         {
@@ -226,7 +226,7 @@ public class TileSystem : JobComponentSystem
 
     struct PendingJob
     {
-        public uint queryHandle;
+        public int queryHandle;
         public int2 goal;
         public JobHandle jobHandle;
         public CacheEntry cacheEntry;
@@ -257,11 +257,11 @@ public class TileSystem : JobComponentSystem
         return copy;
     }
 
-    Dictionary<uint, CacheEntry> m_Cache = new Dictionary<uint, CacheEntry>();
+    Dictionary<int, CacheEntry> m_Cache = new Dictionary<int, CacheEntry>();
 
-    public uint lastGeneratedQueryHandle { get; private set; }
+    public int lastGeneratedQueryHandle { get; private set; }
 
-    public NativeArray<float3> GetFlowField(uint handle)
+    public NativeArray<float3> GetFlowField(int handle)
     {
         if (m_Cache.TryGetValue(handle, out CacheEntry cacheEntry))
             return cacheEntry.flowField;

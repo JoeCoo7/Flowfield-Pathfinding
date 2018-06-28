@@ -7,12 +7,12 @@ namespace FlowField
     [System.Serializable]
     public struct Query : IComponentData
     {
-        public uint Handle;
+        public int Handle;
     }
 
     [System.Serializable]
     public struct Result : IComponentData
     {
-        public uint Handle;
+        public int Handle;
     }
 }
