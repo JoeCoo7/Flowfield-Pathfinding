@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Entities;
 
 public class DisplayInfo : MonoBehaviour
@@ -10,7 +8,7 @@ public class DisplayInfo : MonoBehaviour
         var agentSystem = World.Active.GetExistingManager<AgentSystem>();
         if (agentSystem != null)
         {
-            GUILayout.Label(string.Format("Agents: {0}", agentSystem.numAgents));
+            GUI.Label(new Rect(0, 0, 300, 50), "Agents: " + agentSystem.numAgents.ToString());
         }
     }
 }

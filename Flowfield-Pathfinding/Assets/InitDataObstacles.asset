@@ -9,7 +9,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2613051fc61152c4fbcce528d29d3e25, type: 3}
-  m_Name: InitData
+  m_Name: InitDataObstacles
   m_EditorClassIdentifier: 
   m_textureResolution: 1024
   m_worldWidth: 1024
@@ -18,7 +18,7 @@ MonoBehaviour:
   m_cellSize: 2
   m_goalAgentFactor: 4
   m_cellsPerBlock: 8
-  m_noiseScale: 7
+  m_noiseScale: 10
   m_noiseMultiplier: 20
   m_noiseShift: -10
   m_gridPrefab: {fileID: 1095766587170428, guid: 244779e4b985c974abdcabc2aee9fa20,

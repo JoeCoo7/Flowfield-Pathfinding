@@ -20,10 +20,21 @@ public class PlayerSelectionSystem : JobComponentSystem
             float2 screenPoint = (agentVector / -agentVector.w).xy;
 
             if (math.lessThanEqual(start.x, screenPoint.x) && math.lessThanEqual(screenPoint.x, stop.x) &&
-                math.lessThanEqual(start.x, screenPoint.x) && math.lessThanEqual(screenPoint.x, stop.x))
+                math.lessThanEqual(start.y, screenPoint.y) && math.lessThanEqual(screenPoint.y, stop.y))
                 agentSelection.selection[index] = new Agent.Selection { Value = 1 };
             else
                 agentSelection.selection[index] = new Agent.Selection { Value = 0 };
+        }
+    }
+
+    [BurstCompile]
+    struct SelectAllJob : IJobParallelFor
+    {
+        public Agent.Group.AgentSelection agentSelection;
+
+        public void Execute(int index)
+        {
+            agentSelection.selection[index] = new Agent.Selection { Value = 1 };
         }
     }
 
@@ -43,21 +54,34 @@ public class PlayerSelectionSystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        var status = m_Input.Buttons[0].Values["SelectAgents"].Status;
+        var status = m_Input.Buttons[0].Values["SelectAll"].Status;
+        if (status == ECSInput.InputButtons.UP)
+        {
+            var selectionJob = new SelectAllJob { agentSelection = m_AgentSelection };
+            return selectionJob.Schedule(m_AgentSelection.Length, 64, inputDeps);
+        }
+
+        status = m_Input.Buttons[0].Values["SelectAgents"].Status;
         if (status == ECSInput.InputButtons.NONE)
             return inputDeps;
 
         if (status == ECSInput.InputButtons.DOWN)
         {
             m_Start = m_Input.MousePos[0].Value;
+            m_Selection.start = m_Start;
+            m_Selection.stop = m_Stop;
             m_Selection.enabled = true;
         }
         m_Stop = m_Input.MousePos[0].Value;
+        m_Selection.stop = m_Stop;
 
         if (status == ECSInput.InputButtons.UP)
         {
             m_Selection.enabled = false;
+        }
 
+        if (m_Selection.enabled)
+        {
             var job = new SelectionJob
             {
                 start = Normalize(math.min(m_Start, m_Stop), UnityEngine.Screen.width, UnityEngine.Screen.height),

@@ -82,8 +82,8 @@
             fixed4 frag(v2f i, uint instanceID : SV_InstanceID) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(i); // necessary only if any instanced properties are going to be accessed in the fragment Shader.
-				fixed3 vel = normalize(velocityBuffer[instanceID]);
-				return fixed4(hsv_to_rgb(float3(atan2(vel.z, vel.x)/3.14159, 0.9, 0.9)), 1.0) * i.diff;
+				fixed3 vel = velocityBuffer[instanceID];
+				return fixed4(vel, 1.0);
 			}
             ENDCG
         }

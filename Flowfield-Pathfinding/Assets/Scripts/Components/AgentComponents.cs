@@ -17,8 +17,8 @@ namespace Agent
 
     public struct Goal : IComponentData
     {
-        public int2 Current;
-        public int2 Target;
+        public int Current;
+        public int Target;
     }
     public struct AgentMeshInstanceRenderer : ISharedComponentData
     {

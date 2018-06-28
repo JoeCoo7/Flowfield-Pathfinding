@@ -21,11 +21,11 @@ GameObject:
   - component: {fileID: 4079186145859572}
   - component: {fileID: 20954021817941374}
   - component: {fileID: 81497011163631416}
-  - component: {fileID: 114103108964712002}
   - component: {fileID: 114861148149684606}
   - component: {fileID: 114971046963431854}
+  - component: {fileID: 114882991591460252}
   m_Layer: 8
-  m_Name: RTSCamera
+  m_Name: FlyCam
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -135,50 +135,6 @@ MonoBehaviour:
   m_FirstSelected: {fileID: 0}
   m_sendNavigationEvents: 1
   m_DragThreshold: 10
---- !u!114 &114103108964712002
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1083118766984968}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc565ce7f7ade1d45a1880d6f4da568c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Target: {fileID: 0}
-  StartPosition: {x: 0, y: 5, z: -9}
-  AllowEdgePanning: 0
-  AllowKeyPanning: 1
-  AllowMouseDragPanning: 1
-  AllowWheelZooming: 1
-  AllowKeyZooming: 1
-  AllowZoomTilting: 1
-  AllowMouseRotation: 1
-  AllowMoveTo: 1
-  AllowShake: 0
-  AllowFollowTarget: 0
-  Zoom: 200
-  ZoomSpeed: 300
-  ZoomSmoothing: 5
-  MinZoom: 200
-  MaxZoom: 1000
-  TiltMaxChange: -50
-  TiltStart: 400
-  TiltAngle: 80
-  PanBuffer: 0.1
-  PanSpeed: 2
-  PanningMinX: -600
-  PanningMinZ: -600
-  PanningMaxX: 600
-  PanningMaxZ: 600
-  PanSmoothing: 200
-  FollowSmoothing: 8
-  MoveToTargetTime: 0.5
-  RotationSpeed: 1
-  RotationSmoothing: 8
-  TiltSmoothing: 8
-  MinHeightOffset: 0
 --- !u!114 &114861148149684606
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -234,6 +190,22 @@ MonoBehaviour:
   m_BeforeTransparentBundles: []
   m_BeforeStackBundles: []
   m_AfterStackBundles: []
+--- !u!114 &114882991591460252
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1083118766984968}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44b0f037f4af3774586a61a27127d3b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cameraSensitivity: 90
+  climbSpeed: 4
+  normalMoveSpeed: 100
+  slowMoveFactor: 1
+  fastMoveFactor: 3
 --- !u!114 &114971046963431854
 MonoBehaviour:
   m_ObjectHideFlags: 1

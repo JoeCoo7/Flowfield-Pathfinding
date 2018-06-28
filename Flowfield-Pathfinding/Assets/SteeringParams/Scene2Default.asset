@@ -9,19 +9,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3cdd9d14d7a7498494735bc15f0b3818, type: 3}
-  m_Name: AgentsFastAndSeperate
+  m_Name: Scene2Default
   m_EditorClassIdentifier: 
   m_Data:
-    MaxSpeed: 50
-    Acceleration: 27.1
-    Drag: 0.45
-    RotationSpeed: 10
-    TerrainFieldWeight: 1
-    TargetFieldWeight: 60
-    SeparationRadius: 4
-    SeparationWeight: 30
-    CohesionWeight: 5
-    AlignmentWeight: 15
-    AlignmentRadius: 4
-    MaxNeighborChecks: 2
-    NeighbourHashCellSize: 2
+    MaxSpeed: 26.7
+    Acceleration: 7.7
+    Drag: 0.1
+    RotationSpeed: 0
+    TerrainFieldWeight: 0
+    TargetFieldWeight: 0
+    SeparationRadius: 0.1
+    SeparationWeight: 0
+    CohesionWeight: 0
+    AlignmentWeight: 0
+    AlignmentRadius: 1
+    MaxNeighborChecks: 0
+    NeighbourHashCellSize: 1

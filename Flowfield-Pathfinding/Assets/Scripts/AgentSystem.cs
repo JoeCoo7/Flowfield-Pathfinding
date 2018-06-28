@@ -50,7 +50,34 @@ public class AgentSystem : JobComponentSystem
 		}
 	}
 
-	protected override JobHandle OnUpdate(JobHandle inputDeps)
+    NativeArray<float3> m_AllFlowFields;
+
+    protected override void OnCreateManager(int capacity)
+    {
+        base.OnCreateManager(capacity);
+
+        m_AllFlowFields = new NativeArray<float3>(0, Allocator.Persistent);
+    }
+
+    protected override void OnDestroyManager()
+    {
+        m_AllFlowFields.Dispose();
+    }
+
+    void CopyFlowField()
+    {
+        var cache = m_tileSystem.cachedFlowFields;
+        if (cache.IsCreated && m_AllFlowFields.Length != cache.Length)
+        {
+            m_AllFlowFields.Dispose();
+            m_AllFlowFields = new NativeArray<float3>(cache.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+        }
+
+        if (cache.IsCreated)
+            m_AllFlowFields.CopyFrom(cache);
+    }
+
+    protected override JobHandle OnUpdate(JobHandle inputDeps)
 	{
 		if (m_neighborHashMap.IsCreated)
 			m_neighborHashMap.Dispose();
@@ -61,7 +88,7 @@ public class AgentSystem : JobComponentSystem
 		var velocities = m_agents.Velocities;
 		var agentCount = positions.Length;
         var goals = m_agents.Goals;
-        //var flowFields = m_tileSystem.CopyFlowFieldCache(Allocator.TempJob);
+        CopyFlowField();
 
         m_neighborHashMap = new NativeMultiHashMap<int, int>(agentCount, Allocator.TempJob);
 		var vecFromNearestNeighbor = new NativeArray<float3>(agentCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -77,7 +104,7 @@ public class AgentSystem : JobComponentSystem
 			positions = positions,
 			hashMap = m_neighborHashMap,
 			cellRadius = neighborCellSize,
-			 HashedPositions = neighborHashes
+			HashedPositions = neighborHashes
 		};
 		var hashNeighborPositionsJobHandle = hashNeighborPositionsJob.Schedule(agentCount, 64, inputDeps);
 
@@ -95,12 +122,11 @@ public class AgentSystem : JobComponentSystem
 			positions = positions,
 			closestNeighbor = vecFromNearestNeighbor,
 			cellRadius = neighborCellSize, 
-			 hashes = neighborHashes,
-			  steerParams = steerParams,
+			hashes = neighborHashes,
+			steerParams = steerParams,
 			avgNeighborPositions = avgNeighborPositions,
 			avgNeighborVelocities = avgNeighborVelocities,
-			 velocities = velocities
-			  
+			velocities = velocities
 		};
 
 		var closestNeighborJobHandle = closestNeighborJob.Schedule(agentCount, 64, mergeNeighborCellsJobHandle);
@@ -116,8 +142,9 @@ public class AgentSystem : JobComponentSystem
 			velocities = velocities,
 			terrainFlowfield = Main.TerrainFlow,
             goals = goals,
-            targetFlowField = m_tileSystem.latestFlowField,
-			 steerParams = steerParams
+            flowFields = m_AllFlowFields,
+            flowFieldLength = m_AllFlowFields.Length / TileSystem.k_MaxNumFlowFields,
+			steerParams = steerParams
 		};
 
         var speedJob = new PositionRotationJob
@@ -229,8 +256,8 @@ public class AgentSystem : JobComponentSystem
         [ReadOnly] public ComponentDataArray<Goal> goals;
 		[ReadOnly] public NativeArray<float3> terrainFlowfield;
 		[ReadOnly] public ComponentDataArray<Position> positions;
-        //[ReadOnly] public NativeHashMap<int2, NativeArray<float3>> flowFields;
-        [ReadOnly] public NativeArray<float3> targetFlowField;
+        [ReadOnly] public NativeArray<float3> flowFields;
+        public int flowFieldLength;
 		public float deltaTime;
 		public ComponentDataArray<Velocity> velocities;
 
@@ -268,12 +295,8 @@ public class AgentSystem : JobComponentSystem
 			return steerParams.SeparationWeight * (nVec / nDist) * strength * strength;
 		}
 
-		float3 FlowField(float3 position, float3 velocity, NativeArray<float3> field, float weight)
+		float3 FlowField(float3 position, float3 velocity, float3 fieldVal, float weight)
 		{
-			var gridIndex = GridUtilties.WorldToIndex(settings, position);
-			if (gridIndex < 0)
-				return 0;
-			var fieldVal = field[gridIndex];
 			fieldVal.y = 0;
 			var fieldLen = math.length(fieldVal);
 			if (fieldLen < .1f)
@@ -308,28 +331,33 @@ public class AgentSystem : JobComponentSystem
 			var position = positions[index].Value;
             var goal = goals[index].Current;
 
-            float3 targetFlowFieldContribution = new float3(0, 0, 0);
+            var targetFlowFieldContribution = new float3(0, 0, 0);
+            var terrainFlowFieldContribution = new float3(0, 0, 0);
+
             // This is what we want to do, but the targetFlowField is marked as [WriteOnly],
             // which feels like a bug in the JobSystem
-            //NativeArray<float3> targetFlowField;
-            //if (flowFields.TryGetValue(goal, out targetFlowField))
-            //{
-            //    targetFlowFieldContribution =
-            //        FlowField(position, velocity, targetFlowField, steerParams.TargetFieldWeight);
-            //}
-            if (targetFlowField.Length > 0)
-                targetFlowFieldContribution = FlowField(position, velocity, targetFlowField, steerParams.TargetFieldWeight);
+            var gridIndex = GridUtilties.WorldToIndex(settings, position);
+            if (gridIndex != -1)
+            {
+                terrainFlowFieldContribution = FlowField(position, velocity, terrainFlowfield[gridIndex], steerParams.TerrainFieldWeight);
+                if (goal != TileSystem.k_InvalidHandle && flowFields.Length > 0)
+                {
+                    var flowFieldValue = flowFields[flowFieldLength * goal + gridIndex];
+                    targetFlowFieldContribution =
+                        FlowField(position, velocity, flowFieldValue, steerParams.TargetFieldWeight);
+                }
+            }
 
             var normalizedForces = math_experimental.normalizeSafe
 			(
 				Alignment(index, velocity) +
 				Cohesion(index, position) +
 				Separation(index) +
-				FlowField(position, velocity, terrainFlowfield, steerParams.TerrainFieldWeight) +
+                terrainFlowFieldContribution +
 				targetFlowFieldContribution
 			);
-			var newVelocity = Velocity(velocity, normalizedForces);
 
+			var newVelocity = Velocity(velocity, normalizedForces);
 			velocities[index] = new Velocity { Value = newVelocity};
 		}
 	}
@@ -403,7 +431,7 @@ public class AgentSystem : JobComponentSystem
 			pos.y = terrainHeight - o;
 			*/
 
-			pos.y += (terrainHeight - pos.y) * math.min(TimeDelta * (speed + 20) * 2, 1);
+			pos.y = pos.y + (terrainHeight - pos.y) * math.min(TimeDelta * (speed + 20) * 2, 1) + 5;
 
 			var currDir = math.forward(rot);
 			var normalDiff = normal - currUp;
