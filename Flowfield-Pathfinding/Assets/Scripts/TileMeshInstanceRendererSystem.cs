@@ -44,7 +44,9 @@ public class TileMeshInstanceRendererSystem : ComponentSystem
 	protected override void OnCreateManager(int capacity)
 	{
 	    // We want to find all TileMeshInstanceRenderer & TransformMatrix combinations and render them
-	    m_InstanceRendererGroup = GetComponentGroup(typeof(TileMeshInstanceRenderer), typeof(TransformMatrix), ComponentType.Subtractive<MeshCulledComponent>(), ComponentType.Subtractive<MeshLODInactive>());
+	    m_InstanceRendererGroup = GetComponentGroup(
+            ComponentType.ReadOnly<TileMeshInstanceRenderer>(),
+            ComponentType.ReadOnly<TransformMatrix>());
 	}
 
 	protected override void OnUpdate()
