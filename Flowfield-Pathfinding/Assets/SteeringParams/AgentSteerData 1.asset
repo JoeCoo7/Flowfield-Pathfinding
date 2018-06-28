@@ -9,19 +9,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3cdd9d14d7a7498494735bc15f0b3818, type: 3}
-  m_Name: AgentSteerBestPerf
+  m_Name: AgentSteerData 1
   m_EditorClassIdentifier: 
   m_Data:
-    MaxSpeed: 40.7
-    Acceleration: 1.4
-    Drag: 2.4
-    RotationSpeed: 4.2
-    TerrainFieldWeight: 3
-    TargetFieldWeight: 10
-    SeparationRadius: 4
-    SeparationWeight: 40
-    CohesionWeight: 5.3
-    AlignmentWeight: 2.2
-    AlignmentRadius: 3.54
-    MaxNeighborChecks: 10
-    NeighbourHashCellSize: 9.6
+    MaxSpeed: 10.7
+    Acceleration: 6.8
+    Drag: 0
+    RotationSpeed: 9
+    TerrainFieldWeight: 69.9
+    TargetFieldWeight: 9.2
+    SeparationRadius: 8.2
+    SeparationWeight: 9.8
+    CohesionWeight: 3.7
+    AlignmentWeight: 16.71
+    AlignmentRadius: 3.51
+    MaxNeighborChecks: 16
+    NeighbourHashCellSize: 53.3

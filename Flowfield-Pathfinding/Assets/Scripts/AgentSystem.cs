@@ -127,7 +127,9 @@ public class AgentSystem : JobComponentSystem
             Positions = positions,
             Rotations = rotations,
 			TimeDelta = Time.deltaTime,
-			steerParams = steerParams
+			steerParams = steerParams,
+			 grid = settings,
+			  Heights = InitializationData.m_heightmap
 		};
 
 		var steerJobHandle = steerJob.Schedule(agentCount, 64, closestNeighborJobHandle);
@@ -341,12 +343,16 @@ public class AgentSystem : JobComponentSystem
 		[ReadOnly] public ComponentDataArray<Velocity> Velocity;
 		[ReadOnly]public float TimeDelta;
 		public ComponentDataArray<Position> Positions;
-        public ComponentDataArray<Rotation> Rotations;
+		public ComponentDataArray<Rotation> Rotations;
+		[ReadOnly]public NativeArray<float> Heights;
 		public AgentSteerParams steerParams;
+		public GridSettings grid;
         public void Execute(int i)
 		{
 			var pos = Positions[i];
 			pos.Value += Velocity[i].Value * TimeDelta;
+			var h = Heights[GridUtilties.WorldToIndex(grid, pos.Value)];
+			pos.Value.y += (h - pos.Value.y) * math.min(TimeDelta * 20, 1);
 			Positions[i] = pos;
 
             var rot = Rotations[i];
