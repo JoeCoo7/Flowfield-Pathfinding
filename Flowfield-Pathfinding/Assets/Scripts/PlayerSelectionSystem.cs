@@ -20,7 +20,7 @@ public class PlayerSelectionSystem : JobComponentSystem
             float2 screenPoint = (agentVector / -agentVector.w).xy;
 
             if (math.lessThanEqual(start.x, screenPoint.x) && math.lessThanEqual(screenPoint.x, stop.x) &&
-                math.lessThanEqual(start.x, screenPoint.x) && math.lessThanEqual(screenPoint.x, stop.x))
+                math.lessThanEqual(start.y, screenPoint.y) && math.lessThanEqual(screenPoint.y, stop.y))
                 agentSelection.selection[index] = new Agent.Selection { Value = 1 };
             else
                 agentSelection.selection[index] = new Agent.Selection { Value = 0 };
