@@ -150,7 +150,8 @@ public class TileSystem : JobComponentSystem
                 settings = gridSettings,
                 flowfield = flowField,
                 floodQueue = floodQueue,
-                offsets = m_Offsets
+                offsets = m_Offsets,
+                smoothAmount = Main.ActiveInitParams.m_smoothAmount
             }.Schedule(computeFlowFieldJobHandle);
         }
         else

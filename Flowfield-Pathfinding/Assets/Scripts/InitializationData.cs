@@ -35,6 +35,7 @@ public class InitializationData : ScriptableObject
     public Material TileDirectionMaterial;
     public bool m_drawFlowField = false;
     public bool m_smoothFlowField = true;
+    public float m_smoothAmount = 0.9f;
 
 	[NonSerialized]
 	public NativeArray<float3> m_terrainFlow;
