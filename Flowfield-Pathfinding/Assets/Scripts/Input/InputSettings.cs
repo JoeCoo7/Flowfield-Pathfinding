@@ -16,7 +16,8 @@ public class InputSettings : ScriptableObject
 			{"CreateGoal", ";mouse 1"},
             {"SelectAgents", "~right shift|~left shift;mouse 0" },
             {"SelectAll", "right ctrl|left ctrl;a" },
-            {"ShowFlowfield", "left shift|right shift;x" }
+            {"ShowFlowfield", "left shift|right shift;x" },
+            {"ShowHeatmap", "left shift|right shift;y" }
         };
     }
 }
