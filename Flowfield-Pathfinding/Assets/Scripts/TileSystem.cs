@@ -47,6 +47,9 @@ public class TileSystem : JobComponentSystem
     {
         m_Offsets.Dispose();
 
+        if (lastGeneratedHeatmap.IsCreated)
+            lastGeneratedHeatmap.Dispose();
+
         if (cachedFlowFields.IsCreated)
             cachedFlowFields.Dispose();
     }
@@ -87,7 +90,7 @@ public class TileSystem : JobComponentSystem
         }.Schedule(this, inputDeps);
 
         // Create & Initialize heatmap
-        var heatmap = new NativeArray<int>(m_FlowFieldLength, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        var heatmap = new NativeArray<int>(m_FlowFieldLength, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 
         var initializeHeatmapJobHandle = new InitializeHeatmapJob()
         {
@@ -134,7 +137,7 @@ public class TileSystem : JobComponentSystem
         var computeFlowFieldJobHandle = new FlowField.ComputeFlowFieldJob
         {
             settings = gridSettings,
-            heatmap = heatmap, // [DeallocateOnJobCompletion]
+            heatmap = heatmap,
             flowfield = flowField,
             offsets = m_Offsets
         }.Schedule(heatmap.Length, 64, computeHeatmapJobHandle);
@@ -151,7 +154,8 @@ public class TileSystem : JobComponentSystem
         {
             queryHandle = queryHandle,
             jobHandle = smoothFlowFieldJobHandle,
-            flowField = flowField
+            flowField = flowField,
+            heatmap = heatmap
         });
 
         return JobHandle.CombineDependencies(smoothFlowFieldJobHandle, updateAgentsTargetGoalJobHandle);
@@ -171,10 +175,16 @@ public class TileSystem : JobComponentSystem
             {
                 var queryHandle = pendingJob.queryHandle;
                 var flowField = pendingJob.flowField;
+                var heatmap = pendingJob.heatmap;
 
                 var offset = flowField.Length * queryHandle;
                 cachedFlowFields.Slice(offset, flowField.Length).CopyFrom(flowField);
                 flowField.Dispose();
+
+                if (lastGeneratedHeatmap.IsCreated)
+                    lastGeneratedHeatmap.Dispose();
+
+                lastGeneratedHeatmap = heatmap;
 
                 availableGoals[numAvailableGoals++] = pendingJob.queryHandle;
 
@@ -203,6 +213,7 @@ public class TileSystem : JobComponentSystem
         public int queryHandle;
         public JobHandle jobHandle;
         public NativeArray<float3> flowField;
+        public NativeArray<int> heatmap;
     }
 
     struct GoalFlowFieldPair
@@ -216,6 +227,8 @@ public class TileSystem : JobComponentSystem
     public NativeArray<float3> cachedFlowFields { get; private set; }
 
     public int lastGeneratedQueryHandle { get; private set; }
+
+    public NativeArray<int> lastGeneratedHeatmap { get; private set; }
 
     public NativeArray<float3> GetFlowFieldCopy(int handle, Allocator allocator)
     {

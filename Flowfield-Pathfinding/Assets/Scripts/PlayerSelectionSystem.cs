@@ -27,6 +27,17 @@ public class PlayerSelectionSystem : JobComponentSystem
         }
     }
 
+    [BurstCompile]
+    struct SelectAllJob : IJobParallelFor
+    {
+        public Agent.Group.AgentSelection agentSelection;
+
+        public void Execute(int index)
+        {
+            agentSelection.selection[index] = new Agent.Selection { Value = 1 };
+        }
+    }
+
     [Inject] ECSInput.InputDataGroup m_Input;
     [Inject] Agent.Group.AgentSelection m_AgentSelection;
 
@@ -43,7 +54,14 @@ public class PlayerSelectionSystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        var status = m_Input.Buttons[0].Values["SelectAgents"].Status;
+        var status = m_Input.Buttons[0].Values["SelectAll"].Status;
+        if (status == ECSInput.InputButtons.UP)
+        {
+            var selectionJob = new SelectAllJob { agentSelection = m_AgentSelection };
+            return selectionJob.Schedule(m_AgentSelection.Length, 64, inputDeps);
+        }
+
+        status = m_Input.Buttons[0].Values["SelectAgents"].Status;
         if (status == ECSInput.InputButtons.NONE)
             return inputDeps;
 
