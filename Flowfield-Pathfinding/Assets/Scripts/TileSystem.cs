@@ -67,8 +67,7 @@ public class TileSystem : JobComponentSystem
 
         m_Goal = GridUtilties.World2Grid(Main.ActiveInitParams.m_grid, hit.point);
 
-        var flowFieldJobHandle = CreateJobs(inputDeps);
-        return wasJobScheduled ? JobHandle.CombineDependencies(updateAgentsJobHandle, flowFieldJobHandle) : flowFieldJobHandle;
+        return wasJobScheduled ? CreateJobs(updateAgentsJobHandle) : CreateJobs(inputDeps);
     }
 
     JobHandle CreateJobs(JobHandle inputDeps)
@@ -158,7 +157,7 @@ public class TileSystem : JobComponentSystem
             heatmap = heatmap
         });
 
-        return JobHandle.CombineDependencies(smoothFlowFieldJobHandle, updateAgentsTargetGoalJobHandle);
+        return JobHandle.CombineDependencies(initializeHeatmapJobHandle, updateAgentsTargetGoalJobHandle);
     }
 
     int m_FlowFieldLength;
@@ -173,6 +172,8 @@ public class TileSystem : JobComponentSystem
             var pendingJob = m_PendingJobs[i];
             if (pendingJob.jobHandle.IsCompleted)
             {
+                pendingJob.jobHandle.Complete();
+
                 var queryHandle = pendingJob.queryHandle;
                 var flowField = pendingJob.flowField;
                 var heatmap = pendingJob.heatmap;
