@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Experimental.PlayerLoop;
 using Unity.Rendering;
+using Unity.Collections;
 
 /// <summary>
 /// Renders all Entities containing both AgentMeshInstanceRenderer & TransformMatrix components.
@@ -45,7 +46,7 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
     protected override void OnCreateManager(int capacity)
     {
         // We want to find all AgentMeshInstanceRenderer & TransformMatrix combinations and render them
-        m_InstanceRendererGroup = GetComponentGroup(typeof(AgentMeshInstanceRenderer), typeof(Agent.Velocity), typeof(TransformMatrix), ComponentType.Subtractive<MeshCulledComponent>(), ComponentType.Subtractive<MeshLODInactive>());
+        m_InstanceRendererGroup = GetComponentGroup(typeof(AgentMeshInstanceRenderer), typeof(Agent.Velocity), typeof(TransformMatrix), typeof(Agent.Selection), ComponentType.Subtractive<MeshCulledComponent>(), ComponentType.Subtractive<MeshLODInactive>());
 
         // Start with random colors for units
         int maxUnitLength = 1024 * 1024;
@@ -80,6 +81,7 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
             var renderer = m_CacheduniqueRendererTypes[i];
             var transforms = m_InstanceRendererGroup.GetComponentDataArray<TransformMatrix>(forEachFilter, i);
             var velocities = m_InstanceRendererGroup.GetComponentDataArray<Agent.Velocity>(forEachFilter, i);
+            var selection = m_InstanceRendererGroup.GetComponentDataArray<Agent.Selection>(forEachFilter, i);
 
             // Graphics.DrawMeshInstanced has a set of limitations that are not optimal for working with ECS.
             // Specifically:
@@ -90,6 +92,7 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
 
             // For now, we have to copy our data into Matrix4x4[] with a specific upper limit of how many instances we can render in one batch.
             // So we just have a for loop here, representing each Graphics.DrawMeshInstanced batch
+
             int beginIndex = 0;
             while (beginIndex < transforms.Length)
             {
@@ -102,14 +105,21 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
                     m_MatricesArray[j].m23 += Main.ActiveInitParams.m_cellSize / 2;
                 }
 
-                m_ComputeBuffer.SetData(velocities.GetChunkArray(beginIndex, length));
+
+                NativeArray<float3> fakeData = new NativeArray<float3>(length, Allocator.Temp, NativeArrayOptions.ClearMemory);
+                int y = 0;
+                for (int x = beginIndex; x < length; ++x)
+                    fakeData[y++] = selection[x].Value == 1 ? 50.0f : 0.0f;
+                m_ComputeBuffer.SetData(fakeData);//velocities.GetChunkArray(beginIndex, length));
                 renderer.material.SetBuffer("velocityBuffer", m_ComputeBuffer);
+                fakeData.Dispose();
 
                 // !!! This will draw all meshes using the last material.  Probably need an array of materials.
                 Graphics.DrawMeshInstanced(renderer.mesh, renderer.subMesh, renderer.material, m_MatricesArray, length, null, renderer.castShadows, renderer.receiveShadows);
 
                 beginIndex += length;
             }
+
         }
 
         m_CacheduniqueRendererTypes.Clear();
