@@ -69,6 +69,7 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
         var forEachFilter = m_InstanceRendererGroup.CreateForEachFilter(m_CacheduniqueRendererTypes);
 
         int drawIdx = 0;
+        Vector3[] colors = new Vector3[m_MatricesArray.Length];
         for (int i = 0; i != m_CacheduniqueRendererTypes.Count; i++)
         {
             // For each unique MeshInstanceRenderer data, we want to get all entities with a TransformMatrix
@@ -107,11 +108,10 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
                     var material = new Material(renderer.material);
                     m_Materials.Add(material);
                 }
-
-                Vector3[] colors = new Vector3[length];
+                
                 for (int x = 0; x < length; ++x)
                     colors[x] = selection[beginIndex + x].Value == 1 ? new Vector3(0.5f, 1f, 0.5f) : new Vector3(0.5f, 0.5f, 1f);
-                m_ComputeBuffers[drawIdx].SetData(colors);
+                m_ComputeBuffers[drawIdx].SetData(colors, 0, 0, length);
                 m_Materials[drawIdx].SetBuffer("velocityBuffer", m_ComputeBuffers[drawIdx]);
 
                 // !!! This will draw all meshes using the last material.  Probably need an array of materials.
