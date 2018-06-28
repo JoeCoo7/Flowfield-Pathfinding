@@ -53,11 +53,12 @@ public class InitializationData : ScriptableObject
 		var height = (int)(m_worldHeight / m_cellSize);
 		var cellCount = new int2(width, height);
 
-		m_grid = new GridSettings()
-		{
-			worldSize = new float2(m_worldWidth, m_worldHeight),
-			cellCount = cellCount,
-			cellSize = new float2(m_cellSize, m_cellSize)
+        m_grid = new GridSettings()
+        {
+            worldSize = new float2(m_worldWidth, m_worldHeight),
+            cellCount = cellCount,
+            cellSize = new float2(m_cellSize, m_cellSize),
+            heightScale = m_heightScale
 		};
 
 		m_terrainHeights = new NativeArray<float>(width * height, Allocator.Persistent);

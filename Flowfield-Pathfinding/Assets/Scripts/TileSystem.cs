@@ -14,6 +14,7 @@ public struct GridSettings : ISharedComponentData
     public float2 worldSize;
     public float2 cellSize;
     public int2 cellCount;
+    public float heightScale;
 }
 
 [UpdateInGroup(typeof(ProcessGroup))]
