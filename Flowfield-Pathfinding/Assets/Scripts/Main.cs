@@ -31,9 +31,18 @@ public class Main : MonoBehaviour
 		get { return Instance.m_InitData.m_terrainFlow; }
 	}
 
+	public static NativeArray<float3> TerrainColors
+	{
+		get { return Instance.m_InitData.m_terrainColors; }
+	}
+	public static NativeArray<float3> TerrainNormals
+	{
+		get { return Instance.m_InitData.m_terrainNormals; }
+	}
+
 	public static NativeArray<float> TerrainHeight
 	{
-		get { return Instance.m_InitData.m_heightmap; }
+		get { return Instance.m_InitData.m_terrainHeights; }
 	}
 
 	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
