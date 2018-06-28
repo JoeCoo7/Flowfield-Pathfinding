@@ -13,4 +13,9 @@ namespace Agent
     {
         public byte Value;
     }
+
+    public struct Goal : IComponentData
+    {
+        public int2 Value;
+    }
 }

@@ -5,6 +5,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Jobs;
 using Unity.Burst;
+using Agent;
 
 [System.Serializable]
 public struct GridSettings : ISharedComponentData
@@ -70,6 +71,17 @@ public class TileSystem : JobComponentSystem
         m_Goal = GridUtilties.World2Grid(Main.ActiveInitParams.m_grid, hit.point);
 
         return CreateJobs(inputDeps);
+    }
+
+    [BurstCompile]
+    struct UpdateAgentsGoalJob : IJobProcessComponentData<Selection, Goal>
+    {
+        public int2 newGoal;
+
+        public void Execute([ReadOnly] ref Selection selectionFlag, ref Goal goal)
+        {
+            goal.Value = math.select(newGoal, goal.Value, selectionFlag.Value == 0);
+        }
     }
 
     JobHandle CreateJobs(JobHandle inputDeps)
