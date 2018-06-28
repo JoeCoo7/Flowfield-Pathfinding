@@ -73,7 +73,7 @@ namespace Manager
         {
             ecb.CreateEntity(Agent);
             ecb.SetComponent(new Unity.Transforms.Position { Value = pos });
-            ecb.SetSharedComponent(new Unity.Rendering.MeshInstanceRenderer { mesh = mesh, material = mat });
+            ecb.SetSharedComponent(new Unity.Rendering.MeshInstanceRenderer { mesh = mesh, material = mat, castShadows = UnityEngine.Rendering.ShadowCastingMode.On });
             ecb.SetSharedComponent(settings);
             ecb.SetSharedComponent(flowField);
         }

@@ -77,7 +77,6 @@ public class InitializationData : ScriptableObject
 	public Color color3;
 	public Color color4;
 	public AnimationCurve terrainHeightCurve;
-
 	CellData GridFunc(float2 per, int2 coord)
 	{
 		var noise = Mathf.PerlinNoise(per.x * m_noiseScale, per.y * m_noiseScale);
