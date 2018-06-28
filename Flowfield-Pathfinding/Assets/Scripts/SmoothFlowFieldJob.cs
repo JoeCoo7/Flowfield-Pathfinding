@@ -35,6 +35,8 @@ namespace FlowField
                 var cellDirectionCeiling = new int2((int)math.sign(flowDirection.x), (int)math.sign(flowDirection.z));
                 var backPropagationCellGrid = cellGrid + cellDirectionCeiling;
                 var backPropagationCellIndex = GridUtilties.Grid2Index(settings, backPropagationCellGrid);
+                if (backPropagationCellIndex < 0)
+                    continue;
                 var backPropagationCellDirection = flowfield[backPropagationCellIndex];
 
                 flowfield[cellIndex] = math_experimental.normalizeSafe(
