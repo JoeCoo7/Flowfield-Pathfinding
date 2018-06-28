@@ -9,6 +9,7 @@ public class Terrain : MonoBehaviour
 	Texture2D m_colorTexture;
 	Color32[] m_terrainColors;
 	Color32[] m_heatmapColors;
+	bool m_showingHeatField = false;
 	public void Init(NativeArray<float> heightMap, NativeArray<float3> normalmap, NativeArray<float3> colormap, float3 size, float cellSize)
 	{
 		int width = (int)(size.x / cellSize);
@@ -37,24 +38,37 @@ public class Terrain : MonoBehaviour
 
 	void OnNewHeatMap(NativeArray<int> map)
 	{
-		var scale = (1f / (Main.ActiveInitParams.m_grid.cellCount.x * 1.25f));
-		for (int i = 0; i < m_heatmapColors.Length; i++)
+		if (Main.ActiveInitParams.m_drawHeatField)
 		{
-			var c = 0f;
-			if (map[i] == int.MaxValue)
+			var scale = (1f / (Main.ActiveInitParams.m_grid.cellCount.x * 1.25f));
+			for (int i = 0; i < m_heatmapColors.Length; i++)
 			{
-				m_heatmapColors[i] = m_terrainColors[i];
+				var c = 0f;
+				if (map[i] == int.MaxValue)
+				{
+					m_heatmapColors[i] = m_terrainColors[i];
+				}
+				else
+				{
+					var h = map[i] * scale;
+					if (h < 1)
+						c = (1 - h) * (1 - h) * (1 - h);
+					m_heatmapColors[i] = new Color(c, c, c) + m_terrainColors[i];
+				}
 			}
-			else
+			m_colorTexture.SetPixels32(m_heatmapColors);
+			m_colorTexture.Apply();
+			m_showingHeatField = true;
+		}
+		else
+		{
+			if (m_showingHeatField)
 			{
-				var h = map[i] * scale;
-				if (h < 1)
-					c = (1 - h) * (1 - h) * (1 - h);
-				m_heatmapColors[i] = new Color(c, c, c) + m_terrainColors[i];
+				m_colorTexture.SetPixels32(m_terrainColors);
+				m_colorTexture.Apply();
+				m_showingHeatField = true;
 			}
 		}
-		m_colorTexture.SetPixels32(m_heatmapColors);
-		m_colorTexture.Apply();
 	}
 
 	Mesh GenerateMesh(NativeArray<float> data, NativeArray<float3> normalmap, float3 size, float cellSize)
