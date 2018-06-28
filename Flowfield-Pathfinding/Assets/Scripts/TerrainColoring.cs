@@ -3,6 +3,7 @@ using Unity.Entities;
 using Unity.Collections;
 using Unity.Mathematics;
 using System.Collections.Generic;
+using UnityEngine.Rendering;
 
 public class TerrainColoring : MonoBehaviour
 {
@@ -32,6 +33,7 @@ public class TerrainColoring : MonoBehaviour
         GetComponent<MeshFilter>().sharedMesh = mesh;
         GetComponent<MeshCollider>().sharedMesh = mesh;
         GetComponent<MeshRenderer>().receiveShadows = true;
+        GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
 
         World.Active.GetOrCreateManager<TileSystem>().OnNewHeatMap += OnNewHeatMap;
     }
