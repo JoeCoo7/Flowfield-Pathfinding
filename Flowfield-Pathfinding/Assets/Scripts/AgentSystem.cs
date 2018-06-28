@@ -333,47 +333,93 @@ public class AgentSystem : JobComponentSystem
 			velocities[index] = new Velocity { Value = newVelocity};
 		}
 	}
-	
-	
-	
+
+
+
 	//-----------------------------------------------------------------------------
-	[BurstCompile]
+	//	[BurstCompile]
 	struct PositionRotationJob : IJobParallelFor
 	{
 		[ReadOnly] public ComponentDataArray<Velocity> Velocity;
-		[ReadOnly]public float TimeDelta;
+		[ReadOnly] public float TimeDelta;
 		public ComponentDataArray<Position> Positions;
 		public ComponentDataArray<Rotation> Rotations;
 		[ReadOnly] public NativeArray<float> Heights;
 		[ReadOnly] public NativeArray<float3> Normals;
 		public AgentSteerParams steerParams;
 		public GridSettings grid;
-        public void Execute(int i)
+
+		public static float CalculateAngle(float _x1, float _y1, float _x2, float _y2)
 		{
-			var pos = Positions[i];
-			pos.Value += Velocity[i].Value * TimeDelta;
-			var speed = math.length(Velocity[i].Value);
+			return math.atan2((_y2 - _y1), (_x2 - _x1));
+		}
+
+		public static float AngleBetween(float2 _vector1, float2 _vector2)
+		{
+			float2 diff = _vector2 - _vector1;
+			float sign = (_vector2.y < _vector1.y) ? -1.0f : 1.0f;
+			return CalculateAngle(1, 0, diff.x, diff.y) * sign;
+		}
+
+
+		public void Execute(int i)
+		{
+			var pos = Positions[i].Value;
+			var rot = Rotations[i].Value;
+			var vel = Velocity[i].Value;
+			var speed = math.length(vel);
+			pos += vel * TimeDelta;
+
+			var index = GridUtilties.WorldToIndex(grid, pos);
+			var terrainHeight = (index < 0 ? pos.y : Heights[index]);
+			var currUp = math.up(rot);
+			var normal = index < 0 ? currUp : Normals[index];
+
+			var coord = GridUtilties.World2Grid(grid, pos);
+			/*
+			var c = coord * grid.cellSize - grid.worldSize * .5f - grid.cellSize * .5f;
+			var center = new float3(c.x, 0, c.y);
+			pos.y = 0;
+			var vecFromGridCenter = pos - center;
+			var nVec = math.normalize(vecFromGridCenter);
+			var angleX = math.atan2(-normal.y, normal.x - nVec.x);
+			var tanX = math.tan(angleX);
+			var ox = vecFromGridCenter.x * tanX;
+			var angleZ = math.atan2(-normal.y, normal.z - nVec.z);
+			var tanZ = math.tan(angleZ);
+			var oz = vecFromGridCenter.z * tanZ;
+			var o = (ox + oz) * .5f;
+			pos.y = terrainHeight + -o;
+			*/
+			/*
+			var worldCellPos = coord * grid.cellSize - grid.worldSize * .5f;
+			var adjacentLength = new float2(pos.x, pos.z) - worldCellPos;
+			var angleX = AngleBetween(math.normalize(new float2(adjacentLength.x, 0)), math.normalize(new float2(normal.x, normal.y)));
+			var offsetX = adjacentLength.x * math.tan(angleX);
+			var angleZ = AngleBetween(math.normalize(new float2(adjacentLength.y, 0)), math.normalize(new float2(normal.z, normal.y)));
+			var offsetZ = adjacentLength.y * math.tan(angleZ);
+
+			var o = (offsetX + offsetZ) * .5f;
+			pos.y = terrainHeight - o;
+			*/
+
+			pos.y += (terrainHeight - pos.y) * math.min(TimeDelta * (speed + 20) * 2, 1);
+
+			var currDir = math.forward(rot);
+			var normalDiff = normal - currUp;
+			var newUp = math.normalize(currUp + normalDiff * math.min(TimeDelta * 10, 1));
+			var newDir = currDir;
 			if (speed > .1f)
 			{
-				var index = GridUtilties.WorldToIndex(grid, pos.Value);
-				var h = index < 0 ? pos.Value.y : Heights[index];
-				pos.Value.y += (h - pos.Value.y) * math.min(TimeDelta * 10, 1);
-				Positions[i] = pos;
-
-				var rot = Rotations[i];
-				var currDir = math.forward(Rotations[i].Value);
-				var currUp = math.up(Rotations[i].Value);
-				var normal = index < 0 ? currUp : Normals[index];
-				var normalDiff = normal - currUp;
-				var newUp = math.normalize(currUp + normalDiff * math.min(TimeDelta * 10, 1));
-
 				var speedPer = speed / steerParams.MaxSpeed;
-				var desiredDir = math.normalize(Velocity[i].Value);
+				var desiredDir = math.normalize(vel);
 				var dirDiff = desiredDir - currDir;
-				var newDir = math.normalize(currDir + dirDiff * math.min(TimeDelta * steerParams.RotationSpeed * (.5f + speedPer * .5f), 1));
-				rot.Value = math.lookRotationToQuaternion(newDir, newUp);
-				Rotations[i] = rot;
+				newDir = math.normalize(currDir + dirDiff * math.min(TimeDelta * steerParams.RotationSpeed * (.5f + speedPer * .5f), 1));
 			}
+			rot = math.lookRotationToQuaternion(newDir, newUp);
+			Positions[i] = new Position(pos);
+			Rotations[i] = new Rotation(rot);
+
 		}
 	}
 
