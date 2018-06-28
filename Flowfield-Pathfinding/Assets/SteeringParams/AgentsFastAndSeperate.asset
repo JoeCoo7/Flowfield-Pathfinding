@@ -12,16 +12,16 @@ MonoBehaviour:
   m_Name: AgentsFastAndSeperate
   m_EditorClassIdentifier: 
   m_Data:
-    MaxSpeed: 38
-    Acceleration: 10
-    Drag: 1.2
-    RotationSpeed: 9
-    TerrainFieldWeight: 69.9
-    TargetFieldWeight: 9.2
+    MaxSpeed: 50
+    Acceleration: 27.1
+    Drag: 0.45
+    RotationSpeed: 10
+    TerrainFieldWeight: 1
+    TargetFieldWeight: 60
     SeparationRadius: 4
-    SeparationWeight: 123.3
-    CohesionWeight: 0.77
-    AlignmentWeight: 26
+    SeparationWeight: 30
+    CohesionWeight: 5
+    AlignmentWeight: 15
     AlignmentRadius: 4
-    MaxNeighborChecks: 4
-    NeighbourHashCellSize: 20
+    MaxNeighborChecks: 2
+    NeighbourHashCellSize: 2

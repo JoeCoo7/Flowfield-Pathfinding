@@ -47,7 +47,10 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
     protected override void OnCreateManager(int capacity)
     {
         // We want to find all AgentMeshInstanceRenderer & TransformMatrix combinations and render them
-        m_InstanceRendererGroup = GetComponentGroup(typeof(AgentMeshInstanceRenderer), typeof(TransformMatrix), typeof(Agent.Selection), ComponentType.Subtractive<MeshCulledComponent>(), ComponentType.Subtractive<MeshLODInactive>());
+        m_InstanceRendererGroup = GetComponentGroup(
+            ComponentType.ReadOnly<AgentMeshInstanceRenderer>(), 
+            ComponentType.ReadOnly<TransformMatrix>(), 
+            ComponentType.ReadOnly<Agent.Selection>());
     }
 
     protected override void OnDestroyManager()

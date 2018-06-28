@@ -154,7 +154,7 @@ MonoBehaviour:
   AllowWheelZooming: 1
   AllowKeyZooming: 1
   AllowZoomTilting: 1
-  AllowMouseRotation: 0
+  AllowMouseRotation: 1
   AllowMoveTo: 1
   AllowShake: 0
   AllowFollowTarget: 0
@@ -168,10 +168,10 @@ MonoBehaviour:
   TiltAngle: 80
   PanBuffer: 0.1
   PanSpeed: 2
-  PanningMinX: -350
-  PanningMinZ: -400
-  PanningMaxX: 200
-  PanningMaxZ: 400
+  PanningMinX: -600
+  PanningMinZ: -600
+  PanningMaxX: 600
+  PanningMaxZ: 600
   PanSmoothing: 200
   FollowSmoothing: 8
   MoveToTargetTime: 0.5

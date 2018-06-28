@@ -384,7 +384,7 @@ public class AgentSystem : JobComponentSystem
 			if (speed > .1f)
 			{
 				var index = GridUtilties.WorldToIndex(grid, pos.Value);
-				var h = index < 0 ? pos.Value.y : Heights[index];
+				var h = index < 0 ? pos.Value.y : Heights[index] + 5;
 				pos.Value.y += (h - pos.Value.y) * math.min(TimeDelta * 10, 1);
 				Positions[i] = pos;
 
