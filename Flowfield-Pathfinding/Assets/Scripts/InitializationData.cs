@@ -67,7 +67,7 @@ public class InitializationData : ScriptableObject
 		BuildWorld();
 	}
 
-	internal void BuildWorld()
+	public void BuildWorld()
 	{
 		CreateGrid(m_grid, m_terrainHeights, m_terrainColors, m_terrainNormals, m_terrainFlow, GridFunc);
 
