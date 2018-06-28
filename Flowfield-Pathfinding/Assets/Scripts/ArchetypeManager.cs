@@ -48,7 +48,7 @@ namespace Manager
             em.SetComponentData(e, new Tile.Position { Value = pos });
             em.SetComponentData(e, new Tile.Cost { Value = cost });
             em.SetComponentData(e, new Tile.Collision { Value = col });
-            em.SetComponentData(e, new Tile.FlowFieldHandle { Handle = uint.MaxValue });
+            em.SetComponentData(e, new Tile.FlowFieldHandle { Handle = int.MaxValue });
             em.SetSharedComponentData(e, new Tile.TileMeshInstanceRenderer { mesh = mesh, material = mat });
             em.SetSharedComponentData(e, settings);
         }

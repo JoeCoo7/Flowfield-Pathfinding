@@ -15,7 +15,7 @@ namespace System
             [ReadOnly]
             public NativeArray<float3> flowField;
 
-            public uint handle;
+            public int handle;
 
             public void Execute(int index)
             {
