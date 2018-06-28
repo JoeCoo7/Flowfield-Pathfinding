@@ -16,6 +16,7 @@ namespace Agent
 
     public struct Goal : IComponentData
     {
-        public int2 Value;
+        public int2 Current;
+        public int2 Target;
     }
 }
