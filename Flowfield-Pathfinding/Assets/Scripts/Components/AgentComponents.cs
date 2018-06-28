@@ -9,5 +9,13 @@ namespace Agent
         public float3 Value;
     }
 
-    public struct Selection : IComponentData { }
+    public struct Selection : IComponentData
+    {
+        public byte Value;
+    }
+
+    public struct Goal : IComponentData
+    {
+        public int2 Value;
+    }
 }

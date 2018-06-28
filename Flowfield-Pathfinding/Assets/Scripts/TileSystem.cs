@@ -5,6 +5,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Jobs;
 using Unity.Burst;
+using Agent;
 
 [System.Serializable]
 public struct GridSettings : ISharedComponentData
@@ -65,13 +66,27 @@ public class TileSystem : JobComponentSystem
         return CreateJobs(inputDeps);
     }
 
+    [BurstCompile]
+    struct UpdateAgentsGoalJob : IJobProcessComponentData<Selection, Goal>
+    {
+        public int2 newGoal;
+
+        public void Execute([ReadOnly] ref Selection selectionFlag, ref Goal goal)
+        {
+            goal.Value = math.select(newGoal, goal.Value, selectionFlag.Value == 0);
+        }
+    }
+
     JobHandle CreateJobs(JobHandle inputDeps)
     {
         GridSettings gridSettings = Main.ActiveInitParams.m_grid;
         uint queryHandle = ++s_QueryHandle;
 
-        for (var i = 0; i < m_SelectedWithQuery.entity.Length; ++i)
+        for (var i = 0; i < m_SelectedWithQuery.Length; ++i)
         {
+            if (m_SelectedWithQuery.selection[i].Value != 1)
+                continue;
+
             var query = m_SelectedWithQuery.flowFieldQuery[i];
             query.Handle = queryHandle;
             m_SelectedWithQuery.flowFieldQuery[i] = query;
@@ -80,7 +95,12 @@ public class TileSystem : JobComponentSystem
         var buffer = m_EndFrameBarrier.CreateCommandBuffer();
         var newQuery = new FlowField.Query { Handle = queryHandle };
         for (var i = 0; i < m_Selected.entity.Length; ++i)
+        { 
+            if (m_Selected.selection[i].Value != 1)
+                continue;
+
             buffer.AddComponent(m_Selected.entity[i], newQuery);
+        }
 
         // Create & Initialize heatmap
         var heatmap = new NativeArray<int>(gridSettings.cellCount.x * gridSettings.cellCount.y,
@@ -93,8 +113,24 @@ public class TileSystem : JobComponentSystem
         }.Schedule(this, 64, inputDeps);
 
         // Compute heatmap from goals
-        var goals = new NativeArray<int2>(1, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        goals[0] = m_Goal;
+        var numAgents = 1000;
+        var radius = numAgents / Main.ActiveInitParams.m_goalAgentFactor;
+        var goalMin = math.max(new int2(m_Goal.x - radius, m_Goal.y - radius), new int2(0, 0));
+        var goalMax = math.min(new int2(m_Goal.x + radius, m_Goal.y + radius), gridSettings.cellCount - new int2(1, 1));
+        var dims = goalMax - goalMin;
+        var maxLength = dims.x * dims.y;
+        var goals = new NativeArray<int2>(maxLength, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+
+        // TODO: Change to circle
+        var goalIndex = 0;
+        for (int x = goalMin.x; x < goalMax.x; ++x)
+        {
+            for (int y = goalMin.y; y < goalMax.y; ++y)
+            {
+                goals[goalIndex++] = new int2(x, y);
+            }
+        }
+
         var floodQueue = new NativeArray<int>(heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         var computeHeatmapJobHandle = new ComputeHeatmapJob()
         {
@@ -221,20 +257,22 @@ public class TileSystem : JobComponentSystem
         public void Execute()
         {
             BurstQueue queue = new BurstQueue(floodQueue);
-
+            
             for (int i = 0; i < goals.Length; ++i)
             {
                 var tileIndex = GridUtilties.Grid2Index(settings, goals[i]);
-                heatmap[tileIndex] = 0;
-                queue.Enqueue(tileIndex);
+                if (heatmap[tileIndex] != k_Obstacle)
+                {
+                    heatmap[tileIndex] = 0;
+                    queue.Enqueue(tileIndex);
+                }
             }
 
             // Search!
             while (queue.Length > 0)
             {
                 var index = queue.Dequeue();
-                var distance = heatmap[index];
-                var newDistance = distance + 1;
+                var newDistance = heatmap[index] + 1;
                 var grid = GridUtilties.Index2Grid(settings, index);
 
                 for (GridUtilties.Direction dir = GridUtilties.Direction.N; dir <= GridUtilties.Direction.W; ++dir)

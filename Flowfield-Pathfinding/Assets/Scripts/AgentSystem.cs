@@ -27,6 +27,10 @@ public class AgentSystem : JobComponentSystem
 	[Inject] AgentData m_agents;
 	private NativeMultiHashMap<int, int> m_neighborHashMap;
 
+    public int numAgents
+    {
+        get { return m_agents.Length; }
+    }
 
 	[BurstCompile]
 	struct HashPositionsWidthSavedHash : IJobParallelFor

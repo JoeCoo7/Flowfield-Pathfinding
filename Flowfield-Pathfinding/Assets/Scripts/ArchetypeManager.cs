@@ -34,6 +34,7 @@ namespace Manager
                 ComponentType.Create<Unity.Transforms.TransformMatrix>(),
                 ComponentType.Create<Unity.Rendering.MeshInstanceRenderer>(),
                 ComponentType.Create<Agent.Velocity>(),
+                ComponentType.Create<Agent.Selection>(),
                 ComponentType.Create<GridSettings>(),
                 ComponentType.Create<FlowField.Data>());
 
@@ -43,6 +44,7 @@ namespace Manager
                 ComponentType.Create<Unity.Transforms.TransformMatrix>(),
                 ComponentType.Create<Unity.Rendering.MeshInstanceRenderer>(),
                 ComponentType.Create<Agent.Velocity>(),
+                ComponentType.Create<Agent.Selection>(),
                 ComponentType.Create<GridSettings>(),
                 ComponentType.Create<FlowField.Data>(),
                 ComponentType.Create<FlowField.Query>());
