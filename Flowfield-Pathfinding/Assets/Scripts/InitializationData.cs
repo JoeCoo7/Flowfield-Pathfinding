@@ -76,12 +76,16 @@ public class InitializationData : ScriptableObject
 	public Color color2;
 	public Color color3;
 	public Color color4;
+	public AnimationCurve terrainHeightCurve;
+
 	CellData GridFunc(float2 per, int2 coord)
 	{
 		var noise = Mathf.PerlinNoise(per.x * m_noiseScale, per.y * m_noiseScale);
 		var cost = (byte)math.clamp((noise * m_noiseMultiplier + m_noiseShift) * 255, 0, 255);
 		Color color;
-		var height = noise;
+
+		var height = math.clamp(terrainHeightCurve.Evaluate(noise), 0, 1);
+
 		if (height < .2f)
 			color = color1;
 		else if (height < .4f)
@@ -92,7 +96,8 @@ public class InitializationData : ScriptableObject
 			color = Color.Lerp(color4, color3, (.8f - height) * 5);
 		else
 			color = color4;
-		return new CellData() { cost = cost, height = noise * m_heightScale, color = color };
+
+		return new CellData() { cost = cost, height = height * m_heightScale, color = color };
 	}
 
 	public struct CellData

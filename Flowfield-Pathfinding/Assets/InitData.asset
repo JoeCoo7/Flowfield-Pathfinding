@@ -14,7 +14,7 @@ MonoBehaviour:
   m_textureResolution: 1024
   m_worldWidth: 1024
   m_worldHeight: 1024
-  m_heightScale: 25
+  m_heightScale: 100
   m_cellSize: 2
   m_goalAgentFactor: 100
   m_cellsPerBlock: 8
@@ -35,3 +35,27 @@ MonoBehaviour:
   color2: {r: 0.6132076, g: 0.40099263, b: 0.078097194, a: 1}
   color3: {r: 0.007819034, g: 0.4811321, b: 0, a: 1}
   color4: {r: 0.6226415, g: 0.6226415, b: 0.6226415, a: 1}
+  terrainHeightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: -0.0015992578
+      value: 0.032776535
+      inSlope: 1.3007463
+      outSlope: 1.3007463
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.06803742
+    - serializedVersion: 3
+      time: 1.0095215
+      value: 1.3719978
+      inSlope: 3.6431165
+      outSlope: 3.6431165
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.031645343
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
