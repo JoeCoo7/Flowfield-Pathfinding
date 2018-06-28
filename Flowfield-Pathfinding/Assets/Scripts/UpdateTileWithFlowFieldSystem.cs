@@ -61,7 +61,7 @@ namespace System
         {
             if (m_input.Buttons[0].Values["ShowFlowfield"].Status == InputButtons.UP)
                 Main.ActiveInitParams.m_drawFlowField = !Main.ActiveInitParams.m_drawFlowField; 
-            if (m_input.Buttons[0].Values["ShowHeatfield"].Status == InputButtons.UP)
+            if (m_input.Buttons[0].Values["ShowHeatmap"].Status == InputButtons.UP)
                 Main.ActiveInitParams.m_drawHeatField = !Main.ActiveInitParams.m_drawHeatField;
             
             var tileSystem = m_TileSystem;
