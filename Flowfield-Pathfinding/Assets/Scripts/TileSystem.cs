@@ -20,15 +20,11 @@ public struct GridSettings : ISharedComponentData
 [UpdateAfter(typeof(AgentSystem))]
 public class TileSystem : JobComponentSystem
 {
-    static int s_QueryHandle = int.MaxValue;
+    public const int k_MaxNumFlowFields = 10;
 
-    public static readonly int2 k_InvalidGoal = new int2(-1, -1);
+    public const int k_InvalidHandle = -1;
 
-    public static bool IsGoalValid(int2 goal)
-    {
-        var result = (goal != k_InvalidGoal);
-        return result.x && result.y;
-    }
+    static int s_QueryHandle = k_InvalidHandle;
 
     [Inject] ECSInput.InputDataGroup m_input;
 
@@ -44,29 +40,15 @@ public class TileSystem : JobComponentSystem
 
         m_Offsets = new NativeArray<int2>(GridUtilties.Offset.Length, Allocator.Persistent);
         m_Offsets.CopyFrom(GridUtilties.Offset);
-        lastGeneratedQueryHandle = s_QueryHandle;
-        cachedFlowFields = new NativeHashMap<int2, NativeArray<float3>>(16, Allocator.Persistent);
-        m_CompletedFlowFields = new List<GoalFlowFieldPair>();
-        latestFlowField = m_EmptyFlowField = new NativeArray<float3>(0, Allocator.Persistent);
+        lastGeneratedQueryHandle = -1;
     }
-
-    NativeArray<float3> m_EmptyFlowField;
 
     protected override void OnDestroyManager()
     {
         m_Offsets.Dispose();
-        foreach (var kvp in m_Cache)
-        {
-            var entry = kvp.Value;
-            entry.heatmap.Dispose();
-            entry.flowField.Dispose();
-        }
-        if (m_EmptyFlowField.IsCreated)
-            m_EmptyFlowField.Dispose();
 
-        cachedFlowFields.Dispose();
-        m_Cache.Clear();
-        m_CompletedFlowFields.Clear();
+        if (cachedFlowFields.IsCreated)
+            cachedFlowFields.Dispose();
     }
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -89,16 +71,23 @@ public class TileSystem : JobComponentSystem
     JobHandle CreateJobs(JobHandle inputDeps)
     {
         GridSettings gridSettings = Main.ActiveInitParams.m_grid;
-        int queryHandle = ++s_QueryHandle;
+        if (s_QueryHandle == -1)
+        {
+            m_FlowFieldLength = gridSettings.cellCount.x * gridSettings.cellCount.y;
+            cachedFlowFields = new NativeArray<float3>(m_FlowFieldLength * k_MaxNumFlowFields, Allocator.Persistent);
+            s_QueryHandle = 0;
+        }
+
+        int queryHandle = s_QueryHandle;
+        s_QueryHandle = (s_QueryHandle + 1) % k_MaxNumFlowFields;
 
         var updateAgentsTargetGoalJobHandle = new UpdateAgentsTargetGoalJob
         {
-            newGoal = m_Goal
+            newGoal = queryHandle
         }.Schedule(this, inputDeps);
 
         // Create & Initialize heatmap
-        var heatmap = new NativeArray<int>(gridSettings.cellCount.x * gridSettings.cellCount.y,
-            Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+        var heatmap = new NativeArray<int>(m_FlowFieldLength, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
         var initializeHeatmapJobHandle = new InitializeHeatmapJob()
         {
@@ -141,11 +130,11 @@ public class TileSystem : JobComponentSystem
             floodQueue = floodQueue
         }.Schedule(initializeHeatmapJobHandle);
 
-        var flowField = new NativeArray<float3>(heatmap.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+        var flowField = new NativeArray<float3>(heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         var computeFlowFieldJobHandle = new FlowField.ComputeFlowFieldJob
         {
             settings = gridSettings,
-            heatmap = heatmap,
+            heatmap = heatmap, // [DeallocateOnJobCompletion]
             flowfield = flowField,
             offsets = m_Offsets
         }.Schedule(heatmap.Length, 64, computeHeatmapJobHandle);
@@ -161,21 +150,18 @@ public class TileSystem : JobComponentSystem
         m_PendingJobs.Add(new PendingJob
         {
             queryHandle = queryHandle,
-            goal = m_Goal,
             jobHandle = smoothFlowFieldJobHandle,
-            cacheEntry = new CacheEntry
-            {
-                heatmap = heatmap,
-                flowField = flowField
-            }
+            flowField = flowField
         });
 
         return JobHandle.CombineDependencies(smoothFlowFieldJobHandle, updateAgentsTargetGoalJobHandle);
     }
 
+    int m_FlowFieldLength;
+
     bool ProcessPendingJobs(JobHandle inputDeps, out JobHandle updateAgentsJobHandle)
     {
-        var availableGoals = new NativeArray<int2>(m_PendingJobs.Count, Allocator.TempJob);
+        var availableGoals = new NativeArray<int>(m_PendingJobs.Count, Allocator.TempJob);
         var numAvailableGoals = 0;
 
         for (int i = m_PendingJobs.Count - 1; i >= 0; --i)
@@ -184,22 +170,16 @@ public class TileSystem : JobComponentSystem
             if (pendingJob.jobHandle.IsCompleted)
             {
                 var queryHandle = pendingJob.queryHandle;
-                m_Cache.Add(queryHandle, pendingJob.cacheEntry);
+                var flowField = pendingJob.flowField;
 
-                m_CompletedFlowFields.Add(new GoalFlowFieldPair
-                {
-                    goal = pendingJob.goal,
-                    flowField = pendingJob.cacheEntry.flowField
-                });
+                var offset = flowField.Length * queryHandle;
+                cachedFlowFields.Slice(offset, flowField.Length).CopyFrom(flowField);
+                flowField.Dispose();
 
-                cachedFlowFields.Remove(pendingJob.goal);
-                cachedFlowFields.TryAdd(pendingJob.goal, pendingJob.cacheEntry.flowField);
-                availableGoals[numAvailableGoals++] = pendingJob.goal;
+                availableGoals[numAvailableGoals++] = pendingJob.queryHandle;
 
                 lastGeneratedQueryHandle = queryHandle;
                 m_PendingJobs.RemoveAt(i);
-
-                latestFlowField = pendingJob.cacheEntry.flowField;
             }
         }
 
@@ -218,55 +198,33 @@ public class TileSystem : JobComponentSystem
         return true;
     }
 
-    struct CacheEntry
-    {
-        public NativeArray<int> heatmap;
-        public NativeArray<float3> flowField;
-    }
-
     struct PendingJob
     {
         public int queryHandle;
-        public int2 goal;
         public JobHandle jobHandle;
-        public CacheEntry cacheEntry;
+        public NativeArray<float3> flowField;
     }
 
     struct GoalFlowFieldPair
     {
-        public int2 goal;
+        public int goal;
         public NativeArray<float3> flowField;
     }
 
-    List<GoalFlowFieldPair> m_CompletedFlowFields;
-
     List<PendingJob> m_PendingJobs = new List<PendingJob>();
 
-    public NativeHashMap<int2, NativeArray<float3>> cachedFlowFields { get; private set; }
-
-    public NativeArray<float3> latestFlowField { get; private set; }
-
-    public NativeHashMap<int2, NativeArray<float3>> CopyFlowFieldCache(Allocator allocator)
-    {
-        var copy = new NativeHashMap<int2, NativeArray<float3>>(m_CompletedFlowFields.Count, allocator);
-        foreach (var pair in m_CompletedFlowFields)
-        {
-            copy.Remove(pair.goal);
-            copy.TryAdd(pair.goal, pair.flowField);
-        }
-        return copy;
-    }
-
-    Dictionary<int, CacheEntry> m_Cache = new Dictionary<int, CacheEntry>();
+    public NativeArray<float3> cachedFlowFields { get; private set; }
 
     public int lastGeneratedQueryHandle { get; private set; }
 
-    public NativeArray<float3> GetFlowField(int handle)
+    public NativeArray<float3> GetFlowFieldCopy(int handle, Allocator allocator)
     {
-        if (m_Cache.TryGetValue(handle, out CacheEntry cacheEntry))
-            return cacheEntry.flowField;
+        if (handle > -1 && handle < k_MaxNumFlowFields)
+            return new NativeArray<float3>(0, allocator);
 
-        return new NativeArray<float3>();
+        var copy = new NativeArray<float3>(m_FlowFieldLength, allocator);
+        cachedFlowFields.Slice(m_FlowFieldLength * handle, m_FlowFieldLength).CopyTo(copy);
+        return copy;
     }
 
     const int k_Obstacle = int.MaxValue;
@@ -346,7 +304,7 @@ public class TileSystem : JobComponentSystem
     [BurstCompile]
     struct UpdateAgentsTargetGoalJob : IJobProcessComponentData<Selection, Goal>
     {
-        public int2 newGoal;
+        public int newGoal;
 
         public void Execute([ReadOnly] ref Selection selectionFlag, ref Goal goal)
         {
@@ -358,17 +316,14 @@ public class TileSystem : JobComponentSystem
     struct UpdateAgentsCurrentGoalJob : IJobProcessComponentData<Goal>
     {
         [ReadOnly, DeallocateOnJobCompletion]
-        public NativeArray<int2> availableGoals;
+        public NativeArray<int> availableGoals;
 
         public int numAvailableGoals;
 
         public void Execute(ref Goal agentGoal)
         {
             for (int i = 0; i < numAvailableGoals; ++i)
-            {
-                var result = agentGoal.Target == availableGoals[i];
-                agentGoal.Current = math.select(agentGoal.Current, agentGoal.Target, result.x && result.y);
-            }
+                agentGoal.Current = math.select(agentGoal.Current, agentGoal.Target, agentGoal.Target == availableGoals[i]);
         }
     }
 }

@@ -59,7 +59,7 @@ namespace Manager
             ecb.SetComponent(new Unity.Transforms.Position { Value = pos });
             ecb.SetSharedComponent(new Agent.AgentMeshInstanceRenderer { mesh = mesh, material = mat, castShadows = UnityEngine.Rendering.ShadowCastingMode.On });
             ecb.SetSharedComponent(settings);
-            ecb.SetComponent(new Agent.Goal { Current = TileSystem.k_InvalidGoal, Target = TileSystem.k_InvalidGoal });
+            ecb.SetComponent(new Agent.Goal { Current = TileSystem.k_InvalidHandle, Target = TileSystem.k_InvalidHandle });
         }
 
         public static void CreateInputSystem(EntityManager entityManager)
