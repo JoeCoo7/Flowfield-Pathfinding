@@ -218,7 +218,7 @@ public class TileSystem : JobComponentSystem
         }
     }
 
-    //[BurstCompile]
+    [BurstCompile]
     struct ComputeHeatmapJob : IJob
     {
         [ReadOnly]
