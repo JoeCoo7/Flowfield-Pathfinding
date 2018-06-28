@@ -10,8 +10,16 @@ namespace Agent
         public float3 Value;
     }
 
-    public struct Selection : IComponentData { }
+    public struct Selection : IComponentData
+    {
+        public byte Value;
+    }
 
+    public struct Goal : IComponentData
+    {
+        public int2 Current;
+        public int2 Target;
+    }
     public struct AgentMeshInstanceRenderer : ISharedComponentData
     {
         public Mesh mesh;

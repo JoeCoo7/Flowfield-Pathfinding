@@ -8,7 +8,7 @@ Material:
   m_PrefabInternal: {fileID: 0}
   m_Name: AgentMaterial
   m_Shader: {fileID: 4800000, guid: 657349f71c6e77e46bb6a23a21de7987, type: 3}
-  m_ShaderKeywords: 
+  m_ShaderKeywords: _GLOSSYREFLECTIONS_OFF _SPECULARHIGHLIGHTS_OFF
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -61,17 +61,17 @@ Material:
     - _DstBlend: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.22
-    - _GlossyReflections: 1
+    - _GlossyReflections: 0
     - _Metallic: 0.66
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
+    - _SpecularHighlights: 0
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 0.3301887, g: 0.2756764, b: 0.2756764, a: 1}
+    - _Color: {r: 0.8396226, g: 0.8396226, b: 0.8396226, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Velocity: {r: 0, g: 1, b: 0, a: 1}

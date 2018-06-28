@@ -33,7 +33,6 @@ public class AgentSpawingSystem : ComponentSystem
 	private float m_RadiusSquared; 
 	private NativeArray<float3> m_Grid;
 	private NativeList<float3> m_activeSamples;
-	static FlowField.Data m_flowField;
 	bool spawnDebugAgentsOnNextFrame = false;
 
 	//-----------------------------------------------------------------------------
@@ -55,7 +54,7 @@ public class AgentSpawingSystem : ComponentSystem
 
 	void Spawn(float3 point, float radius, int count)
 	{
-		Debug.LogFormat("SPAWN({0}, {1}, {2})", point, radius, count);
+		point.y = 0;
 
 		var spawnData = Main.ActiveSpawnParams;
 		m_activeSamples = new NativeList<float3>(Allocator.Temp);
@@ -78,10 +77,9 @@ public class AgentSpawingSystem : ComponentSystem
 	//-----------------------------------------------------------------------------
 	private void CreateAgent(AgentSpawnData spawnData, float3 _pos)
 	{
-		if (!m_flowField.Value.IsCreated)
-            m_flowField = new FlowField.Data() { Value = InitializationData.m_initialFlow };
-
-        Manager.Archetype.CreateAgent(PostUpdateCommands, _pos, spawnData.AgentMesh, spawnData.AgentMaterial, m_agentData.GridSettings[0], m_flowField);
+        Manager.Archetype.CreateAgent(
+            PostUpdateCommands, _pos, spawnData.AgentMesh,
+            spawnData.AgentMaterial, m_agentData.GridSettings[0]);
 	}
 
 	//-----------------------------------------------------------------------------
@@ -116,7 +114,7 @@ public class AgentSpawingSystem : ComponentSystem
 				{
 					var agentPos = new float3(candidate.x + _hit.x, 0, candidate.z + _hit.z);
 					var gridIndex = GridUtilties.WorldToIndex(m_agentData.GridSettings[0], agentPos);
-					if (gridIndex < 0 || m_agentData.TileCost[gridIndex].Value > spawnData.AgentDistSpawningThreshold)
+					if (gridIndex < 0)// || m_agentData.TileCost[gridIndex].Value > spawnData.AgentDistSpawningThreshold)
 						continue;
 					
 					AddSample(candidate, spawnData.AgentDistCellSize);

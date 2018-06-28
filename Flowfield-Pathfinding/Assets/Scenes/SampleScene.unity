@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657874, g: 0.49641258, b: 0.574817, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.49641275, b: 0.57481736, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -144,13 +144,13 @@ Light:
   m_SpotAngle: 30
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 0
-    m_Resolution: -1
+    m_Type: 1
+    m_Resolution: 0
     m_CustomResolution: -1
     m_Strength: 1
     m_Bias: 0.05
     m_NormalBias: 0.4
-    m_NearPlane: 0.2
+    m_NearPlane: 10
   m_Cookie: {fileID: 0}
   m_DrawHalo: 0
   m_Flare: {fileID: 0}
@@ -188,6 +188,8 @@ GameObject:
   m_Component:
   - component: {fileID: 708304320}
   - component: {fileID: 708304319}
+  - component: {fileID: 708304321}
+  - component: {fileID: 708304322}
   m_Layer: 0
   m_Name: Main
   m_TagString: Untagged
@@ -206,12 +208,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cdfdc659ef117b42a2803a3ee7a9ddb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_activeSteerData: 1
+  m_activeSteerData: 2
   m_InitData: {fileID: 11400000, guid: 39139ab02fd60244ebe9ea75514106a5, type: 2}
   m_AgentSpawnData: {fileID: 11400000, guid: 7fdce35a09511fd469f1f778437f070f, type: 2}
   m_AgentSteerData:
   - {fileID: 11400000, guid: 0a93aa877a56406429b23395f89177ce, type: 2}
   - {fileID: 11400000, guid: 73e88fb22f7cf6648aa84b056b1476f5, type: 2}
+  - {fileID: 11400000, guid: b3335dcc8bea867459031bd38e117830, type: 2}
+  - {fileID: 11400000, guid: d307b90c04e75414f905513bf7f9349d, type: 2}
+  - {fileID: 11400000, guid: 9bd3ce7e88db8467c921b844e6217e42, type: 2}
+  - {fileID: 11400000, guid: 3e53ec792bb5a4b30ba8c221c96ebfa9, type: 2}
 --- !u!4 &708304320
 Transform:
   m_ObjectHideFlags: 0
@@ -223,5 +229,95 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &708304321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 708304318}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1f1ebaf805961345a80086eb86bb4ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  selectionColor: {r: 0, g: 1, b: 0, a: 1}
+  selectionWeight: 2
+--- !u!114 &708304322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 708304318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b16ad8fda614be9438cfe9caac62ce71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!1 &1225020946
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1225020948}
+  - component: {fileID: 1225020947}
+  m_Layer: 0
+  m_Name: Directional Light
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!108 &1225020947
+Light:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1225020946}
+  m_Enabled: 1
+  serializedVersion: 8
+  m_Type: 1
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Intensity: 0.47
+  m_Range: 10
+  m_SpotAngle: 30
+  m_CookieSize: 10
+  m_Shadows:
+    m_Type: 0
+    m_Resolution: -1
+    m_CustomResolution: -1
+    m_Strength: 1
+    m_Bias: 0.05
+    m_NormalBias: 0.4
+    m_NearPlane: 0.2
+  m_Cookie: {fileID: 0}
+  m_DrawHalo: 0
+  m_Flare: {fileID: 0}
+  m_RenderMode: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_Lightmapping: 4
+  m_LightShadowCasterMode: 0
+  m_AreaSize: {x: 1, y: 1}
+  m_BounceIntensity: 1
+  m_ColorTemperature: 6570
+  m_UseColorTemperature: 0
+  m_ShadowRadius: 0
+  m_ShadowAngle: 0
+--- !u!4 &1225020948
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1225020946}
+  m_LocalRotation: {x: 0.8225337, y: -0.25405887, z: -0.035995938, w: 0.50753987}
+  m_LocalPosition: {x: -85.259926, y: -305.6356, z: 87.88425}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 54.751003, y: -146.671, z: -128.05}

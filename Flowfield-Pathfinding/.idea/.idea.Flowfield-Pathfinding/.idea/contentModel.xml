@@ -16,7 +16,6 @@
           <e p="ArchetypeManager.cs" t="Include" />
           <e p="BurstQueue.cs" t="Include" />
           <e p="Camera" t="Include">
-            <e p="CameraFacingBillboard.cs" t="Include" />
             <e p="RTSCamera.cs" t="Include" />
             <e p="RTSCameraSettings.cs" t="Include" />
           </e>
@@ -33,6 +32,7 @@
           </e>
           <e p="ComputeFlowFieldJob.cs" t="Include" />
           <e p="DebugHeatmapComponent.cs" t="Include" />
+          <e p="DisplayInfo.cs" t="Include" />
           <e p="Editor" t="Include">
             <e p="GridUtiltiesTests.cs" t="Include" />
           </e>
@@ -60,6 +60,7 @@
           <e p="MathUtility.cs" t="Include" />
           <e p="PlayerSelectionSystem.cs" t="Include" />
           <e p="RenderSystem.cs" t="Include" />
+          <e p="SelectionRect.cs" t="Include" />
           <e p="SmoothFlowFieldJob.cs" t="Include" />
           <e p="SystemOrder.cs" t="Include" />
           <e p="TileMeshInstanceRendererSystem.cs" t="Include" />

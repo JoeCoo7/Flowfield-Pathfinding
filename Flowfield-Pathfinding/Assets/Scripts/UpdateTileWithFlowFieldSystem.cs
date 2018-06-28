@@ -45,14 +45,13 @@ namespace System
         Tile.Group.AllTiles m_Tiles;
 
         [Inject]
-        FlowField.Group.FlowFieldResult m_Results;
+        TileSystem m_TileSystem;
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            if (m_Results.flowFieldData.Length == 0 || !Main.ActiveInitParams.m_drawFlowField)
+            var tileSystem = m_TileSystem;
+            if (tileSystem.cachedFlowFields.Length == 0 || !Main.ActiveInitParams.m_drawFlowField)
                 return inputDeps;
-
-            var tileSystem = World.Active.GetExistingManager<TileSystem>();
 
             var update = new UpdateJob
             {
