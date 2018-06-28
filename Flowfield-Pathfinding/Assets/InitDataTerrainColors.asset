@@ -16,7 +16,7 @@ MonoBehaviour:
   m_worldHeight: 1024
   m_heightScale: 100
   m_cellSize: 8
-  m_goalAgentFactor: 0.5
+  m_goalAgentFactor: 0.25
   m_cellsPerBlock: 8
   m_noiseScale: 6
   m_noiseMultiplier: 20
@@ -31,6 +31,7 @@ MonoBehaviour:
   TileDirectionMaterial: {fileID: 2100000, guid: e3c4f23818b6020418bf279d7e751149,
     type: 2}
   m_drawFlowField: 1
+  m_smoothFlowField: 1
   terrainHeightCurve:
     serializedVersion: 2
     m_Curve:
