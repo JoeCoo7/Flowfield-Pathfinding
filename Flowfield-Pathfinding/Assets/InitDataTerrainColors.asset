@@ -30,10 +30,10 @@ MonoBehaviour:
   TileDirectionMesh: {fileID: 4300000, guid: 6138750424a81274ab6dcfc8a3f3d9d1, type: 3}
   TileDirectionMaterial: {fileID: 2100000, guid: e3c4f23818b6020418bf279d7e751149,
     type: 2}
-  m_drawFlowField: 1
-  m_drawHeatField: 1
+  m_drawFlowField: 0
+  m_drawHeatField: 0
   m_smoothFlowField: 1
-  m_smoothAmount: 0.9
+  m_smoothAmount: 0.88
   terrainHeightCurve:
     serializedVersion: 2
     m_Curve:
