@@ -68,7 +68,7 @@
           <e p="SelectionRect.cs" t="Include" />
           <e p="SmoothFlowFieldJob.cs" t="Include" />
           <e p="SystemOrder.cs" t="Include" />
-          <e p="Terrain.cs" t="Include" />
+          <e p="TerrainColoring.cs" t="Include" />
           <e p="TileMeshInstanceRendererSystem.cs" t="Include" />
           <e p="TileSystem.cs" t="Include" />
           <e p="UpdateTileWithFlowFieldSystem.cs" t="Include" />

@@ -17,7 +17,8 @@ public class InputSettings : ScriptableObject
             {"SelectAgents", "~right shift|~left shift;mouse 0" },
             {"SelectAll", "right ctrl|left ctrl;a" },
             {"ShowFlowfield", "left shift|right shift;x" },
-            {"ShowHeatmap", "left shift|right shift;y" }
+            {"ShowHeatmap", "left shift|right shift;y" },
+            {"SmoothFlowfield", "left shift|right shift;c" }
         };
     }
 }
