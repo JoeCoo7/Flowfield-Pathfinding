@@ -208,7 +208,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cdfdc659ef117b42a2803a3ee7a9ddb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_activeSteerData: 4
+  m_activeSteerData: 0
   m_InitData: {fileID: 11400000, guid: afd5b3065736fba449e66b674c7ee12f, type: 2}
   m_AgentSpawnData: {fileID: 11400000, guid: 7fdce35a09511fd469f1f778437f070f, type: 2}
   m_AgentSteerData:

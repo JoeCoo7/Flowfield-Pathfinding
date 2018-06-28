@@ -378,30 +378,34 @@ public class AgentSystem : JobComponentSystem
 		public GridSettings grid;
 		public void Execute(int i)
 		{
-			var pos = Positions[i];
-			pos.Value += Velocity[i].Value * TimeDelta;
-			var speed = math.length(Velocity[i].Value);
+			var pos = Positions[i].Value;
+			var rot = Rotations[i].Value;
+			var vel = Velocity[i].Value;
+			var speed = math.length(vel);
+			pos += vel * TimeDelta;
+
+			var index = GridUtilties.WorldToIndex(grid, pos);
+			var terrainHeight = (index < 0 ? pos.y : Heights[index]);
+			var currUp = math.up(rot);
+			var normal = index < 0 ? currUp : Normals[index];
+
+			var targetHeight = terrainHeight + 3;
+			pos.y = pos.y + (targetHeight - pos.y) * math.min(TimeDelta * (speed + 1), 1);
+
+			var currDir = math.forward(rot);
+			var normalDiff = normal - currUp;
+			var newUp = math.normalize(currUp + normalDiff * math.min(TimeDelta * 10, 1));
+			var newDir = currDir;
 			if (speed > .1f)
 			{
-				var index = GridUtilties.WorldToIndex(grid, pos.Value);
-				var h = index < 0 ? pos.Value.y : Heights[index] + 5;
-				pos.Value.y += (h - pos.Value.y) * math.min(TimeDelta * 10, 1);
-				Positions[i] = pos;
-
-				var rot = Rotations[i];
-				var currDir = math.forward(Rotations[i].Value);
-				var currUp = math.up(Rotations[i].Value);
-				var normal = index < 0 ? currUp : Normals[index];
-				var normalDiff = normal - currUp;
-				var newUp = math.normalize(currUp + normalDiff * math.min(TimeDelta * 10, 1));
-
 				var speedPer = speed / steerParams.MaxSpeed;
-				var desiredDir = math.normalize(Velocity[i].Value);
+				var desiredDir = math.normalize(vel);
 				var dirDiff = desiredDir - currDir;
-				var newDir = math.normalize(currDir + dirDiff * math.min(TimeDelta * steerParams.RotationSpeed * (.5f + speedPer * .5f), 1));
-				rot.Value = math.lookRotationToQuaternion(newDir, newUp);
-				Rotations[i] = rot;
+				newDir = math.normalize(currDir + dirDiff * math.min(TimeDelta * steerParams.RotationSpeed * (.5f + speedPer * .5f), 1));
 			}
+			rot = math.lookRotationToQuaternion(newDir, newUp);
+			Positions[i] = new Position(pos);
+			Rotations[i] = new Rotation(rot);
 		}
 	}
 

@@ -15,10 +15,10 @@ MonoBehaviour:
   m_worldWidth: 1024
   m_worldHeight: 1024
   m_heightScale: 100
-  m_cellSize: 2
+  m_cellSize: 4
   m_goalAgentFactor: 0.25
   m_cellsPerBlock: 8
-  m_noiseScale: 10
+  m_noiseScale: 4
   m_noiseMultiplier: 20
   m_noiseShift: -10
   m_gridPrefab: {fileID: 1095766587170428, guid: 244779e4b985c974abdcabc2aee9fa20,
@@ -30,28 +30,39 @@ MonoBehaviour:
   TileDirectionMesh: {fileID: 4300000, guid: 6138750424a81274ab6dcfc8a3f3d9d1, type: 3}
   TileDirectionMaterial: {fileID: 2100000, guid: e3c4f23818b6020418bf279d7e751149,
     type: 2}
-  m_drawFlowField: 1
+  m_drawFlowField: 0
+  m_drawHeatField: 0
   m_smoothFlowField: 1
+  m_smoothAmount: 0.9
   terrainHeightCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: -0.0015992578
-      value: 0.032776535
-      inSlope: 1.3007463
-      outSlope: 1.3007463
+      value: 0.030152023
+      inSlope: 0.050873797
+      outSlope: 0.050873797
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.33333334
-      outWeight: 0.06803742
+      outWeight: 0.15372424
     - serializedVersion: 3
-      time: 1.0095215
-      value: 1.3719978
-      inSlope: 3.6431165
-      outSlope: 3.6431165
+      time: 0.82828104
+      value: 0.5720034
+      inSlope: 2.2028637
+      outSlope: 2.2028637
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0.031645343
+      inWeight: 0.33333334
+      outWeight: 0.8496769
+    - serializedVersion: 3
+      time: 1.0079346
+      value: 1.3719978
+      inSlope: 9.190288
+      outSlope: 9.190288
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.08014934
       outWeight: 0.33333334
     m_PreInfinity: 2
     m_PostInfinity: 2
