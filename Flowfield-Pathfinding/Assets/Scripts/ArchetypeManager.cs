@@ -32,7 +32,7 @@ namespace Manager
                 ComponentType.Create<Unity.Transforms.Position>(),
                 ComponentType.Create<Unity.Transforms.Rotation>(),
                 ComponentType.Create<Unity.Transforms.TransformMatrix>(),
-                ComponentType.Create<Unity.Rendering.MeshInstanceRenderer>(),
+                ComponentType.Create<Agent.AgentMeshInstanceRenderer>(),
                 ComponentType.Create<Agent.Velocity>(),
                 ComponentType.Create<GridSettings>(),
                 ComponentType.Create<FlowField.Data>());
@@ -41,7 +41,7 @@ namespace Manager
                 ComponentType.Create<Unity.Transforms.Position>(),
                 ComponentType.Create<Unity.Transforms.Rotation>(),
                 ComponentType.Create<Unity.Transforms.TransformMatrix>(),
-                ComponentType.Create<Unity.Rendering.MeshInstanceRenderer>(),
+                ComponentType.Create<Agent.AgentMeshInstanceRenderer>(),
                 ComponentType.Create<Agent.Velocity>(),
                 ComponentType.Create<GridSettings>(),
                 ComponentType.Create<FlowField.Data>(),
@@ -71,7 +71,7 @@ namespace Manager
         {
             ecb.CreateEntity(Agent);
             ecb.SetComponent(new Unity.Transforms.Position { Value = pos });
-            ecb.SetSharedComponent(new Unity.Rendering.MeshInstanceRenderer { mesh = mesh, material = mat });
+            ecb.SetSharedComponent(new Agent.AgentMeshInstanceRenderer { mesh = mesh, material = mat });
             ecb.SetSharedComponent(settings);
             ecb.SetSharedComponent(flowField);
         }

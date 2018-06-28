@@ -53,7 +53,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_SerializedData:
-    mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+    mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
     material: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
     subMesh: 0
     castShadows: 0

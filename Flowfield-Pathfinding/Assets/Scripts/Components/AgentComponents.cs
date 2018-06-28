@@ -1,6 +1,7 @@
 ﻿using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Agent
 {
@@ -10,4 +11,13 @@ namespace Agent
     }
 
     public struct Selection : IComponentData { }
+
+    public struct AgentMeshInstanceRenderer : ISharedComponentData
+    {
+        public Mesh mesh;
+        public Material material;
+        public int subMesh;
+        public ShadowCastingMode castShadows;
+        public bool receiveShadows;
+    }
 }
