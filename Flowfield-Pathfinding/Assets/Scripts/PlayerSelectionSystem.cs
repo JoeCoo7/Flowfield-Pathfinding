@@ -1,4 +1,5 @@
 ﻿using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -6,22 +7,20 @@ using Unity.Mathematics;
 public class PlayerSelectionSystem : JobComponentSystem
 {
     [BurstCompile]
-    struct SelectionJob : IJobParallelFor
+    struct SelectionJob : IJobProcessComponentData<Unity.Transforms.Position, Agent.Selection>
     {
         public float2 start;
         public float2 stop;
         public float4x4 world2Clip;
-        public Agent.Group.AgentSelection agentSelection;
 
-        public void Execute(int index)
+        public void Execute([ReadOnly] ref Unity.Transforms.Position position, [WriteOnly] ref Agent.Selection selection)
         {
-            var position = agentSelection.position[index].Value;
-            float4 agentVector = math.mul(world2Clip, new float4(position.x, position.y, position.z, 1));
+            float4 agentVector = math.mul(world2Clip, new float4(position.Value, 1));
             float2 screenPoint = (agentVector / -agentVector.w).xy;
 
             var result = math.all(start <= screenPoint) && math.all(screenPoint <= stop);
             var selectionValue = math.select(0, 1, result);
-            agentSelection.selection[index] = new Agent.Selection { Value = (byte)selectionValue };
+            selection = new Agent.Selection { Value = (byte)selectionValue };
         }
     }
 
