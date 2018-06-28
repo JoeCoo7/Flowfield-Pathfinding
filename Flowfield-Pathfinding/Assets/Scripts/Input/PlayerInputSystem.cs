@@ -60,7 +60,6 @@ namespace ECSInput
         struct InjectedPlayerInput
         {
             public int Length;
-            [ReadOnly] private ComponentDataArray<PlayerInputTag> m_inputFilter;
             [ReadOnly] public SharedComponentDataArray<InputButtons> Buttons;
             public ComponentDataArray<MousePosition> MousePos;
             public ComponentDataArray<MouseDoubleClick> DoubleClick;
