@@ -77,8 +77,11 @@ public class TileSystem : JobComponentSystem
         GridSettings gridSettings = Main.ActiveInitParams.m_grid;
         uint queryHandle = ++s_QueryHandle;
 
-        for (var i = 0; i < m_SelectedWithQuery.entity.Length; ++i)
+        for (var i = 0; i < m_SelectedWithQuery.Length; ++i)
         {
+            if (m_SelectedWithQuery.selection[i].Value != 1)
+                continue;
+
             var query = m_SelectedWithQuery.flowFieldQuery[i];
             query.Handle = queryHandle;
             m_SelectedWithQuery.flowFieldQuery[i] = query;
@@ -87,7 +90,12 @@ public class TileSystem : JobComponentSystem
         var buffer = m_EndFrameBarrier.CreateCommandBuffer();
         var newQuery = new FlowField.Query { Handle = queryHandle };
         for (var i = 0; i < m_Selected.entity.Length; ++i)
+        { 
+            if (m_Selected.selection[i].Value != 1)
+                continue;
+
             buffer.AddComponent(m_Selected.entity[i], newQuery);
+        }
 
         // Create & Initialize heatmap
         var heatmap = new NativeArray<int>(gridSettings.cellCount.x * gridSettings.cellCount.y,
