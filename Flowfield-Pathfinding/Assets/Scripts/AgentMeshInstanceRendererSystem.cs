@@ -106,13 +106,21 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
                 }
 
 
-                NativeArray<float3> fakeData = new NativeArray<float3>(length, Allocator.Temp, NativeArrayOptions.ClearMemory);
+                //NativeArray<float3> fakeData = new NativeArray<float3>(length, Allocator.Temp, NativeArrayOptions.ClearMemory);
+                //float3[] fakeData = new float3[length];
+                //int y = 0;
+                //for (int x = beginIndex; x < length; ++x)
+                //    fakeData[y++] = selection[x].Value == 1 ? 1.0f : 0.0f;
+                //m_ComputeBuffer.SetData(fakeData);//velocities.GetChunkArray(beginIndex, length));
+                //renderer.material.SetBuffer("velocityBuffer", m_ComputeBuffer);
+                //fakeData.Dispose();
+
+                Vector3[] colors = new Vector3[length];
                 int y = 0;
                 for (int x = beginIndex; x < length; ++x)
-                    fakeData[y++] = selection[x].Value == 1 ? 50.0f : 0.0f;
-                m_ComputeBuffer.SetData(fakeData);//velocities.GetChunkArray(beginIndex, length));
+                    colors[y++] = selection[x].Value == 1 ? new Vector3(1f,1f,1f) : new Vector3(0f,0f,0f);
+                m_ComputeBuffer.SetData(colors);
                 renderer.material.SetBuffer("velocityBuffer", m_ComputeBuffer);
-                fakeData.Dispose();
 
                 // !!! This will draw all meshes using the last material.  Probably need an array of materials.
                 Graphics.DrawMeshInstanced(renderer.mesh, renderer.subMesh, renderer.material, m_MatricesArray, length, null, renderer.castShadows, renderer.receiveShadows);
