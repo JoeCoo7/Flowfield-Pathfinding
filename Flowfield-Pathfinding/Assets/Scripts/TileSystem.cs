@@ -115,13 +115,15 @@ public class TileSystem : JobComponentSystem
         var maxNumGoals = math.max(1, dims.x * dims.y);
         var goals = new NativeArray<int2>(maxNumGoals, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
-        // TODO: Change to circle
         var goalIndex = 0;
+        var radiusAsFloat = (float)radius;
         for (int x = goalMin.x; x < goalMax.x; ++x)
         {
             for (int y = goalMin.y; y < goalMax.y; ++y)
             {
-                goals[goalIndex++] = new int2(x, y);
+                var p = new int2(x, y);
+                if (math.distance(p, m_Goal) <= radiusAsFloat)
+                    goals[goalIndex++] = new int2(x, y);
             }
         }
 
@@ -133,6 +135,7 @@ public class TileSystem : JobComponentSystem
         {
             settings = gridSettings,
             goals = goals,
+            numGoals = goalIndex,
             heatmap = heatmap,
             offsets = m_Offsets,
             floodQueue = floodQueue
@@ -295,6 +298,8 @@ public class TileSystem : JobComponentSystem
         [ReadOnly, DeallocateOnJobCompletion]
         public NativeArray<int2> goals;
 
+        public int numGoals;
+
         [ReadOnly]
         public NativeArray<int2> offsets;
 
@@ -306,7 +311,7 @@ public class TileSystem : JobComponentSystem
         {
             BurstQueue queue = new BurstQueue(floodQueue);
             
-            for (int i = 0; i < goals.Length; ++i)
+            for (int i = 0; i < numGoals; ++i)
             {
                 var tileIndex = GridUtilties.Grid2Index(settings, goals[i]);
                 if (heatmap[tileIndex] != k_Obstacle)
