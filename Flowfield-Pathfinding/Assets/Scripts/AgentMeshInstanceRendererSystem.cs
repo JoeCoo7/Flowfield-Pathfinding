@@ -9,6 +9,7 @@ using UnityEngine.Assertions;
 using UnityEngine.Experimental.PlayerLoop;
 using Unity.Rendering;
 using Unity.Collections;
+using Unity.Mathematics;
 
 /// <summary>
 /// Renders all Entities containing both AgentMeshInstanceRenderer & TransformMatrix components.
@@ -108,10 +109,11 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
                     m_Materials.Add(material);
                 }
 
-                Vector3[] colors = new Vector3[length];
+                var colors = new NativeArray<float3>(length, Allocator.Temp);
                 for (int x = 0; x < length; ++x)
                     colors[x] = selection[beginIndex + x].Value == 1 ? new Vector3(0.5f, 1f, 0.5f) : new Vector3(0.5f, 0.5f, 1f);
                 m_ComputeBuffers[drawIdx].SetData(colors);
+                colors.Dispose();
                 m_Materials[drawIdx].SetBuffer("velocityBuffer", m_ComputeBuffers[drawIdx]);
 
                 // !!! This will draw all meshes using the last material.  Probably need an array of materials.
