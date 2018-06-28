@@ -117,7 +117,7 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
 
                 Vector3[] colors = new Vector3[length];
                 for (int x = 0; x < length; ++x)
-                    colors[x] = selection[x].Value == 1 ? new Vector3(1f, 1f, 1f) : new Vector3(0f, 0f, 0f);
+                    colors[x] = selection[x].Value == 1 ? new Vector3(0.5f, 1f, 0.5f) : new Vector3(0.5f, 0.5f, 1f);
                 m_ComputeBuffers[i].SetData(colors);
                 renderer.material.SetBuffer("velocityBuffer", m_ComputeBuffers[i]);
 
