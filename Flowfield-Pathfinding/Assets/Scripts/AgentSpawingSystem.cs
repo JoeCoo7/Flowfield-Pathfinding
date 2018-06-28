@@ -34,12 +34,26 @@ public class AgentSpawingSystem : ComponentSystem
     private NativeArray<float3> m_Grid;
     private NativeList<float3> m_activeSamples;
     bool spawnDebugAgentsOnNextFrame = false;
-
-    //-----------------------------------------------------------------------------
-    protected override void OnUpdate()
+	bool demoSpawn = false;
+	float demoSpawnRate = 50;
+	float demoSpawnRateAccel = 20;
+	float demoSpawnRateAccelAccel = 20;
+	//-----------------------------------------------------------------------------
+	protected override void OnUpdate()
     {
         var spawnData = Main.ActiveSpawnParams;
-        if (spawnDebugAgentsOnNextFrame)
+
+		if (demoSpawn)
+		{
+			var ws = Main.ActiveInitParams.m_grid.worldSize;
+			var spawnThisFrame = (int)(demoSpawnRate * Time.deltaTime);
+			Spawn(new float3(Random.Range(30, ws.x - 60) - ws.x * .5f, 0, ws.y - ws.y * .5f - 50), 50, spawnThisFrame);
+			demoSpawnRate += demoSpawnRateAccel * Time.deltaTime;
+			demoSpawnRateAccel += demoSpawnRateAccelAccel * Time.deltaTime;
+		}
+
+
+		if (spawnDebugAgentsOnNextFrame)
         {
             Spawn(0, 500, 10000);
             spawnDebugAgentsOnNextFrame = false;

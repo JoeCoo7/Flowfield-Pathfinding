@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Name: AgentSteerFastClustered
   m_EditorClassIdentifier: 
   m_Data:
-    MaxSpeed: 100
+    MaxSpeed: 74.9
     Acceleration: 12.9
-    Drag: 4.9
+    Drag: 3.5
     RotationSpeed: 4.2
     TerrainFieldWeight: 3
     TargetFieldWeight: 10

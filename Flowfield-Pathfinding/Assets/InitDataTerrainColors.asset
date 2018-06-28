@@ -14,7 +14,7 @@ MonoBehaviour:
   m_textureResolution: 1024
   m_worldWidth: 1024
   m_worldHeight: 1024
-  m_heightScale: 100
+  m_heightScale: 50
   m_cellSize: 4
   m_goalAgentFactor: 0.31
   m_cellsPerBlock: 8

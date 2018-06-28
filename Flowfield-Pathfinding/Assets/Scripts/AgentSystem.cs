@@ -391,6 +391,8 @@ public class AgentSystem : JobComponentSystem
 
 			var targetHeight = terrainHeight + 3;
 			pos.y = pos.y + (targetHeight - pos.y) * math.min(TimeDelta * (speed + 1), 1);
+		//	if (pos.z < -grid.worldSize.y * .5f)
+		//		pos.z = grid.worldSize.y - grid.worldSize.y * .5f - 50;
 
 			var currDir = math.forward(rot);
 			var normalDiff = normal - currUp;
@@ -477,7 +479,6 @@ public class AgentSystem : JobComponentSystem
 			*/
 
 			pos.y = pos.y + (terrainHeight - pos.y) * math.min(TimeDelta * (speed + 20) * 2, 1) + 5;
-
 			var currDir = math.forward(rot);
 			var normalDiff = normal - currUp;
 			var newUp = math.normalize(currUp + normalDiff * math.min(TimeDelta * 10, 1));

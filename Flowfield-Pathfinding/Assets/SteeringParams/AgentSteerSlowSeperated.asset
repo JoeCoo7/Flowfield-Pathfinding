@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Name: AgentSteerSlowSeperated
   m_EditorClassIdentifier: 
   m_Data:
-    MaxSpeed: 46.2
+    MaxSpeed: 47.2
     Acceleration: 16.8
     Drag: 8.99
     RotationSpeed: 4.2

@@ -161,13 +161,13 @@ MonoBehaviour:
   Zoom: 200
   ZoomSpeed: 300
   ZoomSmoothing: 5
-  MinZoom: 200
+  MinZoom: 150
   MaxZoom: 1000
-  TiltMaxChange: -50
+  TiltMaxChange: -60
   TiltStart: 400
   TiltAngle: 80
   PanBuffer: 0.1
-  PanSpeed: 2
+  PanSpeed: 1
   PanningMinX: -600
   PanningMinZ: -600
   PanningMaxX: 600
