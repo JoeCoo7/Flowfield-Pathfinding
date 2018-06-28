@@ -40,9 +40,9 @@ namespace System
                     math.mul(
                         math.lookRotationToMatrix(
                             new float3(
-                                position.Value.x * settings.cellSize.x - settings.worldSize.x / 2.0f + settings.cellSize.x / 2.0f,
+                                position.Value.x * settings.cellSize.x - settings.worldSize.x / 2.0f,
                                 height + 5.0f,
-                                position.Value.y * settings.cellSize.y - settings.worldSize.y / 2.0f + settings.cellSize.y / 2.0f),
+                                position.Value.y * settings.cellSize.y - settings.worldSize.y / 2.0f),
                             flowDirection, new float3(0.0f, 1.0f, 0.0f)),
                         math.scale(scale)
                         );
