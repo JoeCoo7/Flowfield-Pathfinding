@@ -9,16 +9,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2613051fc61152c4fbcce528d29d3e25, type: 3}
-  m_Name: InitDataTerrainColors
+  m_Name: InitDataScene2
   m_EditorClassIdentifier: 
   m_textureResolution: 1024
   m_worldWidth: 1024
   m_worldHeight: 1024
   m_heightScale: 100
-  m_cellSize: 8
-  m_goalAgentFactor: 1
+  m_cellSize: 2
+  m_goalAgentFactor: 4
   m_cellsPerBlock: 8
-  m_noiseScale: 6
+  m_noiseScale: 10
   m_noiseMultiplier: 20
   m_noiseShift: -10
   m_gridPrefab: {fileID: 1095766587170428, guid: 244779e4b985c974abdcabc2aee9fa20,
@@ -57,8 +57,8 @@ MonoBehaviour:
     m_RotationOrder: 4
   terrainColor:
     serializedVersion: 2
-    key0: {r: 0.754717, g: 0.16521345, b: 0.010679938, a: 1}
-    key1: {r: 0.6509434, g: 0.5218356, b: 0, a: 1}
+    key0: {r: 0.088109665, g: 0.5660378, b: 0.1892124, a: 1}
+    key1: {r: 0.13274725, g: 0.41509432, b: 0.09594162, a: 1}
     key2: {r: 0.4245283, g: 0.30418363, b: 0.17021182, a: 0}
     key3: {r: 0.764151, g: 0.764151, b: 0.764151, a: 0}
     key4: {r: 1, g: 1, b: 1, a: 0}
@@ -67,7 +67,7 @@ MonoBehaviour:
     key7: {r: 0, g: 0, b: 0, a: 0}
     ctime0: 0
     ctime1: 25829
-    ctime2: 34310
+    ctime2: 45682
     ctime3: 55705
     ctime4: 65535
     ctime5: 65535

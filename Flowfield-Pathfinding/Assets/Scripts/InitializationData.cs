@@ -21,7 +21,7 @@ public class InitializationData : ScriptableObject
 	public float m_worldHeight = 100;
 	public float m_heightScale = 10;
 	public float m_cellSize;
-	public int m_goalAgentFactor = 100;
+	public float m_goalAgentFactor = 0.5f;
 	public int m_cellsPerBlock = 8;
 	public float m_noiseScale = 3;
 	public float m_noiseMultiplier = 4;

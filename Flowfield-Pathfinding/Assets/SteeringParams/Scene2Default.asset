@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3cdd9d14d7a7498494735bc15f0b3818, type: 3}
+  m_Name: Scene2Default
+  m_EditorClassIdentifier: 
+  m_Data:
+    MaxSpeed: 26.7
+    Acceleration: 7.7
+    Drag: 0.1
+    RotationSpeed: 0
+    TerrainFieldWeight: 0
+    TargetFieldWeight: 0
+    SeparationRadius: 0.1
+    SeparationWeight: 0
+    CohesionWeight: 0
+    AlignmentWeight: 0
+    AlignmentRadius: 1
+    MaxNeighborChecks: 0
+    NeighbourHashCellSize: 1
