@@ -23,7 +23,7 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
     Matrix4x4[] m_MatricesArray = new Matrix4x4[512];
     List<AgentMeshInstanceRenderer> m_CacheduniqueRendererTypes = new List<AgentMeshInstanceRenderer>(10);
     ComponentGroup m_InstanceRendererGroup;
-    ComputeBuffer m_ComputeBuffer;
+    List<ComputeBuffer> m_ComputeBuffers = new List<ComputeBuffer>();
 
     // This is the ugly bit, necessary until Graphics.DrawMeshInstanced supports NativeArrays pulling the data in from a job.
     public unsafe static void CopyMatrices(ComponentDataArray<TransformMatrix> transforms, int beginIndex, int length, Matrix4x4[] outMatrices)
@@ -49,6 +49,7 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
         m_InstanceRendererGroup = GetComponentGroup(typeof(AgentMeshInstanceRenderer), typeof(Agent.Velocity), typeof(TransformMatrix), typeof(Agent.Selection), ComponentType.Subtractive<MeshCulledComponent>(), ComponentType.Subtractive<MeshLODInactive>());
 
         // Start with random colors for units
+        /*
         int maxUnitLength = 1024 * 1024;
         m_ComputeBuffer = new ComputeBuffer(maxUnitLength, 4 * 3);
         Vector3[] colors = new Vector3[maxUnitLength];
@@ -58,12 +59,15 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
             colors[c] = new Vector3(color.r, color.g, color.b);
         }
         m_ComputeBuffer.SetData(colors);
+        */
     }
 
     protected override void OnDestroyManager()
     {
         base.OnDestroyManager();
-        m_ComputeBuffer.Release();
+
+        foreach (var buffer in m_ComputeBuffers)
+            buffer.Release();
     }
 
     protected override void OnUpdate()
@@ -105,22 +109,17 @@ public class AgentMeshInstanceRendererSystem : ComponentSystem
                     m_MatricesArray[j].m23 += Main.ActiveInitParams.m_cellSize / 2;
                 }
 
-
-                //NativeArray<float3> fakeData = new NativeArray<float3>(length, Allocator.Temp, NativeArrayOptions.ClearMemory);
-                //float3[] fakeData = new float3[length];
-                //int y = 0;
-                //for (int x = beginIndex; x < length; ++x)
-                //    fakeData[y++] = selection[x].Value == 1 ? 1.0f : 0.0f;
-                //m_ComputeBuffer.SetData(fakeData);//velocities.GetChunkArray(beginIndex, length));
-                //renderer.material.SetBuffer("velocityBuffer", m_ComputeBuffer);
-                //fakeData.Dispose();
+                if (i >= m_ComputeBuffers.Count)
+                {
+                    var computeBuffer = new ComputeBuffer(512, 3 * sizeof(float));
+                    m_ComputeBuffers.Add(computeBuffer);
+                }
 
                 Vector3[] colors = new Vector3[length];
-                int y = 0;
-                for (int x = beginIndex; x < length; ++x)
-                    colors[y++] = selection[x].Value == 1 ? new Vector3(1f,1f,1f) : new Vector3(0f,0f,0f);
-                m_ComputeBuffer.SetData(colors);
-                renderer.material.SetBuffer("velocityBuffer", m_ComputeBuffer);
+                for (int x = 0; x < length; ++x)
+                    colors[x] = selection[x].Value == 1 ? new Vector3(1f, 1f, 1f) : new Vector3(0f, 0f, 0f);
+                m_ComputeBuffers[i].SetData(colors);
+                renderer.material.SetBuffer("velocityBuffer", m_ComputeBuffers[i]);
 
                 // !!! This will draw all meshes using the last material.  Probably need an array of materials.
                 Graphics.DrawMeshInstanced(renderer.mesh, renderer.subMesh, renderer.material, m_MatricesArray, length, null, renderer.castShadows, renderer.receiveShadows);
