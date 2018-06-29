@@ -35,13 +35,17 @@ public class AgentSpawingSystem : ComponentSystem
     private NativeList<float3> m_activeSamples;
     bool spawnDebugAgentsOnNextFrame = false;
 	bool demoSpawn = false;
-	float demoSpawnRate = 50;
+	float demoSpawnRate = 150;
 	float demoSpawnRateAccel = 20;
 	float demoSpawnRateAccelAccel = 20;
+	float demoDelay = 25;
 	//-----------------------------------------------------------------------------
 	protected override void OnUpdate()
     {
         var spawnData = Main.ActiveSpawnParams;
+		demoDelay -= Time.deltaTime;
+		if (demoDelay < 0)
+			demoSpawn = true;
 
 		if (demoSpawn)
 		{
