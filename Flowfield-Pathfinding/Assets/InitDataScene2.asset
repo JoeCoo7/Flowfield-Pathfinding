@@ -16,7 +16,7 @@ MonoBehaviour:
   m_worldHeight: 1024
   m_heightScale: 100
   m_cellSize: 4
-  m_goalAgentFactor: 0.25
+  m_goalAgentFactor: 2
   m_cellsPerBlock: 8
   m_noiseScale: 4
   m_noiseMultiplier: 20

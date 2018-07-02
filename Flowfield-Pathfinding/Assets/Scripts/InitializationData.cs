@@ -155,8 +155,6 @@ public class InitializationData : ScriptableObject
 			normal.y = 0;
 			normal = math.normalize(normal);
 			var flow = normal * cd.cost * inv255;
-			//			flow += new float3(0,0,-5);
-			//			flowMap[ii] = math.normalize(flow);
 			flowMap[ii] = flow;
 			Manager.Archetype.SetupTile(entityManager, entities[ii], Main.ActiveInitParams.TileDirectionMesh, Main.ActiveInitParams.TileDirectionMaterial, coord, cd.cost, new float3(), grid);
 		}

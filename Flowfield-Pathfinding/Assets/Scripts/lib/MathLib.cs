@@ -295,9 +295,9 @@ namespace RSGLib.utility
         }
 
         //-----------------------------------------------------------------------------
-        public static Vector3 Abs(Vector3 v)
+        public static Vector3 Abs(Vector3 _vector)
         {
-            return new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
+            return new Vector3(Mathf.Abs(_vector.x), Mathf.Abs(_vector.y), Mathf.Abs(_vector.z));
         }
 
         //-----------------------------------------------------------------------------
@@ -329,9 +329,9 @@ namespace RSGLib.utility
         }
 
         //-----------------------------------------------------------------------------
-        public static float Frac(float _v)
+        public static float Frac(float _value)
         {
-            return _v - (float) System.Math.Truncate(_v);
+            return _value - (float) System.Math.Truncate(_value);
         }
 
         //-----------------------------------------------------------------------------

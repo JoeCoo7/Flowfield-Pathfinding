@@ -9,13 +9,12 @@
         <e p="AgentShader.shader" t="Include" />
         <e p="AgentVertexShader.shader" t="Include" />
         <e p="compute.compute" t="Include" />
-        <e p="FlyCam.cs" t="Include" />
         <e p="LowPolyShader.shader" t="Include" />
         <e p="Scripts" t="Include">
           <e p="AgentChangeMaterialJob.cs" t="Include" />
           <e p="AgentMeshInstanceRendererSystem.cs" t="Include" />
-          <e p="AgentSpawingSystem.cs" t="Include" />
           <e p="AgentSpawnData.cs" t="Include" />
+          <e p="AgentSpawningSystem.cs" t="Include" />
           <e p="AgentSteerData.cs" t="Include" />
           <e p="AgentSystem.cs" t="Include" />
           <e p="ArchetypeManager.cs" t="Include" />
@@ -41,6 +40,7 @@
             <e p="GridUtiltiesTests.cs" t="Include" />
             <e p="InitializationDataEditor.cs" t="Include" />
           </e>
+          <e p="FlyCam.cs" t="Include" />
           <e p="GridDataView.cs" t="Include" />
           <e p="GridUtilities.cs" t="Include" />
           <e p="HashUtility.cs" t="Include" />
