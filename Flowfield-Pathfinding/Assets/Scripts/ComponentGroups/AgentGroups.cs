@@ -8,6 +8,6 @@ namespace Agent.Group
     {
         [ReadOnly] public ComponentDataArray<Unity.Transforms.Position> position;
         [WriteOnly] public ComponentDataArray<Selection> selection;
-        [ReadOnly] public int Length;
+        [ReadOnly] public readonly int Length;
     }
 }

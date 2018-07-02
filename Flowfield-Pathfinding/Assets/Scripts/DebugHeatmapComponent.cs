@@ -1,7 +1,7 @@
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using Unity.Mathematics;
 
 namespace DebugHeatmap
 {
@@ -32,7 +32,7 @@ namespace DebugHeatmap
         }
     }
 
-    [Unity.Burst.BurstCompile]
+    [BurstCompile]
     public struct CopyHeatmapJob : IJobParallelFor
     {
         [ReadOnly]

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
 using Unity.Collections;
@@ -6,9 +7,9 @@ using Unity.Mathematics;
 using Unity.Jobs;
 using Unity.Burst;
 using Agent;
-using UnityEngine.Assertions;
 
-[System.Serializable]
+//-----------------------------------------------------------------------------
+[Serializable]
 public struct GridSettings : ISharedComponentData
 {
     public float2 worldSize;
@@ -17,46 +18,21 @@ public struct GridSettings : ISharedComponentData
     public float heightScale;
 }
 
+//-----------------------------------------------------------------------------
 [UpdateInGroup(typeof(ProcessGroup))]
 [UpdateAfter(typeof(AgentSystem))]
 public class TileSystem : JobComponentSystem
 {
-    public const int k_MaxNumFlowFields = 10;
-	public System.Action<NativeArray<int>> OnNewHeatMap;
-
-	public const int k_InvalidHandle = -1;
-
-    static int s_QueryHandle = k_InvalidHandle;
-
-    [Inject] ECSInput.InputDataGroup m_input;
-
-    [Inject] AgentSystem m_AgentSystem;
-
-    NativeArray<int2> m_Offsets;
-
-    int2 m_Goal = new int2(197, 232);
-
-    protected override void OnCreateManager(int capacity)
+    //-----------------------------------------------------------------------------
+    struct PendingJob
     {
-        base.OnCreateManager(capacity);
-
-        m_Offsets = new NativeArray<int2>(GridUtilties.Offset.Length, Allocator.Persistent);
-        m_Offsets.CopyFrom(GridUtilties.Offset);
-        lastGeneratedQueryHandle = -1;
-        m_SmoothingParams.Update();
+        public int queryHandle;
+        public JobHandle jobHandle;
+        public NativeArray<float3> flowField;
+        public NativeArray<int> heatmap;
     }
-
-    protected override void OnDestroyManager()
-    {
-        m_Offsets.Dispose();
-
-        if (lastGeneratedHeatmap.IsCreated)
-            lastGeneratedHeatmap.Dispose();
-
-        if (cachedFlowFields.IsCreated)
-            cachedFlowFields.Dispose();
-    }
-
+    
+    //-----------------------------------------------------------------------------
     struct SmoothingParams
     {
         public float smoothAmount;
@@ -71,7 +47,7 @@ public class TileSystem : JobComponentSystem
 
             var initParams = Main.ActiveInitParams;
             hasChanged = (enableSmoothing != initParams.m_smoothFlowField);
-            hasChanged |= (smoothAmount != initParams.m_smoothAmount);
+            hasChanged |= (Math.Abs(smoothAmount - initParams.m_smoothAmount) > float.Epsilon);
             hasChanged &= hasData;
 
             enableSmoothing = initParams.m_smoothFlowField;
@@ -80,8 +56,52 @@ public class TileSystem : JobComponentSystem
         }
     }
 
-    SmoothingParams m_SmoothingParams;
+    public const int k_MaxNumFlowFields = 10;
+    public const int k_InvalidHandle = -1;
+    private const int k_Obstacle = int.MaxValue;
+    private const int k_Unvisited = k_Obstacle - 1;
+    
+	public System.Action<NativeArray<int>> OnNewHeatMap;
+    public NativeArray<float3> CachedFlowFields { get; private set; }
+    public int LastGeneratedQueryHandle { get; private set; }
+    public NativeArray<int> LastGeneratedHeatmap { get; private set; }
 
+    private static int s_QueryHandle = k_InvalidHandle;
+    private int m_FlowFieldLength;
+    private int2 m_Goal = new int2(197, 232);
+
+    [Inject] ECSInput.InputDataGroup m_Input;
+    [Inject] AgentSystem m_AgentSystem;
+    private NativeArray<int2> m_Offsets;
+    private List<PendingJob> m_PendingJobs = new List<PendingJob>();
+    private SmoothingParams m_SmoothingParams;
+
+    
+    //-----------------------------------------------------------------------------
+    protected override void OnCreateManager(int capacity)
+    {
+        base.OnCreateManager(capacity);
+
+        m_Offsets = new NativeArray<int2>(GridUtilties.Offset.Length, Allocator.Persistent);
+        m_Offsets.CopyFrom(GridUtilties.Offset);
+        LastGeneratedQueryHandle = -1;
+        m_SmoothingParams.Update();
+    }
+
+    //-----------------------------------------------------------------------------
+    protected override void OnDestroyManager()
+    {
+        m_Offsets.Dispose();
+
+        if (LastGeneratedHeatmap.IsCreated)
+            LastGeneratedHeatmap.Dispose();
+
+        if (CachedFlowFields.IsCreated)
+            CachedFlowFields.Dispose();
+    }
+
+
+    //-----------------------------------------------------------------------------
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
         m_SmoothingParams.Update();
@@ -91,10 +111,10 @@ public class TileSystem : JobComponentSystem
 
         if (!m_SmoothingParams.hasChanged)
         {
-            if (m_input.Buttons[0].Values["CreateGoal"].Status != ECSInput.InputButtons.UP)
+            if (m_Input.Buttons[0].Values["CreateGoal"].Status != ECSInput.InputButtons.UP)
                 return wasJobScheduled ? updateAgentsJobHandle : inputDeps;
 
-            if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_input.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity))
+            if (!Physics.Raycast(Camera.main.ScreenPointToRay(m_Input.MousePos[0].Value), out RaycastHit hit, Mathf.Infinity))
                 return wasJobScheduled ? updateAgentsJobHandle : inputDeps;
 
             m_Goal = GridUtilties.World2Grid(Main.ActiveInitParams.m_grid, hit.point);
@@ -103,13 +123,14 @@ public class TileSystem : JobComponentSystem
         return wasJobScheduled ? CreateJobs(updateAgentsJobHandle) : CreateJobs(inputDeps);
     }
 
+    //-----------------------------------------------------------------------------
     JobHandle CreateJobs(JobHandle inputDeps)
     {
         GridSettings gridSettings = Main.ActiveInitParams.m_grid;
         if (s_QueryHandle == -1)
         {
             m_FlowFieldLength = gridSettings.cellCount.x * gridSettings.cellCount.y;
-            cachedFlowFields = new NativeArray<float3>(m_FlowFieldLength * k_MaxNumFlowFields, Allocator.Persistent);
+            CachedFlowFields = new NativeArray<float3>(m_FlowFieldLength * k_MaxNumFlowFields, Allocator.Persistent);
             s_QueryHandle = 0;
         }
 
@@ -121,7 +142,7 @@ public class TileSystem : JobComponentSystem
 
         var updateAgentsTargetGoalJobHandle = new UpdateAgentsTargetGoalJob
         {
-            newGoal = queryHandle
+            NewGoal = queryHandle
         }.Schedule(this, inputDeps);
 
         // Create & Initialize heatmap
@@ -208,20 +229,8 @@ public class TileSystem : JobComponentSystem
         return JobHandle.CombineDependencies(initializeHeatmapJobHandle, updateAgentsTargetGoalJobHandle);
     }
 
-    struct DeallocFloodQueue : IJob
-    {
-        [ReadOnly, DeallocateOnJobCompletion]
-        public NativeArray<int> floodQueue;
-
-        public void Execute()
-        {
-            // This page intentionally left blank.
-        }
-    }
-
-    int m_FlowFieldLength;
-
-    bool ProcessPendingJobs(JobHandle inputDeps, out JobHandle updateAgentsJobHandle)
+    //-----------------------------------------------------------------------------
+    private bool ProcessPendingJobs(JobHandle inputDeps, out JobHandle updateAgentsJobHandle)
     {
         var availableGoals = new NativeArray<int>(m_PendingJobs.Count, Allocator.TempJob);
         var numAvailableGoals = 0;
@@ -238,17 +247,17 @@ public class TileSystem : JobComponentSystem
                 var heatmap = pendingJob.heatmap;
 
                 var offset = flowField.Length * queryHandle;
-                cachedFlowFields.Slice(offset, flowField.Length).CopyFrom(flowField);
+                CachedFlowFields.Slice(offset, flowField.Length).CopyFrom(flowField);
                 flowField.Dispose();
 
-                if (lastGeneratedHeatmap.IsCreated)
-                    lastGeneratedHeatmap.Dispose();
+                if (LastGeneratedHeatmap.IsCreated)
+                    LastGeneratedHeatmap.Dispose();
 
-                lastGeneratedHeatmap = heatmap;
+                LastGeneratedHeatmap = heatmap;
 				newHeatMap = true;
 				availableGoals[numAvailableGoals++] = pendingJob.queryHandle;
 
-                lastGeneratedQueryHandle = queryHandle;
+                LastGeneratedQueryHandle = queryHandle;
                 m_PendingJobs.RemoveAt(i);
             }
         }
@@ -261,63 +270,48 @@ public class TileSystem : JobComponentSystem
         }
 
 		if (newHeatMap && OnNewHeatMap != null)
-			OnNewHeatMap(lastGeneratedHeatmap);
-
+			OnNewHeatMap(LastGeneratedHeatmap);
 
 
 		updateAgentsJobHandle = new UpdateAgentsCurrentGoalJob
         {
-            availableGoals = availableGoals,
-            numAvailableGoals = numAvailableGoals
+            AvailableGoals = availableGoals,
+            NumAvailableGoals = numAvailableGoals
         }.Schedule(this, inputDeps);
         return true;
     }
 
 
-    struct PendingJob
-    {
-        public int queryHandle;
-        public JobHandle jobHandle;
-        public NativeArray<float3> flowField;
-        public NativeArray<int> heatmap;
-    }
-
-    struct GoalFlowFieldPair
-    {
-        public int goal;
-        public NativeArray<float3> flowField;
-    }
-
-    List<PendingJob> m_PendingJobs = new List<PendingJob>();
-
-    public NativeArray<float3> cachedFlowFields { get; private set; }
-
-    public int lastGeneratedQueryHandle { get; private set; }
-
-    public NativeArray<int> lastGeneratedHeatmap { get; private set; }
-
+    //-----------------------------------------------------------------------------
     public NativeArray<float3> GetFlowFieldCopy(int handle, Allocator allocator)
     {
         if (handle == -1 || handle >= k_MaxNumFlowFields)
             return new NativeArray<float3>(0, allocator);
 
         var copy = new NativeArray<float3>(m_FlowFieldLength, allocator);
-        cachedFlowFields.Slice(m_FlowFieldLength * handle, m_FlowFieldLength).CopyTo(copy);
+        CachedFlowFields.Slice(m_FlowFieldLength * handle, m_FlowFieldLength).CopyTo(copy);
         return copy;
     }
-
-    const int k_Obstacle = int.MaxValue;
-
-    const int k_Unvisited = k_Obstacle - 1;
-
+    
+    //-----------------------------------------------------------------------------
     [BurstCompile]
-    struct InitializeHeatmapJob : IJobProcessComponentData<Tile.Cost, Tile.Position>
+    private struct DeallocFloodQueue : IJob
     {
-        [ReadOnly]
-        public GridSettings settings;
+        [ReadOnly, DeallocateOnJobCompletion]
+        public NativeArray<int> floodQueue;
+        public void Execute()
+        {
+            // This page intentionally left blank.
+            // is this just for deallocating floodqueue 
+        }
+    }
 
-        [WriteOnly]
-        public NativeArray<int> heatmap;
+    //-----------------------------------------------------------------------------
+    [BurstCompile]
+    private  struct InitializeHeatmapJob : IJobProcessComponentData<Tile.Cost, Tile.Position>
+    {
+        [ReadOnly] public GridSettings settings;
+        [WriteOnly] public NativeArray<int> heatmap;
 
         public void Execute([ReadOnly] ref Tile.Cost cost, [ReadOnly] ref Tile.Position position)
         {
@@ -326,31 +320,25 @@ public class TileSystem : JobComponentSystem
         }
     }
 
+    //-----------------------------------------------------------------------------
     [BurstCompile]
-    struct ComputeHeatmapJob : IJob
+    private struct ComputeHeatmapJob : IJob
     {
-        [ReadOnly]
-        public GridSettings settings;
-
-        [ReadOnly, DeallocateOnJobCompletion]
-        public NativeArray<int2> goals;
+        [ReadOnly] public GridSettings settings;
+        [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int2> goals;
+        [ReadOnly] public NativeArray<int2> offsets;
 
         public int numGoals;
-
-        [ReadOnly]
-        public NativeArray<int2> offsets;
-
         public NativeArray<int> heatmap;
-
         public NativeArray<int> floodQueue;
 
+        //-----------------------------------------------------------------------------
         public void Execute()
         {
             BurstQueue queue = new BurstQueue(floodQueue);
-            
-            for (int i = 0; i < numGoals; ++i)
+            for (int index = 0; index < numGoals; ++index)
             {
-                var tileIndex = GridUtilties.Grid2Index(settings, goals[i]);
+                var tileIndex = GridUtilties.Grid2Index(settings, goals[index]);
                 if (heatmap[tileIndex] != k_Obstacle)
                 {
                     heatmap[tileIndex] = 0;
@@ -380,30 +368,32 @@ public class TileSystem : JobComponentSystem
         }
     }
 
+    //-----------------------------------------------------------------------------
     [BurstCompile]
     struct UpdateAgentsTargetGoalJob : IJobProcessComponentData<Selection, Goal>
     {
-        public int newGoal;
+        public int NewGoal;
 
+        //-----------------------------------------------------------------------------
         public void Execute([ReadOnly] ref Selection selectionFlag, ref Goal goal)
         {
-            goal.Target = math.select(newGoal, goal.Target, selectionFlag.Value == 0);
+            goal.Target = math.select(NewGoal, goal.Target, selectionFlag.Value == 0);
         }
     }
 
+    //-----------------------------------------------------------------------------
     [BurstCompile]
     struct UpdateAgentsCurrentGoalJob : IJobProcessComponentData<Goal>
     {
-        [ReadOnly, DeallocateOnJobCompletion]
-        public NativeArray<int> availableGoals;
+        [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int> AvailableGoals;
+        public int NumAvailableGoals;
 
-        public int numAvailableGoals;
-
+        //-----------------------------------------------------------------------------
         public void Execute(ref Goal agentGoal)
         {
-            for (int i = 0; i < numAvailableGoals; ++i)
+            for (int i = 0; i < NumAvailableGoals; ++i)
             {
-                var newGoal = availableGoals[i];
+                var newGoal = AvailableGoals[i];
                 var targetEqualsNewGoal = (agentGoal.Target == newGoal);
 
                 // If the current goal is equal to the new goal, then invalid the current goal

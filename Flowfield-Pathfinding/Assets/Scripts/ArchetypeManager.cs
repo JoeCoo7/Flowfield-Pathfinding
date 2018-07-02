@@ -19,7 +19,6 @@ namespace Manager
                     ComponentType.Create<Tile.TileMeshInstanceRenderer>(),
                     ComponentType.Create<Tile.Position>(),
                     ComponentType.Create<Tile.Cost>(),
-                    ComponentType.Create<Tile.Collision>(),
                     ComponentType.Create<Tile.FlowFieldHandle>(),
                     ComponentType.Create<GridSettings>());
 
@@ -47,7 +46,6 @@ namespace Manager
         {
             em.SetComponentData(e, new Tile.Position { Value = pos });
             em.SetComponentData(e, new Tile.Cost { Value = cost });
-            em.SetComponentData(e, new Tile.Collision { Value = col });
             em.SetComponentData(e, new Tile.FlowFieldHandle { Handle = int.MaxValue });
             em.SetSharedComponentData(e, new Tile.TileMeshInstanceRenderer { mesh = mesh, material = mat });
             em.SetSharedComponentData(e, settings);

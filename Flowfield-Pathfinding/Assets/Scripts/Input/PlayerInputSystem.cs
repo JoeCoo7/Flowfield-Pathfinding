@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using RSGLib;
-using RSGLib.utility;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -59,7 +58,7 @@ namespace ECSInput
         //----------------------------------------------------------------------------------------
         struct InjectedPlayerInput
         {
-            public int Length;
+            public readonly int Length;
             [ReadOnly] public SharedComponentDataArray<InputButtons> Buttons;
             public ComponentDataArray<MousePosition> MousePos;
             public ComponentDataArray<MouseDoubleClick> DoubleClick;

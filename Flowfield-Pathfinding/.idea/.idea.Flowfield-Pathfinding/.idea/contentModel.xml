@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ContentModelStore">
-    <e p="C:\Users\JoeCool\.Rider2018.1\system\resharper-host\Local\Transient\ReSharperHost\v12\SolutionCaches\_Flowfield-Pathfinding.167461676.00" t="ExcludeRecursive" />
-    <e p="D:\GameDev\Flowfield-Pathfinding\Flowfield-Pathfinding" t="IncludeRecursive">
+    <e p="C:\Users\JoeCool\.Rider2018.1\system\resharper-host\Local\Transient\ReSharperHost\v12\SolutionCaches\_Flowfield-Pathfinding.-1546292023.00" t="ExcludeRecursive" />
+    <e p="G:\GameDev\Flowfield-Pathfinding\Flowfield-Pathfinding" t="IncludeRecursive">
       <e p="Assembly-CSharp-Editor.csproj" t="IncludeRecursive" />
       <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
       <e p="Assets" t="Include">
@@ -30,7 +30,6 @@
           </e>
           <e p="Components" t="Include">
             <e p="AgentComponents.cs" t="Include" />
-            <e p="FlowFieldComponents.cs" t="Include" />
             <e p="TileComponents.cs" t="Include" />
           </e>
           <e p="ComputeFlowFieldJob.cs" t="Include" />
@@ -48,17 +47,7 @@
           <e p="Input" t="Include">
             <e p="InputSettings.cs" t="Include" />
             <e p="PlayerInputSystem.cs" t="Include" />
-          </e>
-          <e p="lib" t="Include">
-            <e p="Camera" t="Include">
-              <e p="CameraExtensions.cs" t="Include" />
-            </e>
-            <e p="Input" t="Include">
-              <e p="DoubleClickDetector.cs" t="Include" />
-              <e p="StandardInput.cs" t="Include" />
-            </e>
-            <e p="MathLib.cs" t="Include" />
-            <e p="Utils.cs" t="Include" />
+            <e p="StandardInput.cs" t="Include" />
           </e>
           <e p="Main.cs" t="Include" />
           <e p="MathExt.cs" t="Include" />
@@ -72,6 +61,7 @@
           <e p="TileMeshInstanceRendererSystem.cs" t="Include" />
           <e p="TileSystem.cs" t="Include" />
           <e p="UpdateTileWithFlowFieldSystem.cs" t="Include" />
+          <e p="Utils.cs" t="Include" />
         </e>
       </e>
       <e p="Flowfield-Pathfinding.sln" t="IncludeFlat" />

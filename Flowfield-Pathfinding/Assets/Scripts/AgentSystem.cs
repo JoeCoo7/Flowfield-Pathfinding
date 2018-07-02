@@ -23,7 +23,7 @@ public class AgentSystem : JobComponentSystem
 		public ComponentDataArray<Position> Positions;
         public ComponentDataArray<Rotation> Rotations;
         public EntityArray Entity;
-		public int Length;
+		public readonly int Length;
 	}
 
 	struct PreviousJobData
@@ -88,7 +88,7 @@ public class AgentSystem : JobComponentSystem
 	//-----------------------------------------------------------------------------
     private void CopyFlowField()
     {
-        var cache = m_tileSystem.cachedFlowFields;
+        var cache = m_tileSystem.CachedFlowFields;
         if (cache.IsCreated && m_AllFlowFields.Length != cache.Length)
         {
             m_AllFlowFields.Dispose();
@@ -151,7 +151,7 @@ public class AgentSystem : JobComponentSystem
         }
 
         var positions = new NativeArray<Position>(agentCount, Allocator.TempJob);
-        var copyPossitions = new CopyComponentData<Position>
+        var copyPositions = new CopyComponentData<Position>
         {
             Source = m_agents.Positions,
             Results = positions
@@ -178,7 +178,7 @@ public class AgentSystem : JobComponentSystem
             Results = goals
         }.Schedule(agentCount, 64, inputDeps);
 
-        var copyJobs = JobHandle.CombineDependencies(JobHandle.CombineDependencies(copyPossitions, copyRotation, copyVelocities), copyGoals);
+        var copyJobs = JobHandle.CombineDependencies(JobHandle.CombineDependencies(copyPositions, copyRotation, copyVelocities), copyGoals);
         CopyFlowField();
 
         var neighborHashMap = new NativeMultiHashMap<int, int>(agentCount, Allocator.TempJob);
