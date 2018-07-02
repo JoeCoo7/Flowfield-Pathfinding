@@ -5,7 +5,6 @@ using UnityEngine;
 //-----------------------------------------------------------------------------
 public static class Utils
 {
-
     //-----------------------------------------------------------------------------
     public static T InstantiateAssetFromResource<T>(string _name, string _newName = "") where T : ScriptableObject
     {
@@ -20,7 +19,6 @@ public static class Utils
 
         return objectData;
     }
-    
 
     //-----------------------------------------------------------------------------
     public static bool IsPointOnScreen(Camera _camera, Vector3 _position)

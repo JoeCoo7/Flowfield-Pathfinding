@@ -2,17 +2,17 @@
 using Unity.Collections;
 using Unity.Jobs;
 
+//-----------------------------------------------------------------------------
 namespace FlowField
 {
+    //-----------------------------------------------------------------------------
     [BurstCompile]
     struct CombineHeatmapsJob : IJobParallelFor
     {
-        [ReadOnly]
-        public NativeArray<NativeArray<int>> sourceHeatmaps;
+        [ReadOnly] public NativeArray<NativeArray<int>> sourceHeatmaps;
+        [WriteOnly] public NativeArray<int> combinedHeatmap;
 
-        [WriteOnly]
-        public NativeArray<int> combinedHeatmap;
-
+        //-----------------------------------------------------------------------------
         public void Execute(int index)
         {
             // Set the output value from the first heatmap

@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace Manager
 {
+    //-----------------------------------------------------------------------------
     public static class Archetype
     {
         public static EntityArchetype FlowFieldResult;
@@ -32,8 +33,6 @@ namespace Manager
                 ComponentType.Create<Agent.Goal>(),
                 ComponentType.Create<GridSettings>());
 
-            DebugHeatmapType = entityManager.CreateArchetype(
-                ComponentType.Create<DebugHeatmap.Component>());
 
             PlayerInput = entityManager.CreateArchetype(
                 ComponentType.Create<ECSInput.PlayerInputTag>(),
@@ -42,6 +41,7 @@ namespace Manager
                 ComponentType.Create<ECSInput.InputButtons>());
         }
 
+        //-----------------------------------------------------------------------------
         public static void SetupTile(EntityManager em, Entity e, Mesh mesh, Material mat, int2 pos, byte cost, float3 col, GridSettings settings)
         {
             em.SetComponentData(e, new Tile.Position { Value = pos });
@@ -51,6 +51,7 @@ namespace Manager
             em.SetSharedComponentData(e, settings);
         }
 
+        //-----------------------------------------------------------------------------
         public static void CreateAgent(EntityCommandBuffer ecb, float3 pos, Mesh mesh, Material mat, GridSettings settings)
         {
             ecb.CreateEntity(Agent);
@@ -60,6 +61,7 @@ namespace Manager
             ecb.SetComponent(new Agent.Goal { Current = TileSystem.k_InvalidHandle, Target = TileSystem.k_InvalidHandle });
         }
 
+        //-----------------------------------------------------------------------------
         public static void CreateInputSystem(EntityManager entityManager)
         {
             var inputSystemEntity =entityManager.CreateEntity(PlayerInput);

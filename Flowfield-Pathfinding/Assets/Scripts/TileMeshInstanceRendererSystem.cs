@@ -9,9 +9,8 @@ using UnityEngine.Assertions;
 using UnityEngine.Experimental.PlayerLoop;
 using Unity.Rendering;
 
-/// <summary>
-/// Renders all Entities containing both TileMeshInstanceRenderer & TransformMatrix components.
-/// </summary>
+//-----------------------------------------------------------------------------
+// ReSharper disable once RequiredBaseTypesIsNotInherited
 [UpdateInGroup(typeof(RenderingGroup))]
 [UpdateAfter(typeof(PreLateUpdate.ParticleSystemBeginUpdateAll))]
 [UpdateAfter(typeof(MeshCullingBarrier))]
@@ -23,13 +22,9 @@ public class TileMeshInstanceRendererSystem : ComponentSystem
 	List<TileMeshInstanceRenderer>  m_CacheduniqueRendererTypes = new List<TileMeshInstanceRenderer>(10);
 	ComponentGroup m_InstanceRendererGroup;
 
-	// This is the ugly bit, necessary until Graphics.DrawMeshInstanced supports NativeArrays pulling the data in from a job.
+	//-----------------------------------------------------------------------------
     public unsafe static void CopyMatrices(ComponentDataArray<TransformMatrix> transforms, int beginIndex, int length, Matrix4x4[] outMatrices)
     {
-	    // @TODO: This is using unsafe code because the Unity DrawInstances API takes a Matrix4x4[] instead of NativeArray.
-	    // We want to use the ComponentDataArray.CopyTo method
-	    // because internally it uses memcpy to copy the data,
-	    // if the nativeslice layout matches the layout of the component data. It's very fast...
         fixed (Matrix4x4* matricesPtr = outMatrices)
         {
             Assert.AreEqual(sizeof(Matrix4x4), sizeof(TransformMatrix));
@@ -41,6 +36,7 @@ public class TileMeshInstanceRendererSystem : ComponentSystem
         }
     }
 
+	//-----------------------------------------------------------------------------
 	protected override void OnCreateManager(int capacity)
 	{
 	    // We want to find all TileMeshInstanceRenderer & TransformMatrix combinations and render them
@@ -49,6 +45,7 @@ public class TileMeshInstanceRendererSystem : ComponentSystem
             ComponentType.ReadOnly<TransformMatrix>());
 	}
 
+	//-----------------------------------------------------------------------------
 	protected override void OnUpdate()
 	{
         // Early out if we have disabled flow field rendering

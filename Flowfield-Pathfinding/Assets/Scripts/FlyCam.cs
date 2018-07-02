@@ -2,7 +2,6 @@
 
 public class FlyCam : MonoBehaviour
 {
- 
 	/*
 	EXTENDED FLYCAM
 		Desi Quintans (CowfaceGames.com), 17 August 2012.

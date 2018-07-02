@@ -1,5 +1,4 @@
-﻿using RSGLib.ECS;
-using Unity.Collections;
+﻿using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -177,7 +176,7 @@ public class AgentSpawningSystem : ComponentSystem
             for (int x = xmin; x <= xmax; x++)
             {
                 float3 cell = m_Grid[y * m_DistWidth + x];
-                if (cell.Equals(MathExt.Float3Zero()))
+                if (cell.Equals(new float3(0,0,0)))
                     continue;
 
                 float3 d = cell - sample;

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using RSGLib;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -10,6 +9,13 @@ using UnityEngine;
 //----------------------------------------------------------------------------------------
 namespace ECSInput
 {
+    public sealed class MouseButtons
+    {
+        public const int LEFT = 0;
+        public const int RIGHT = 1;
+        public const int MIDDLE = 2;
+    }
+    
     //----------------------------------------------------------------------------------------
     public struct MouseDoubleClick : IComponentData
     {
@@ -222,7 +228,7 @@ namespace ECSInput
             if (m_timer > DOUBLE_CLICK_TIME_WINDOW)
                 m_numberOfClicks = 0;
 
-            if (!Input.GetMouseButtonDown(StandardInput.LEFT_MOUSE_BUTTON))
+            if (!Input.GetMouseButtonDown(MouseButtons.LEFT))
                 return 0;
 
             m_numberOfClicks++;

@@ -1,4 +1,4 @@
-﻿using RSGLib;
+﻿using ECSInput;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -220,7 +220,7 @@ namespace WT.ECS
 
             float mouseX = Input.GetAxis("Mouse X");
             float mouseY = Input.GetAxis("Mouse Y");
-            return Input.GetMouseButton(StandardInput.MIDDLE_MOUSE_BUTTON) && (Math.Abs(mouseX) > Mathf.Epsilon || Math.Abs(mouseY) > Mathf.Epsilon);
+            return Input.GetMouseButton(MouseButtons.MIDDLE) && (Math.Abs(mouseX) > Mathf.Epsilon || Math.Abs(mouseY) > Mathf.Epsilon);
         }
 
         //----------------------------------------------------------------------------------------
@@ -229,7 +229,7 @@ namespace WT.ECS
             if (!AllowMouseRotation)
                 return false;
 
-            return Input.GetMouseButton(StandardInput.LEFT_MOUSE_BUTTON) && (Input.GetKey(KeyCode.RightShift) || Input.GetKey(KeyCode.LeftShift));
+            return Input.GetMouseButton(MouseButtons.LEFT) && (Input.GetKey(KeyCode.RightShift) || Input.GetKey(KeyCode.LeftShift));
         }
 
         //----------------------------------------------------------------------------------------
@@ -238,7 +238,7 @@ namespace WT.ECS
             if(!AllowMouseRotation)
                 return false;
 
-            return Input.GetMouseButton(StandardInput.RIGHT_MOUSE_BUTTON) && (Input.GetKey(KeyCode.RightShift) || Input.GetKey(KeyCode.LeftShift));
+            return Input.GetMouseButton(MouseButtons.RIGHT) && (Input.GetKey(KeyCode.RightShift) || Input.GetKey(KeyCode.LeftShift));
         }
 
         //----------------------------------------------------------------------------------------
@@ -280,7 +280,7 @@ namespace WT.ECS
             if(EventSystem.current.IsPointerOverGameObject())
                 return false;
 
-            if(Input.GetMouseButton(StandardInput.MIDDLE_MOUSE_BUTTON))
+            if(Input.GetMouseButton(MouseButtons.MIDDLE))
                 return false;
 
             return true;

@@ -6,41 +6,37 @@ using Unity.Mathematics.Experimental;
 
 namespace FlowField
 {
+    //-----------------------------------------------------------------------------
     [BurstCompile]
     struct SmoothFlowFieldJob : IJob
     {
-        [ReadOnly]
-        public GridSettings settings;
+        [ReadOnly] public GridSettings Settings;
+        [ReadOnly] public NativeArray<int2> Offsets;
+        [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int> FloodQueue;
 
-        [ReadOnly]
-        public NativeArray<int2> offsets;
+        public NativeArray<float3> Flowfield;
+        public float SmoothAmount;
 
-        [ReadOnly, DeallocateOnJobCompletion]
-        public NativeArray<int> floodQueue;
-
-        public NativeArray<float3> flowfield;
-
-        public float smoothAmount;
-
+        //-----------------------------------------------------------------------------
         public void Execute()
         {
-            for (int i = 0; i < flowfield.Length; ++i)
+            for (int i = 0; i < Flowfield.Length; ++i)
             {
-                var cellIndex = floodQueue[i];
-                if (cellIndex < 0 || cellIndex >= flowfield.Length)
+                var cellIndex = FloodQueue[i];
+                if (cellIndex < 0 || cellIndex >= Flowfield.Length)
                     continue;
 
-                var flowDirection = flowfield[cellIndex];
-                var cellGrid = GridUtilties.Index2Grid(settings, cellIndex);
+                var flowDirection = Flowfield[cellIndex];
+                var cellGrid = GridUtilties.Index2Grid(Settings, cellIndex);
                 var cellDirectionCeiling = new int2((int)math.sign(flowDirection.x), (int)math.sign(flowDirection.z));
                 var backPropagationCellGrid = cellGrid + cellDirectionCeiling;
-                var backPropagationCellIndex = GridUtilties.Grid2Index(settings, backPropagationCellGrid);
+                var backPropagationCellIndex = GridUtilties.Grid2Index(Settings, backPropagationCellGrid);
                 if (backPropagationCellIndex < 0)
                     continue;
-                var backPropagationCellDirection = flowfield[backPropagationCellIndex];
+                var backPropagationCellDirection = Flowfield[backPropagationCellIndex];
 
-                flowfield[cellIndex] = math_experimental.normalizeSafe(
-                    flowDirection * (1.0f - smoothAmount) + backPropagationCellDirection * smoothAmount);
+                Flowfield[cellIndex] = math_experimental.normalizeSafe(
+                    flowDirection * (1.0f - SmoothAmount) + backPropagationCellDirection * SmoothAmount);
             }
         }
     }

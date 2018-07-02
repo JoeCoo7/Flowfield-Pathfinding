@@ -1,18 +1,29 @@
-﻿using Unity.Burst;
+﻿using Agent.Group;
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 
+//-----------------------------------------------------------------------------
 public class PlayerSelectionSystem : JobComponentSystem
 {
+    [Inject] private ECSInput.InputDataGroup m_Input;
+    [Inject] private AgentSelection m_AgentSelection;
+    private SelectionRect m_Selection;
+    private float3 m_Start;
+    private float3 m_Stop;
+    
+    //-----------------------------------------------------------------------------
     [BurstCompile]
     struct SelectionJob : IJobParallelFor
     {
         public float2 start;
         public float2 stop;
         public float4x4 world2Clip;
-        public Agent.Group.AgentSelection agentSelection;
+        public AgentSelection agentSelection;
 
+        //-----------------------------------------------------------------------------
         public void Execute(int index)
         {
             var position = agentSelection.position[index].Value;
@@ -25,33 +36,31 @@ public class PlayerSelectionSystem : JobComponentSystem
         }
     }
 
+    //-----------------------------------------------------------------------------
     [BurstCompile]
     struct SelectAllJob : IJobParallelFor
     {
-        public Agent.Group.AgentSelection agentSelection;
+        public AgentSelection agentSelection;
 
+        //-----------------------------------------------------------------------------
         public void Execute(int index)
         {
             agentSelection.selection[index] = new Agent.Selection { Value = 1 };
         }
     }
 
-    [Inject] ECSInput.InputDataGroup m_Input;
-    [Inject] Agent.Group.AgentSelection m_AgentSelection;
 
-    SelectionRect m_Selection;
-
-    float3 m_Start;
-    float3 m_Stop;
-
+    //-----------------------------------------------------------------------------
     protected override void OnCreateManager(int capacity)
     {
         base.OnCreateManager(capacity);
-        m_Selection = UnityEngine.Object.FindObjectOfType<SelectionRect>();
+        m_Selection = Object.FindObjectOfType<SelectionRect>();
     }
 
+    //-----------------------------------------------------------------------------
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
+        // select all key?
         var status = m_Input.Buttons[0].Values["SelectAll"].Status;
         if (status == ECSInput.InputButtons.UP)
         {
@@ -63,29 +72,28 @@ public class PlayerSelectionSystem : JobComponentSystem
         if (status == ECSInput.InputButtons.NONE)
             return inputDeps;
 
+
+        // select by rectangle?
         if (status == ECSInput.InputButtons.DOWN)
         {
             m_Start = m_Input.MousePos[0].Value;
-            m_Selection.start = m_Start;
-            m_Selection.stop = m_Stop;
+            m_Selection.Start = m_Start;
+            m_Selection.Stop = m_Stop;
             m_Selection.enabled = true;
         }
         m_Stop = m_Input.MousePos[0].Value;
-        m_Selection.stop = m_Stop;
+        m_Selection.Stop = m_Stop;
 
         if (status == ECSInput.InputButtons.UP)
-        {
             m_Selection.enabled = false;
-        }
 
         if (m_Selection.enabled)
         {
             var job = new SelectionJob
             {
-                start = Normalize(math.min(m_Start, m_Stop), UnityEngine.Screen.width, UnityEngine.Screen.height),
-                stop = Normalize(math.max(m_Start, m_Stop), UnityEngine.Screen.width, UnityEngine.Screen.height),
-                world2Clip = UnityEngine.Camera.main.projectionMatrix *
-                    UnityEngine.Camera.main.GetComponent<UnityEngine.Transform>().worldToLocalMatrix,
+                start = Normalize(math.min(m_Start, m_Stop), Screen.width,Screen.height),
+                stop = Normalize(math.max(m_Start, m_Stop), Screen.width, Screen.height),
+                world2Clip = Camera.main.projectionMatrix * Camera.main.GetComponent<Transform>().worldToLocalMatrix,
                 agentSelection = m_AgentSelection
             };
             return job.Schedule(m_AgentSelection.Length, 64, inputDeps);
@@ -94,6 +102,7 @@ public class PlayerSelectionSystem : JobComponentSystem
         return inputDeps;
     }
 
+    //-----------------------------------------------------------------------------
     static float2 Normalize(float3 p, int width, int height)
     {
         return new float2(p.x / (width / 2) - 1, p.y / (height / 2) - 1);

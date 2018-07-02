@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
+//-----------------------------------------------------------------------------
 public class InitializationData : ScriptableObject
 {
 #if UNITY_EDITOR
@@ -16,40 +17,43 @@ public class InitializationData : ScriptableObject
 	}
 #endif
 
-	public int m_textureResolution = 2048;
 	public float m_worldWidth = 100;
 	public float m_worldHeight = 100;
-	public float m_heightScale = 10;
 	public float m_cellSize;
-	public float m_goalAgentFactor = 0.5f;
-	public int m_cellsPerBlock = 8;
+	public float m_heightScale = 10;
 	public float m_noiseScale = 3;
 	public float m_noiseMultiplier = 4;
 	public float m_noiseShift = -2;
-	public GameObject m_gridPrefab;
-	public GameObject m_terrainPrefab;
-	public GameObject m_cameraObject;
-	[NonSerialized]
-	public GridSettings m_grid;
-    public Mesh TileDirectionMesh;
-    public Material TileDirectionMaterial;
-    public bool m_drawFlowField = false;
+	
+	public float m_goalAgentFactor = 0.5f;
+	public bool m_drawFlowField = false;
 	public bool m_drawHeatField = false;
     public bool m_smoothFlowField = true;
+	
+	public GameObject m_terrainPrefab;
+	public GameObject m_cameraObject;
+	public Mesh TileDirectionMesh;
+	public Material TileDirectionMaterial;
+	public AnimationCurve terrainHeightCurve;
+	public Gradient terrainColor;
+	[Range(0, 1)] public float m_smoothAmount = 0.9f;
 
-    [Range(0, 1)]
-    public float m_smoothAmount = 0.9f;
+	public struct CellData
+	{
+		public byte cost;
+		public float height;
+		public float3 color;
+	}
 
-	[NonSerialized]
-	public NativeArray<float3> m_terrainFlow;
-	[NonSerialized]
-	public NativeArray<float3> m_terrainNormals;
-	[NonSerialized]
-	public NativeArray<float3> m_terrainColors;
-	[NonSerialized]
-	public NativeArray<float> m_terrainHeights;
+	[NonSerialized] public GridSettings m_grid;
+	[NonSerialized] public NativeArray<float3> m_terrainFlow;
+	[NonSerialized] public NativeArray<float3> m_terrainNormals;
+	[NonSerialized] public NativeArray<float3> m_terrainColors;
+	[NonSerialized] public NativeArray<float> m_terrainHeights;
 
-	TerrainColoring m_terrain;
+	private TerrainColoring m_terrain;
+	
+	//-----------------------------------------------------------------------------
 	public void Initalize()
 	{
 		Instantiate(m_cameraObject);
@@ -72,7 +76,8 @@ public class InitializationData : ScriptableObject
 		m_terrainColors = new NativeArray<float3>(width * height, Allocator.Persistent);
 		BuildWorld();
 	}
-
+	
+	//-----------------------------------------------------------------------------
 	public void BuildWorld()
 	{
 		CreateGrid(m_grid, m_terrainHeights, m_terrainColors, m_terrainNormals, m_terrainFlow, GridFunc);
@@ -82,6 +87,7 @@ public class InitializationData : ScriptableObject
 		m_terrain.Init(m_terrainHeights, m_terrainNormals, m_terrainColors, new float3(m_worldWidth, m_heightScale, m_worldHeight), m_cellSize);
 	}
 
+	//-----------------------------------------------------------------------------
 	public void Shutdown()
 	{
 		m_terrainHeights.Dispose();
@@ -91,9 +97,7 @@ public class InitializationData : ScriptableObject
 	}
 
 
-	public AnimationCurve terrainHeightCurve;
-	public Gradient terrainColor;
-
+	//-----------------------------------------------------------------------------
 	CellData GridFunc(float2 per, int2 coord)
 	{
 		var noise = Mathf.PerlinNoise(per.x * m_noiseScale, per.y * m_noiseScale);
@@ -104,13 +108,8 @@ public class InitializationData : ScriptableObject
 		return new CellData() { cost = cost, height = height * m_heightScale, color = new float3(color.r, color.g, color.b) };
 	}
 
-	public struct CellData
-	{
-		public byte cost;
-		public float height;
-		public float3 color;
-	}
 
+	//-----------------------------------------------------------------------------
 	public static void CreateGrid(GridSettings grid, 
 		NativeArray<float> heightmap,
 		NativeArray<float3> colormap,

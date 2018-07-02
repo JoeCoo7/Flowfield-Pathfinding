@@ -5,29 +5,32 @@ using Unity.Mathematics;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
 
+//-----------------------------------------------------------------------------
 public class TerrainColoring : MonoBehaviour
 {
-    Texture2D m_colorTexture;
-    Color32[] m_terrainColors;
-    Color32[] m_heatmapColors;
-    bool m_showingHeatField = false;
+    private Texture2D m_ColorTexture;
+    private Color32[] m_TerrainColors;
+    private Color32[] m_HeatmapColors;
+    private bool m_ShowingHeatField = false;
+    
+    //-----------------------------------------------------------------------------
     public void Init(NativeArray<float> heightMap, NativeArray<float3> normalmap, NativeArray<float3> colormap, float3 size, float cellSize)
     {
         int width = (int)(size.x / cellSize);
         int depth = (int)(size.z / cellSize);
-        m_colorTexture = new Texture2D(width, depth);
-        m_heatmapColors = new Color32[width * depth];
-        m_terrainColors = new Color32[width * depth];
-        for (int i = 0; i < m_terrainColors.Length; i++)
+        m_ColorTexture = new Texture2D(width, depth);
+        m_HeatmapColors = new Color32[width * depth];
+        m_TerrainColors = new Color32[width * depth];
+        for (int i = 0; i < m_TerrainColors.Length; i++)
         {
-            m_terrainColors[i] = new Color(colormap[i].x, colormap[i].y, colormap[i].z);
-            m_heatmapColors[i] = new Color(0, 0, 0);
+            m_TerrainColors[i] = new Color(colormap[i].x, colormap[i].y, colormap[i].z);
+            m_HeatmapColors[i] = new Color(0, 0, 0);
         }
-        m_colorTexture.SetPixels32(m_terrainColors);
-        m_colorTexture.Apply();
+        m_ColorTexture.SetPixels32(m_TerrainColors);
+        m_ColorTexture.Apply();
 
         var mat = GetComponent<MeshRenderer>().sharedMaterial;
-        mat.SetTexture("_MainTex", m_colorTexture);
+        mat.SetTexture("_MainTex", m_ColorTexture);
 
         var mesh = GenerateMesh(heightMap, normalmap, size, cellSize);
         GetComponent<MeshFilter>().sharedMesh = mesh;
@@ -38,47 +41,48 @@ public class TerrainColoring : MonoBehaviour
         World.Active.GetOrCreateManager<TileSystem>().OnNewHeatMap += OnNewHeatMap;
     }
 
-    void OnNewHeatMap(NativeArray<int> map)
+    //-----------------------------------------------------------------------------
+    private void OnNewHeatMap(NativeArray<int> map)
     {
         if (Main.ActiveInitParams.m_drawHeatField)
         {
             var scale = (1f / (Main.ActiveInitParams.m_grid.cellCount.x * 1.25f));
-            for (int i = 0; i < m_heatmapColors.Length; i++)
+            for (int index = 0; index < m_HeatmapColors.Length; index++)
             {
                 var c = 0f;
-                if (map[i] == int.MaxValue)
-                {
-                    m_heatmapColors[i] = m_terrainColors[i];
-                }
+                if (map[index] == int.MaxValue)
+                    m_HeatmapColors[index] = m_TerrainColors[index];
                 else
                 {
-                    var h = map[i] * scale;
+                    var h = map[index] * scale;
                     if (h < 1)
                         c = (1 - h) * (1 - h) * (1 - h);
-                    m_heatmapColors[i] = new Color(c, c, c) + m_terrainColors[i];
+                    
+                    m_HeatmapColors[index] = new Color(c, c, c) + m_TerrainColors[index];
                 }
             }
-            m_colorTexture.SetPixels32(m_heatmapColors);
-            m_colorTexture.Apply();
-            m_showingHeatField = true;
+            m_ColorTexture.SetPixels32(m_HeatmapColors);
+            m_ColorTexture.Apply();
+            m_ShowingHeatField = true;
         }
         else
         {
-            if (m_showingHeatField)
+            if (m_ShowingHeatField)
             {
-                m_colorTexture.SetPixels32(m_terrainColors);
-                m_colorTexture.Apply();
-                m_showingHeatField = true;
+                m_ColorTexture.SetPixels32(m_TerrainColors);
+                m_ColorTexture.Apply();
+                m_ShowingHeatField = true;
             }
         }
     }
 
-    Mesh GenerateMesh(NativeArray<float> data, NativeArray<float3> normalmap, float3 size, float cellSize)
+    //-----------------------------------------------------------------------------
+    private Mesh GenerateMesh(NativeArray<float> data, NativeArray<float3> normalmap, float3 size, float cellSize)
     {
         int width = (int)(size.x / cellSize);
         int depth = (int)(size.z / cellSize);
         Mesh mesh = new Mesh();
-        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+        mesh.indexFormat = IndexFormat.UInt32;
         var verts = new List<Vector3>(data.Length);
         var normals = new List<Vector3>(data.Length);
         var indices = new List<int>(data.Length * 3);

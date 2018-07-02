@@ -12,7 +12,6 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
     [Inject] private InputDataGroup m_Input;
     [Inject] private TileSystem m_TileSystem;
     
-    
     //-----------------------------------------------------------------------------
     [BurstCompile]
     struct UpdateJob : IJobParallelFor
@@ -23,6 +22,7 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
         [ReadOnly] public NativeArray<float> TerrainHeight;
         public int Handle;
 
+        //-----------------------------------------------------------------------------
         public void Execute(int index)
         {
             if (tiles.handles[index].Handle == Handle)

@@ -51,9 +51,6 @@ public class Main : MonoBehaviour
         var entityManager = World.Active.GetOrCreateManager<EntityManager>();
         Manager.Archetype.Initialize(entityManager);
 
-        var debugEntity = entityManager.CreateEntity(Manager.Archetype.DebugHeatmapType);
-        entityManager.SetSharedComponentData(debugEntity, new DebugHeatmap.Component());
-
 		Manager.Archetype.CreateInputSystem(entityManager);
 		
 		Instance = FindObjectOfType<Main>();

@@ -203,11 +203,11 @@ public class TileSystem : JobComponentSystem
         {
             finalJobHandle = new FlowField.SmoothFlowFieldJob
             {
-                settings = gridSettings,
-                flowfield = flowField,
-                floodQueue = floodQueue,
-                offsets = m_Offsets,
-                smoothAmount = Main.ActiveInitParams.m_smoothAmount
+                Settings = gridSettings,
+                Flowfield = flowField,
+                FloodQueue = floodQueue,
+                Offsets = m_Offsets,
+                SmoothAmount = Main.ActiveInitParams.m_smoothAmount
             }.Schedule(computeFlowFieldJobHandle);
         }
         else

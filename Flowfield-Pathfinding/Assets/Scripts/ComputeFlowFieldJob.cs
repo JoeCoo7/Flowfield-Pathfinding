@@ -5,21 +5,17 @@ using Unity.Mathematics;
 
 namespace FlowField
 {
+    //-----------------------------------------------------------------------------
     [BurstCompile]
     struct ComputeFlowFieldJob : IJobParallelFor
     {
-        [ReadOnly]
-        public GridSettings settings;
+        [ReadOnly] public GridSettings settings;
+        [ReadOnly] public NativeArray<int> heatmap;
+        [ReadOnly] public NativeArray<int2> offsets;
 
-        [ReadOnly]
-        public NativeArray<int> heatmap;
+        [WriteOnly] public NativeArray<float3> flowfield;
 
-        [ReadOnly]
-        public NativeArray<int2> offsets;
-
-        [WriteOnly]
-        public NativeArray<float3> flowfield;
-
+        //-----------------------------------------------------------------------------
         public void Execute(int index)
         {
             int2 grid = GridUtilties.Index2Grid(settings, index);

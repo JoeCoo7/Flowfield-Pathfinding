@@ -5,8 +5,10 @@ using Unity.Jobs;
 using Unity.Rendering;
 using UnityEngine.Rendering;
 
+//-----------------------------------------------------------------------------
 namespace Agent
 {
+    //-----------------------------------------------------------------------------
     [BurstCompile]
     struct AgentChangeMaterialJob : IJobParallelFor
     {

@@ -1,25 +1,27 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "InputSettings", menuName = "Pathfinding/InputSettings")]
-public class InputSettings : ScriptableObject
+namespace ECSInput
 {
-    public Dictionary<string, string> Commands;
-    public Dictionary<string, string> Mods;
-
-    //-----------------------------------------------------------------------------
-    private void OnEnable()
+    [CreateAssetMenu(fileName = "InputSettings", menuName = "Pathfinding/InputSettings")]
+    public class InputSettings : ScriptableObject
     {
-        Commands = new Dictionary<string, string>
+        public Dictionary<string, string> Commands;
+        public Dictionary<string, string> Mods;
+
+        //-----------------------------------------------------------------------------
+        private void OnEnable()
         {
-			{"SpawnAgents", "right shift|left shift;mouse 0"},
-			{"CreateGoal", ";mouse 1"},
-            {"SelectAgents", "~right shift|~left shift;mouse 0" },
-            {"SelectAll", "right shift|left shift;v" },
-            {"ShowFlowfield", "left shift|right shift;x" },
-            {"ShowHeatmap", "left shift|right shift;y" },
-            {"SmoothFlowfield", "left shift|right shift;c" }
-        };
+            Commands = new Dictionary<string, string>
+            {
+                {"SpawnAgents", "right shift|left shift;mouse 0"},
+                {"CreateGoal", ";mouse 1"},
+                {"SelectAgents", "~right shift|~left shift;mouse 0"},
+                {"SelectAll", "right shift|left shift;v"},
+                {"ShowFlowfield", "left shift|right shift;x"},
+                {"ShowHeatmap", "left shift|right shift;y"},
+                {"SmoothFlowfield", "left shift|right shift;c"}
+            };
+        }
     }
 }
- 

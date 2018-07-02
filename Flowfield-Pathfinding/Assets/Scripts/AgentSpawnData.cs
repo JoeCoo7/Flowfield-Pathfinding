@@ -19,5 +19,4 @@ public class AgentSpawnData : ScriptableObject
 	public int AgentDistMaxTries = 30;
 	public int AgentDistCellSize = 1;
 	public int AgentDistNumPerClick = 100;
-	public int AgentDistSpawningThreshold = 128;
 }
