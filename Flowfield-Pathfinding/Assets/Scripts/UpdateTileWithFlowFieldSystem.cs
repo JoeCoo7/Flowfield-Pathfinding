@@ -6,9 +6,10 @@ using Unity.Mathematics;
 using Unity.Collections;
 
 //-----------------------------------------------------------------------------
+[UpdateInGroup(typeof(ProcessGroup))]
 public class UpdateTileWithFlowFieldSystem : JobComponentSystem
 {
-    [Inject] private Tile.Group.AllTiles m_Tiles;
+    [Inject] private Tile.AllTiles m_Tiles;
     [Inject] private InputDataGroup m_Input;
     [Inject] private TileSystem m_TileSystem;
     
@@ -16,7 +17,7 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
     [BurstCompile]
     struct UpdateJob : IJobParallelFor
     {
-        public Tile.Group.AllTiles tiles;
+        public Tile.AllTiles Tiles;
         
         [ReadOnly, DeallocateOnJobCompletion] public NativeArray<float3> FlowField;
         [ReadOnly] public NativeArray<float> TerrainHeight;
@@ -25,14 +26,14 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
         //-----------------------------------------------------------------------------
         public void Execute(int index)
         {
-            if (tiles.handles[index].Handle == Handle)
+            if (Tiles.handles[index].Handle == Handle)
                 return;
 
-            tiles.handles[index] = new Tile.FlowFieldHandle { Handle = Handle };
+            Tiles.handles[index] = new Tile.FlowFieldHandle { Handle = Handle };
 
-            var tileTransform = tiles.transforms[index];
-            var position = tiles.position[index];
-            var settings = tiles.settings[index];
+            var tileTransform = Tiles.transforms[index];
+            var position = Tiles.position[index];
+            var settings = Tiles.settings[index];
             var tileIndex = GridUtilties.Grid2Index(settings, position.Value);
             var flowDirection = FlowField[tileIndex];
             var height = TerrainHeight[tileIndex];
@@ -42,7 +43,7 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
                 position.Value.y * settings.cellSize.y - settings.worldSize.y / 2.0f);
             
             tileTransform.Value = math.mul(math.lookRotationToMatrix(pos, flowDirection, new float3(0.0f, 1.0f, 0.0f)), math.scale(scale));
-            tiles.transforms[index] = tileTransform;
+            Tiles.transforms[index] = tileTransform;
         }
     }
 
@@ -62,12 +63,12 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
 
         var update = new UpdateJob
         {
-            tiles = m_Tiles,
+            Tiles = m_Tiles,
             Handle = tileSystem.LastGeneratedQueryHandle,
             FlowField = tileSystem.GetFlowFieldCopy(tileSystem.LastGeneratedQueryHandle, Allocator.TempJob),
             TerrainHeight = Main.TerrainHeight
         };
 
-        return update.Schedule(update.tiles.transforms.Length, 64, inputDeps);
+        return update.Schedule(update.Tiles.transforms.Length, 64, inputDeps);
     }
 }

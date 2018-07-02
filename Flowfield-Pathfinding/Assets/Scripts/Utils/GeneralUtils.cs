@@ -3,7 +3,7 @@ using UnityEngine;
 
 
 //-----------------------------------------------------------------------------
-public static class Utils
+public static class GeneralUtils
 {
     //-----------------------------------------------------------------------------
     public static T InstantiateAssetFromResource<T>(string _name, string _newName = "") where T : ScriptableObject

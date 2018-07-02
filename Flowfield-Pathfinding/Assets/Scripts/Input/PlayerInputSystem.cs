@@ -103,7 +103,7 @@ namespace ECSInput
         public static InputButtons ProcessInputSettings()
         {
             var inputButtons = new InputButtons { Values = new Dictionary<string, InputButtons.Command>() };
-            var settings = Utils.InstantiateAssetFromResource<InputSettings>("InputSettings");
+            var settings = GeneralUtils.InstantiateAssetFromResource<InputSettings>("InputSettings");
             foreach (var entry in settings.Commands)
             {
                 var fullKey = entry.Value.Split(';');

@@ -1,5 +1,6 @@
 ﻿using Agent;
 using Samples.Common;
+using Tile;
 using Unity.Burst;
 using UnityEngine;
 using Unity.Mathematics;
@@ -8,42 +9,32 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics.Experimental;
 using Unity.Transforms;
+using Position = Unity.Transforms.Position;
 
 [UpdateInGroup(typeof(ProcessGroup))]
 [UpdateAfter(typeof(AgentSpawningSystem))]
 //-----------------------------------------------------------------------------
-
 public class AgentSystem : JobComponentSystem
 {
-	struct AgentData
-	{
-		[ReadOnly] public SharedComponentDataArray<GridSettings> GridSettings;
-		[ReadOnly] public ComponentDataArray<Goal> Goals;
-		public ComponentDataArray<Velocity> Velocities;
-		public ComponentDataArray<Position> Positions;
-        public ComponentDataArray<Rotation> Rotations;
-        public EntityArray Entity;
-		public readonly int Length;
-	}
-
-	struct PreviousJobData
-	{
-		public JobHandle jobHandle;
-		public NativeArray<Position> positions;
-		public NativeArray<Rotation> rotations;
-		public NativeArray<Velocity> velocities;
-		public NativeArray<Goal> goals;
-		public NativeMultiHashMap<int, int> neighborHashMap;
-		public bool isValid;
-		public int length;
-	}
-
-	[Inject] private AgentData m_agents;
-    [Inject, ReadOnly] private TileSystem m_tileSystem;
-	private PreviousJobData m_PreviousJobData;
 
 	//-----------------------------------------------------------------------------
-    public int numAgents { get { return m_agents.Length; } }
+	struct PreviousJobData
+	{
+		public JobHandle JobHandle;
+		public NativeArray<Position> Positions;
+		public NativeArray<Rotation> Rotations;
+		public NativeArray<Velocity> Velocities;
+		public NativeArray<Goal> Goals;
+		public NativeMultiHashMap<int, int> NeighborHashMap;
+		public bool IsValid;
+		public int Length;
+	}
+
+	public int NumAgents { get { return m_Agents.Length; } }
+	
+	[Inject] private AllDataGroup m_Agents;
+    [Inject, ReadOnly] private TileSystem m_TileSystem;
+	private PreviousJobData m_PreviousJobData;
 	private NativeArray<float3> m_AllFlowFields;
 
 	//-----------------------------------------------------------------------------
@@ -73,14 +64,14 @@ public class AgentSystem : JobComponentSystem
 	//-----------------------------------------------------------------------------
     protected override void OnDestroyManager()
     {
-        if (m_PreviousJobData.isValid)
+        if (m_PreviousJobData.IsValid)
         {
-            m_PreviousJobData.jobHandle.Complete();
-            m_PreviousJobData.goals.Dispose();
-            m_PreviousJobData.positions.Dispose();
-            m_PreviousJobData.rotations.Dispose();
-            m_PreviousJobData.velocities.Dispose();
-            m_PreviousJobData.neighborHashMap.Dispose();
+            m_PreviousJobData.JobHandle.Complete();
+            m_PreviousJobData.Goals.Dispose();
+            m_PreviousJobData.Positions.Dispose();
+            m_PreviousJobData.Rotations.Dispose();
+            m_PreviousJobData.Velocities.Dispose();
+            m_PreviousJobData.NeighborHashMap.Dispose();
         }
         m_AllFlowFields.Dispose();
     }
@@ -88,7 +79,7 @@ public class AgentSystem : JobComponentSystem
 	//-----------------------------------------------------------------------------
     private void CopyFlowField()
     {
-        var cache = m_tileSystem.CachedFlowFields;
+        var cache = m_TileSystem.CachedFlowFields;
         if (cache.IsCreated && m_AllFlowFields.Length != cache.Length)
         {
             m_AllFlowFields.Dispose();
@@ -100,52 +91,33 @@ public class AgentSystem : JobComponentSystem
     }
 
 	//-----------------------------------------------------------------------------
-    [BurstCompile]
-    struct CopyPreviousResultsToAgentsJob : IJobParallelFor
-    {
-        [ReadOnly, DeallocateOnJobCompletion] public NativeArray<Position> positions;
-        [ReadOnly, DeallocateOnJobCompletion] public NativeArray<Rotation> rotations;
-        [ReadOnly, DeallocateOnJobCompletion] public NativeArray<Velocity> velocities;
-        [WriteOnly] public ComponentDataArray<Position> outputPositions;
-        [WriteOnly] public ComponentDataArray<Rotation> outputRotations;
-        [WriteOnly] public ComponentDataArray<Velocity> outputVelocities;
-
-        public void Execute(int index)
-        {
-            outputPositions[index] = new Position { Value = positions[index].Value };
-            outputRotations[index] = new Rotation { Value = rotations[index].Value };
-            outputVelocities[index] = new Velocity { Value = velocities[index].Value };
-        }
-    }
-
-	//-----------------------------------------------------------------------------
     protected override JobHandle OnUpdate(JobHandle inputDeps)
 	{
-		var settings = m_agents.GridSettings[0];
-        var agentCount = m_agents.Positions.Length;
+		var settings = m_Agents.GridSettings[0];
+        var agentCount = m_Agents.Positions.Length;
 
         // process the previous frame
-        if (m_PreviousJobData.isValid && m_PreviousJobData.jobHandle.IsCompleted)
+        if (m_PreviousJobData.IsValid && m_PreviousJobData.JobHandle.IsCompleted)
         {
-            m_PreviousJobData.jobHandle.Complete();
+            m_PreviousJobData.JobHandle.Complete();
 
             // copy data back to the components
             var copyPrevJobHandle = new CopyPreviousResultsToAgentsJob
             {
-                positions = m_PreviousJobData.positions,
-                rotations = m_PreviousJobData.rotations,
-                velocities = m_PreviousJobData.velocities,
+                positions = m_PreviousJobData.Positions,
+                rotations = m_PreviousJobData.Rotations,
+                velocities = m_PreviousJobData.Velocities,
 
-                outputPositions = m_agents.Positions,
-                outputRotations = m_agents.Rotations,
-                outputVelocities = m_agents.Velocities
-            }.Schedule(m_PreviousJobData.length, 64, inputDeps);
+                outputPositions = m_Agents.Positions,
+                outputRotations = m_Agents.Rotations,
+                outputVelocities = m_Agents.Velocities
+            }.Schedule(m_PreviousJobData.Length, 64, inputDeps);
 
             copyPrevJobHandle.Complete();
-            m_PreviousJobData.goals.Dispose();
-            m_PreviousJobData.neighborHashMap.Dispose();
+            m_PreviousJobData.Goals.Dispose();
+            m_PreviousJobData.NeighborHashMap.Dispose();
         }
-        else if (m_PreviousJobData.isValid && !m_PreviousJobData.jobHandle.IsCompleted)
+        else if (m_PreviousJobData.IsValid && !m_PreviousJobData.JobHandle.IsCompleted)
         {
             return inputDeps;
         }
@@ -153,28 +125,28 @@ public class AgentSystem : JobComponentSystem
         var positions = new NativeArray<Position>(agentCount, Allocator.TempJob);
         var copyPositions = new CopyComponentData<Position>
         {
-            Source = m_agents.Positions,
+            Source = m_Agents.Positions,
             Results = positions
         }.Schedule(agentCount, 64, inputDeps);
 
         var rotations = new NativeArray<Rotation>(agentCount, Allocator.TempJob);
         var copyRotation = new CopyComponentData<Rotation>
         {
-            Source = m_agents.Rotations,
+            Source = m_Agents.Rotations,
             Results = rotations
         }.Schedule(agentCount, 64, inputDeps);
 
         var velocities = new NativeArray<Velocity>(agentCount, Allocator.TempJob);
         var copyVelocities = new CopyComponentData<Velocity>
         {
-            Source = m_agents.Velocities,
+            Source = m_Agents.Velocities,
             Results = velocities
         }.Schedule(agentCount, 64, inputDeps);
 
         var goals = new NativeArray<Goal>(agentCount, Allocator.TempJob);
         var copyGoals = new CopyComponentData<Goal>
         {
-            Source = m_agents.Goals,
+            Source = m_Agents.Goals,
             Results = goals
         }.Schedule(agentCount, 64, inputDeps);
 
@@ -208,16 +180,16 @@ public class AgentSystem : JobComponentSystem
 
 		var closestNeighborJob = new FindClosestNeighbor
 		{
-			cellHash = neighborHashMap,
-			cellHashes = cellNeighborIndices,
-			positions = positions,
-			closestNeighbor = vecFromNearestNeighbor,
-			cellRadius = neighborCellSize, 
-			hashes = neighborHashes,
-			steerParams = steerParams,
-			avgNeighborPositions = avgNeighborPositions,
-			avgNeighborVelocities = avgNeighborVelocities,
-			velocities = velocities
+			CellHash = neighborHashMap,
+			CellHashes = cellNeighborIndices,
+			Positions = positions,
+			ClosestNeighbor = vecFromNearestNeighbor,
+			CellRadius = neighborCellSize, 
+			Hashes = neighborHashes,
+			SteerParams = steerParams,
+			AvgNeighborPositions = avgNeighborPositions,
+			AvgNeighborVelocities = avgNeighborVelocities,
+			Velocities = velocities
 		};
 
 		var closestNeighborJobHandle = closestNeighborJob.Schedule(agentCount, 64, mergeNeighborCellsJobHandle);
@@ -255,19 +227,38 @@ public class AgentSystem : JobComponentSystem
 
         m_PreviousJobData = new PreviousJobData
         {
-            jobHandle = speedJobHandel,
-            isValid = true,
-            positions = positions,
-            rotations = rotations,
-            velocities = velocities,
-            goals = goals,
-            neighborHashMap = neighborHashMap,
-            length = agentCount,
+            JobHandle = speedJobHandel,
+            IsValid = true,
+            Positions = positions,
+            Rotations = rotations,
+            Velocities = velocities,
+            Goals = goals,
+            NeighborHashMap = neighborHashMap,
+            Length = agentCount,
         };
 
         return copyJobs;
 	}
 
+	//-----------------------------------------------------------------------------
+	[BurstCompile]
+	private struct CopyPreviousResultsToAgentsJob : IJobParallelFor
+	{
+		[ReadOnly, DeallocateOnJobCompletion] public NativeArray<Position> positions;
+		[ReadOnly, DeallocateOnJobCompletion] public NativeArray<Rotation> rotations;
+		[ReadOnly, DeallocateOnJobCompletion] public NativeArray<Velocity> velocities;
+		[WriteOnly] public ComponentDataArray<Position> outputPositions;
+		[WriteOnly] public ComponentDataArray<Rotation> outputRotations;
+		[WriteOnly] public ComponentDataArray<Velocity> outputVelocities;
+
+		public void Execute(int index)
+		{
+			outputPositions[index] = new Position { Value = positions[index].Value };
+			outputRotations[index] = new Rotation { Value = rotations[index].Value };
+			outputVelocities[index] = new Velocity { Value = velocities[index].Value };
+		}
+	}
+	
 	//-----------------------------------------------------------------------------
 	[BurstCompile]
 	struct MergeNeighborCells : IJobNativeMultiHashMapMergedSharedKeyIndices
@@ -289,34 +280,35 @@ public class AgentSystem : JobComponentSystem
 	[BurstCompile]
 	struct FindClosestNeighbor : IJobParallelFor
 	{
-		[DeallocateOnJobCompletion] [ReadOnly] public NativeArray<int> cellHashes;
-		[ReadOnly] public NativeArray<Position> positions;
-		[ReadOnly] public NativeArray<Velocity> velocities;
-		[ReadOnly] public NativeMultiHashMap<int, int> cellHash;
-		[WriteOnly] public NativeArray<float3> closestNeighbor;
-		[WriteOnly] public NativeArray<float3> avgNeighborPositions;
-		[WriteOnly] public NativeArray<float3> avgNeighborVelocities;
-		[DeallocateOnJobCompletion] [ReadOnly] public NativeArray<int> hashes;
-		[ReadOnly] public AgentSteerParams steerParams;
-		public float cellRadius;
+		[DeallocateOnJobCompletion] [ReadOnly] public NativeArray<int> CellHashes;
+		[ReadOnly] public NativeArray<Position> Positions;
+		[ReadOnly] public NativeArray<Velocity> Velocities;
+		[ReadOnly] public NativeMultiHashMap<int, int> CellHash;
+		[WriteOnly] public NativeArray<float3> ClosestNeighbor;
+		[WriteOnly] public NativeArray<float3> AvgNeighborPositions;
+		[WriteOnly] public NativeArray<float3> AvgNeighborVelocities;
+		[DeallocateOnJobCompletion] [ReadOnly] public NativeArray<int> Hashes;
+		[ReadOnly] public AgentSteerParams SteerParams;
+		public float CellRadius;
 		public void Execute(int index)
 		{
-			var myPosition = positions[index].Value;
-			var myVelocity = velocities[index].Value;
+			var myPosition = Positions[index].Value;
+			var myVelocity = Velocities[index].Value;
 			var closestDistance = float.MaxValue;
 			float3 closestVecFromNeighbor = float.MaxValue;
-			var hash = hashes[index];
+			var hash = Hashes[index];
 			var totalPosition = myPosition;
 			var totalVelocity = myVelocity;
 			var foundCount = 1;
 			var checkedCount = 0;
-			if (cellHash.TryGetFirstValue(hash, out int item, out NativeMultiHashMapIterator<int> it))
+			
+			if (CellHash.TryGetFirstValue(hash, out int item, out NativeMultiHashMapIterator<int> it))
 			{
 				do
 				{
 					if (item != index)
 					{
-						var neighborPosition = positions[item].Value;
+						var neighborPosition = Positions[item].Value;
 						var vecFromNeighbor =  myPosition - neighborPosition;
 						var neighborDistance = math.length(vecFromNeighbor);
 						if (neighborDistance < closestDistance)
@@ -324,21 +316,21 @@ public class AgentSystem : JobComponentSystem
 							closestDistance = neighborDistance;
 							closestVecFromNeighbor = vecFromNeighbor;
 						}
-						if (neighborDistance < steerParams.AlignmentRadius)
+						if (neighborDistance < SteerParams.AlignmentRadius)
 						{
-							totalVelocity += velocities[item].Value;
+							totalVelocity += Velocities[item].Value;
 							totalPosition += neighborPosition;
 							foundCount++;
 						}
 					}
 					checkedCount++;
-					if (checkedCount > steerParams.MaxNeighborChecks && foundCount > 1)
+					if (checkedCount > SteerParams.MaxNeighborChecks && foundCount > 1)
 						break;
-				} while (cellHash.TryGetNextValue(out item, ref it));
+				} while (CellHash.TryGetNextValue(out item, ref it));
 			}
-			closestNeighbor[index] = closestVecFromNeighbor;
-			avgNeighborPositions[index] = totalPosition / foundCount;
-			avgNeighborVelocities[index] = totalVelocity / foundCount;
+			ClosestNeighbor[index] = closestVecFromNeighbor;
+			AvgNeighborPositions[index] = totalPosition / foundCount;
+			AvgNeighborVelocities[index] = totalVelocity / foundCount;
 		}
 	}
 	

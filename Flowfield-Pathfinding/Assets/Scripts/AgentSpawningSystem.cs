@@ -17,14 +17,7 @@ public class AgentSpawningSystem : ComponentSystem
     }
 #endif
 
-    //-----------------------------------------------------------------------------
-    struct AgentData
-    {
-        [ReadOnly] public SharedComponentDataArray<GridSettings> GridSettings;
-        [ReadOnly] public ComponentDataArray<Tile.Cost> TileCost;
-    }
-
-    [Inject] private AgentData m_AgentData;
+    [Inject] private Agent.SpawnGroup m_AgentData;
     [Inject] private ECSInput.InputDataGroup m_InputData;
     
     private Rect m_DistributionRect;
@@ -43,8 +36,7 @@ public class AgentSpawningSystem : ComponentSystem
     //-----------------------------------------------------------------------------
 	protected override void OnUpdate()
     {
-
-		if (m_DemoSpawn)
+        if (m_DemoSpawn)
 		{
 			var ws = Main.ActiveInitParams.m_grid.worldSize;
 			var spawnThisFrame = (int)(m_DemoSpawnRate * Time.deltaTime);
@@ -82,9 +74,9 @@ public class AgentSpawningSystem : ComponentSystem
 		{
 			for (int index = 0; index < count; index++)
 			{
-				var r = new float3(Random.insideUnitSphere);
-				r.y = 0;
-				var p = spawnPoint + r * radius;
+				var randomPoint = new float3(Random.insideUnitSphere);
+				randomPoint.y = 0;
+				var p = spawnPoint + randomPoint * radius;
 				CreateAgent(spawnData, p);
 			}
 			return;
@@ -108,7 +100,7 @@ public class AgentSpawningSystem : ComponentSystem
     //-----------------------------------------------------------------------------
     private void CreateAgent(AgentSpawnData spawnData, float3 _pos)
     {
-        Manager.Archetype.CreateAgent(PostUpdateCommands, _pos, spawnData.AgentMesh, spawnData.AgentMaterial, m_AgentData.GridSettings[0]);
+        Archetypes.CreateAgent(PostUpdateCommands, _pos, spawnData.AgentMesh, spawnData.AgentMaterial, m_AgentData.GridSettings[0]);
     }
 
     //-----------------------------------------------------------------------------
@@ -131,7 +123,7 @@ public class AgentSpawningSystem : ComponentSystem
             float3 sample = m_ActiveSamples[i];
 
             // Try random candidates between [radius, 2 * radius] from that sample.
-            for (int j = 0; j < spawnData.AgentDistMaxTries; ++j)
+            for (int index = 0; index < spawnData.AgentDistMaxTries; ++index)
             {
                 float angle = 2 * Mathf.PI * Random.value;
                 // See: http://stackoverflow.com/questions/9048095/create-random-number-within-an-annulus/9048443#9048443

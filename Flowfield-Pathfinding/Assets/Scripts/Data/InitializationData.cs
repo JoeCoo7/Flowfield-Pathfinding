@@ -1,4 +1,5 @@
 using System;
+using Tile;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -108,7 +109,6 @@ public class InitializationData : ScriptableObject
 		return new CellData() { cost = cost, height = height * m_heightScale, color = new float3(color.r, color.g, color.b) };
 	}
 
-
 	//-----------------------------------------------------------------------------
 	public static void CreateGrid(GridSettings grid, 
 		NativeArray<float> heightmap,
@@ -120,7 +120,7 @@ public class InitializationData : ScriptableObject
 		var entityManager = World.Active.GetOrCreateManager<EntityManager>();
 		var entities = new NativeArray<Entity>(grid.cellCount.x * grid.cellCount.y, Allocator.Temp);
 
-		entityManager.CreateEntity(Manager.Archetype.Tile, entities);
+		entityManager.CreateEntity(Archetypes.Tile, entities);
 		var cells = new CellData[entities.Length];
 		for (int ii = 0; ii < entities.Length; ii++)
 		{
@@ -155,7 +155,7 @@ public class InitializationData : ScriptableObject
 			normal = math.normalize(normal);
 			var flow = normal * cd.cost * inv255;
 			flowMap[ii] = flow;
-			Manager.Archetype.SetupTile(entityManager, entities[ii], Main.ActiveInitParams.TileDirectionMesh, Main.ActiveInitParams.TileDirectionMaterial, coord, cd.cost, new float3(), grid);
+			Archetypes.SetupTile(entityManager, entities[ii], Main.ActiveInitParams.TileDirectionMesh, Main.ActiveInitParams.TileDirectionMaterial, coord, cd.cost, new float3(), grid);
 		}
 		entities.Dispose();
 	}

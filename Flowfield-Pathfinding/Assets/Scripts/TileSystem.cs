@@ -7,16 +7,7 @@ using Unity.Mathematics;
 using Unity.Jobs;
 using Unity.Burst;
 using Agent;
-
-//-----------------------------------------------------------------------------
-[Serializable]
-public struct GridSettings : ISharedComponentData
-{
-    public float2 worldSize;
-    public float2 cellSize;
-    public int2 cellCount;
-    public float heightScale;
-}
+using Tile;
 
 //-----------------------------------------------------------------------------
 [UpdateInGroup(typeof(ProcessGroup))]
@@ -155,7 +146,7 @@ public class TileSystem : JobComponentSystem
         }.Schedule(this, 64, inputDeps);
 
         // Compute heatmap from goals
-        var numAgents = m_AgentSystem.numAgents;
+        var numAgents = m_AgentSystem.NumAgents;
         var radius = (int)( math.log(numAgents) * Main.ActiveInitParams.m_goalAgentFactor);
         var goalMin = math.max(new int2(m_Goal.x - radius, m_Goal.y - radius), new int2(0, 0));
         var goalMax = math.min(new int2(m_Goal.x + radius, m_Goal.y + radius), gridSettings.cellCount - new int2(1, 1));

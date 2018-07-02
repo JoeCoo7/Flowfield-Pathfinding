@@ -6,18 +6,13 @@
       <e p="Assembly-CSharp-Editor.csproj" t="IncludeRecursive" />
       <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
       <e p="Assets" t="Include">
-        <e p="AgentShader.shader" t="Include" />
-        <e p="AgentVertexShader.shader" t="Include" />
         <e p="Scripts" t="Include">
-          <e p="AgentChangeMaterialJob.cs" t="Include" />
           <e p="AgentMeshInstanceRendererSystem.cs" t="Include" />
-          <e p="AgentSpawnData.cs" t="Include" />
           <e p="AgentSpawningSystem.cs" t="Include" />
-          <e p="AgentSteerData.cs" t="Include" />
           <e p="AgentSystem.cs" t="Include" />
           <e p="ArchetypeManager.cs" t="Include" />
-          <e p="BurstQueue.cs" t="Include" />
           <e p="Camera" t="Include">
+            <e p="FlyCam.cs" t="Include" />
             <e p="RTSCamera.cs" t="Include" />
             <e p="RTSCameraSettings.cs" t="Include" />
           </e>
@@ -31,15 +26,15 @@
             <e p="TileComponents.cs" t="Include" />
           </e>
           <e p="ComputeFlowFieldJob.cs" t="Include" />
-          <e p="DisplayInfo.cs" t="Include" />
+          <e p="Data" t="Include">
+            <e p="AgentSpawnData.cs" t="Include" />
+            <e p="AgentSteerData.cs" t="Include" />
+            <e p="InitializationData.cs" t="Include" />
+          </e>
           <e p="Editor" t="Include">
             <e p="GridUtiltiesTests.cs" t="Include" />
             <e p="InitializationDataEditor.cs" t="Include" />
           </e>
-          <e p="FlyCam.cs" t="Include" />
-          <e p="GridUtilities.cs" t="Include" />
-          <e p="HashUtility.cs" t="Include" />
-          <e p="InitializationData.cs" t="Include" />
           <e p="Input" t="Include">
             <e p="InputSettings.cs" t="Include" />
             <e p="PlayerInputSystem.cs" t="Include" />
@@ -47,14 +42,26 @@
           </e>
           <e p="Main.cs" t="Include" />
           <e p="PlayerSelectionSystem.cs" t="Include" />
-          <e p="SelectionRect.cs" t="Include" />
+          <e p="Shaders" t="Include">
+            <e p="AgentShader.shader" t="Include" />
+            <e p="AgentVertexShader.shader" t="Include" />
+          </e>
           <e p="SmoothFlowFieldJob.cs" t="Include" />
           <e p="SystemOrder.cs" t="Include" />
           <e p="TerrainColoring.cs" t="Include" />
           <e p="TileMeshInstanceRendererSystem.cs" t="Include" />
           <e p="TileSystem.cs" t="Include" />
+          <e p="UI" t="Include">
+            <e p="DisplayInfo.cs" t="Include" />
+            <e p="SelectionRect.cs" t="Include" />
+          </e>
           <e p="UpdateTileWithFlowFieldSystem.cs" t="Include" />
-          <e p="Utils.cs" t="Include" />
+          <e p="Utils" t="Include">
+            <e p="BurstQueue.cs" t="Include" />
+            <e p="GeneralUtils.cs" t="Include" />
+            <e p="GridUtilities.cs" t="Include" />
+            <e p="HashUtility.cs" t="Include" />
+          </e>
         </e>
       </e>
       <e p="Flowfield-Pathfinding.sln" t="IncludeFlat" />

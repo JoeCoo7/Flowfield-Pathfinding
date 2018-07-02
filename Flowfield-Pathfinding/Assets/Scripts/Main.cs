@@ -49,9 +49,8 @@ public class Main : MonoBehaviour
 	static void Initialize()
 	{
         var entityManager = World.Active.GetOrCreateManager<EntityManager>();
-        Manager.Archetype.Initialize(entityManager);
-
-		Manager.Archetype.CreateInputSystem(entityManager);
+        Archetypes.Initialize(entityManager);
+		Archetypes.CreateInputSystem(entityManager);
 		
 		Instance = FindObjectOfType<Main>();
 		Instance.m_InitData.Initalize();

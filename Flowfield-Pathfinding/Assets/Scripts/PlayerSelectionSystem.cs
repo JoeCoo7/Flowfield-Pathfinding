@@ -1,4 +1,4 @@
-﻿using Agent.Group;
+﻿using Agent;
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Jobs;
@@ -9,7 +9,7 @@ using UnityEngine;
 public class PlayerSelectionSystem : JobComponentSystem
 {
     [Inject] private ECSInput.InputDataGroup m_Input;
-    [Inject] private AgentSelection m_AgentSelection;
+    [Inject] private SelectionGroup m_AgentSelection;
     private SelectionRect m_Selection;
     private float3 m_Start;
     private float3 m_Stop;
@@ -18,21 +18,21 @@ public class PlayerSelectionSystem : JobComponentSystem
     [BurstCompile]
     struct SelectionJob : IJobParallelFor
     {
-        public float2 start;
-        public float2 stop;
-        public float4x4 world2Clip;
-        public AgentSelection agentSelection;
+        public float2 Start;
+        public float2 Stop;
+        public float4x4 World2Clip;
+        public SelectionGroup AgentSelection;
 
         //-----------------------------------------------------------------------------
         public void Execute(int index)
         {
-            var position = agentSelection.position[index].Value;
-            float4 agentVector = math.mul(world2Clip, new float4(position.x, position.y, position.z, 1));
+            var position = AgentSelection.position[index].Value;
+            float4 agentVector = math.mul(World2Clip, new float4(position.x, position.y, position.z, 1));
             float2 screenPoint = (agentVector / -agentVector.w).xy;
 
-            var result = math.all(start <= screenPoint) && math.all(screenPoint <= stop);
+            var result = math.all(Start <= screenPoint) && math.all(screenPoint <= Stop);
             var selectionValue = math.select(0, 1, result);
-            agentSelection.selection[index] = new Agent.Selection { Value = (byte)selectionValue };
+            AgentSelection.selection[index] = new Agent.Selection { Value = (byte)selectionValue };
         }
     }
 
@@ -40,15 +40,14 @@ public class PlayerSelectionSystem : JobComponentSystem
     [BurstCompile]
     struct SelectAllJob : IJobParallelFor
     {
-        public AgentSelection agentSelection;
+        public SelectionGroup AgentSelection;
 
         //-----------------------------------------------------------------------------
         public void Execute(int index)
         {
-            agentSelection.selection[index] = new Agent.Selection { Value = 1 };
+            AgentSelection.selection[index] = new Agent.Selection { Value = 1 };
         }
     }
-
 
     //-----------------------------------------------------------------------------
     protected override void OnCreateManager(int capacity)
@@ -64,7 +63,7 @@ public class PlayerSelectionSystem : JobComponentSystem
         var status = m_Input.Buttons[0].Values["SelectAll"].Status;
         if (status == ECSInput.InputButtons.UP)
         {
-            var selectionJob = new SelectAllJob { agentSelection = m_AgentSelection };
+            var selectionJob = new SelectAllJob { AgentSelection = m_AgentSelection };
             return selectionJob.Schedule(m_AgentSelection.Length, 64, inputDeps);
         }
 
@@ -91,10 +90,10 @@ public class PlayerSelectionSystem : JobComponentSystem
         {
             var job = new SelectionJob
             {
-                start = Normalize(math.min(m_Start, m_Stop), Screen.width,Screen.height),
-                stop = Normalize(math.max(m_Start, m_Stop), Screen.width, Screen.height),
-                world2Clip = Camera.main.projectionMatrix * Camera.main.GetComponent<Transform>().worldToLocalMatrix,
-                agentSelection = m_AgentSelection
+                Start = Normalize(math.min(m_Start, m_Stop), Screen.width,Screen.height),
+                Stop = Normalize(math.max(m_Start, m_Stop), Screen.width, Screen.height),
+                World2Clip = Camera.main.projectionMatrix * Camera.main.GetComponent<Transform>().worldToLocalMatrix,
+                AgentSelection = m_AgentSelection
             };
             return job.Schedule(m_AgentSelection.Length, 64, inputDeps);
         }

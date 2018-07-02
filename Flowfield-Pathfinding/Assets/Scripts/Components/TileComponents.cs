@@ -23,10 +23,10 @@ namespace Tile
 
     public struct TileMeshInstanceRenderer : ISharedComponentData
     {
-        public Mesh mesh;
-        public Material material;
-        public int subMesh;
-        public ShadowCastingMode castShadows;
-        public bool receiveShadows;
+        public Mesh Mesh;
+        public Material Material;
+        public int SubMesh;
+        public ShadowCastingMode CastShadows;
+        public bool ReceiveShadows;
     }
 }

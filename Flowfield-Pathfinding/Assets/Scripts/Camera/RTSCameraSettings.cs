@@ -94,7 +94,7 @@ namespace WT.ECS
             if(!AllowShake)
                 return;
 
-            if(!Utils.IsPointOnScreen(Camera.main, _position))
+            if(!GeneralUtils.IsPointOnScreen(Camera.main, _position))
                 return;
 
             ShakeTime = _time;
