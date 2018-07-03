@@ -21,11 +21,13 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
         
         [ReadOnly, DeallocateOnJobCompletion] public NativeArray<float3> FlowField;
         [ReadOnly] public NativeArray<float> TerrainHeight;
+        public Tile.GridSettings Settings;
         public int Handle;
 
         //-----------------------------------------------------------------------------
         public void Execute(int index)
         {
+            
             if (Tiles.handles[index].Handle == Handle)
                 return;
 
@@ -33,8 +35,7 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
 
             var tileTransform = Tiles.transforms[index];
             var position = Tiles.position[index];
-            var settings = Tiles.settings[index];
-            var tileIndex = GridUtilties.Grid2Index(settings, position.Value);
+            var tileIndex = GridUtilties.Grid2Index(Settings, position.Value);
             var flowDirection = FlowField[tileIndex];
             var height = TerrainHeight[tileIndex];
 
@@ -42,7 +43,7 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
             var pos = new float3(position.Value.x * settings.cellSize.x - settings.worldSize.x / 2.0f, height + 5.0f,
                 position.Value.y * settings.cellSize.y - settings.worldSize.y / 2.0f);
             
-            tileTransform.Value = math.mul(math.lookRotationToMatrix(pos, flowDirection, new float3(0.0f, 1.0f, 0.0f)), math.scale(scale));
+            tileTransform.Value = math.mul(float4x4.lookAt(pos, flowDirection, new float3(0.0f, 1.0f, 0.0f)), float4x4.scale(scale));
             Tiles.transforms[index] = tileTransform;
         }
     }
@@ -64,6 +65,7 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
         var update = new UpdateJob
         {
             Tiles = m_Tiles,
+            Settings = m_Tiles.settings[0], 
             Handle = tileSystem.LastGeneratedQueryHandle,
             FlowField = tileSystem.GetFlowFieldCopy(tileSystem.LastGeneratedQueryHandle, Allocator.TempJob),
             TerrainHeight = Main.TerrainHeight

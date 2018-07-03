@@ -43,7 +43,7 @@ public class AgentSpawningSystem : ComponentSystem
 			Spawn(new float3(Random.Range(30, ws.x - 60) - ws.x * .5f, 0, ws.y - ws.y * .5f - 50), 50, spawnThisFrame, false);
 			m_DemoSpawnRate += m_DemoSpawnRateAccel * Time.deltaTime;
 			m_DemoSpawnRateAccel += m_DemoSpawnRateAccelAccel * Time.deltaTime;
-		}
+		} 
 
 		if (m_SpawnDebugAgentsOnNextFrame)
         {
@@ -120,6 +120,9 @@ public class AgentSpawningSystem : ComponentSystem
         {
             // Pick a random active sample
             int i = (int)Random.value * m_ActiveSamples.Length;
+            if (i >= m_ActiveSamples.Length)
+                continue;
+                    
             float3 sample = m_ActiveSamples[i];
 
             // Try random candidates between [radius, 2 * radius] from that sample.

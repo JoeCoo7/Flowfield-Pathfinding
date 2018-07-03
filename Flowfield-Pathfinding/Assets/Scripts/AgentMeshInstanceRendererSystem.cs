@@ -14,7 +14,6 @@ using UnityEngine.Experimental.PlayerLoop;
 // this is a copy of MeshInstanceRendererSystem with some required changes
 // ReSharper disable once RequiredBaseTypesIsNotInherited
 [UpdateInGroup(typeof(RenderingGroup))]
-[UpdateAfter(typeof(MeshCullingBarrier))]
 [UpdateAfter(typeof(PreLateUpdate.ParticleSystemBeginUpdateAll))]
 [ExecuteInEditMode]
 public class AgentMeshInstanceRendererSystem : ComponentSystem

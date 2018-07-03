@@ -13,7 +13,6 @@ using Unity.Rendering;
 // ReSharper disable once RequiredBaseTypesIsNotInherited
 [UpdateInGroup(typeof(RenderingGroup))]
 [UpdateAfter(typeof(PreLateUpdate.ParticleSystemBeginUpdateAll))]
-[UpdateAfter(typeof(MeshCullingBarrier))]
 [ExecuteInEditMode]
 public class TileMeshInstanceRendererSystem : ComponentSystem
 {

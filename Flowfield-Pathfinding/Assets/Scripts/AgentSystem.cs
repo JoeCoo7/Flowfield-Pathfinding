@@ -497,7 +497,7 @@ public class AgentSystem : JobComponentSystem
 				var dirDiff = desiredDir - currDir;
 				newDir = math.normalize(currDir + dirDiff * math.min(TimeDelta * steerParams.RotationSpeed * (.5f + speedPer * .5f), 1));
 			}
-			rot = math.lookRotationToQuaternion(newDir, newUp);
+			rot = quaternion.lookRotation(newDir, newUp);
 			Positions[index] = new Position(pos);
 			Rotations[index] = new Rotation(rot);
 		}

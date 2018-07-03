@@ -1,6 +1,8 @@
-﻿using Tile;
+﻿using Agent;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Rendering;
+using Unity.Transforms;
 using UnityEngine;
 
 //-----------------------------------------------------------------------------
@@ -13,22 +15,22 @@ public static class Archetypes
     public static void Initialize(EntityManager entityManager)
     {
         Tile = entityManager.CreateArchetype(
-                ComponentType.Create<Unity.Transforms.TransformMatrix>(),
+                ComponentType.Create<TransformMatrix>(),
                 ComponentType.Create<Tile.TileMeshInstanceRenderer>(),
                 ComponentType.Create<Tile.Position>(),
                 ComponentType.Create<Tile.Cost>(),
                 ComponentType.Create<Tile.FlowFieldHandle>(),
-                ComponentType.Create<GridSettings>());
+                ComponentType.Create<Tile.GridSettings>());
 
         Agent = entityManager.CreateArchetype(
-            ComponentType.Create<Unity.Transforms.Position>(),
-            ComponentType.Create<Unity.Transforms.Rotation>(),
-            ComponentType.Create<Unity.Transforms.TransformMatrix>(),
-            ComponentType.Create<Agent.AgentMeshInstanceRenderer>(),
-            ComponentType.Create<Agent.Velocity>(),
-            ComponentType.Create<Agent.Selection>(),
-            ComponentType.Create<Agent.Goal>(),
-            ComponentType.Create<GridSettings>());
+            ComponentType.Create<Position>(),
+            ComponentType.Create<Rotation>(),
+            ComponentType.Create<TransformMatrix>(),
+            ComponentType.Create<AgentMeshInstanceRenderer>(),
+            ComponentType.Create<Velocity>(),
+            ComponentType.Create<Selection>(),
+            ComponentType.Create<Goal>(),
+            ComponentType.Create<Tile.GridSettings>());
 
 
         PlayerInput = entityManager.CreateArchetype(
@@ -39,7 +41,7 @@ public static class Archetypes
     }
 
     //-----------------------------------------------------------------------------
-    public static void SetupTile(EntityManager em, Entity e, Mesh mesh, Material mat, int2 pos, byte cost, float3 col, GridSettings settings)
+    public static void SetupTile(EntityManager em, Entity e, Mesh mesh, Material mat, int2 pos, byte cost, float3 col, Tile.GridSettings settings)
     {
         em.SetComponentData(e, new Tile.Position { Value = pos });
         em.SetComponentData(e, new Tile.Cost { Value = cost });
@@ -49,7 +51,7 @@ public static class Archetypes
     }
 
     //-----------------------------------------------------------------------------
-    public static void CreateAgent(EntityCommandBuffer ecb, float3 pos, Mesh mesh, Material mat, GridSettings settings)
+    public static void CreateAgent(EntityCommandBuffer ecb, float3 pos, Mesh mesh, Material mat, Tile.GridSettings settings)
     {
         ecb.CreateEntity(Agent);
         ecb.SetComponent(new Unity.Transforms.Position { Value = pos });

@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.unity.entities": "0.0.12-preview.6",
+    "com.unity.entities": "0.0.12-preview.8",
     "com.unity.package-manager-ui": "1.9.9",
     "com.unity.postprocessing": "0.1.8",
     "com.unity.textmeshpro": "1.2.1",
