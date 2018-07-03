@@ -39,9 +39,9 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
             var flowDirection = FlowField[tileIndex];
             var height = TerrainHeight[tileIndex];
 
-            var scale = height < settings.heightScale * 0.4f ? new float3(settings.cellSize.x, settings.cellSize.x, settings.cellSize.x * 0.5f) : new float3(0);
-            var pos = new float3(position.Value.x * settings.cellSize.x - settings.worldSize.x / 2.0f, height + 5.0f,
-                position.Value.y * settings.cellSize.y - settings.worldSize.y / 2.0f);
+            var scale = height < Settings.heightScale * 0.4f ? new float3(Settings.cellSize.x, Settings.cellSize.x, Settings.cellSize.x * 0.5f) : new float3(0);
+            var pos = new float3(position.Value.x * Settings.cellSize.x - Settings.worldSize.x / 2.0f, height + 5.0f,
+                position.Value.y * Settings.cellSize.y - Settings.worldSize.y / 2.0f);
             
             tileTransform.Value = math.mul(float4x4.lookAt(pos, flowDirection, new float3(0.0f, 1.0f, 0.0f)), float4x4.scale(scale));
             Tiles.transforms[index] = tileTransform;
