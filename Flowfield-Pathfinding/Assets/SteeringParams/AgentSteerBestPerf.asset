@@ -23,5 +23,5 @@ MonoBehaviour:
     CohesionWeight: 6.4
     AlignmentWeight: 12.5
     AlignmentRadius: 4.39
-    MaxNeighborChecks: 100
-    NeighbourHashCellSize: 12.8
+    MaxNeighborChecks: 6
+    NeighbourHashCellSize: 3.6

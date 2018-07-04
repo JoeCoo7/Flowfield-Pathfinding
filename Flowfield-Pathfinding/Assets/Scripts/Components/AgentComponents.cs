@@ -25,6 +25,7 @@ namespace Agent
     {
         public int Current;
         public int Target;
+        public int2 Position;
     }
     public struct AgentMeshInstanceRenderer : ISharedComponentData
     {

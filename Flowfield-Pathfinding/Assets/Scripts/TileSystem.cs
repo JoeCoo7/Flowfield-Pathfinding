@@ -17,10 +17,10 @@ public class TileSystem : JobComponentSystem
     //-----------------------------------------------------------------------------
     struct PendingJob
     {
-        public int queryHandle;
-        public JobHandle jobHandle;
-        public NativeArray<float3> flowField;
-        public NativeArray<int> heatmap;
+        public int QueryHandle;
+        public JobHandle JobHandle;
+        public NativeArray<float3> FlowField;
+        public NativeArray<int> Heatmap;
     }
     
     //-----------------------------------------------------------------------------
@@ -52,7 +52,7 @@ public class TileSystem : JobComponentSystem
     private const int k_Obstacle = int.MaxValue;
     private const int k_Unvisited = k_Obstacle - 1;
     
-	public System.Action<NativeArray<int>> OnNewHeatMap;
+	public Action<NativeArray<int>> OnNewHeatMap;
     public NativeArray<float3> CachedFlowFields { get; private set; }
     public int LastGeneratedQueryHandle { get; private set; }
     public NativeArray<int> LastGeneratedHeatmap { get; private set; }
@@ -132,7 +132,8 @@ public class TileSystem : JobComponentSystem
 
         var updateAgentsTargetGoalJobHandle = new UpdateAgentsTargetGoalJob
         {
-            NewGoal = queryHandle
+            NewGoal = queryHandle,
+            NewPos = m_Goal
         }.Schedule(this, inputDeps);
 
         // Create & Initialize heatmap
@@ -188,10 +189,10 @@ public class TileSystem : JobComponentSystem
 
         m_PendingJobs.Add(new PendingJob
         {
-            queryHandle = queryHandle,
-            jobHandle = finalJobHandle,
-            flowField = flowField,
-            heatmap = heatmap
+            QueryHandle = queryHandle,
+            JobHandle = finalJobHandle,
+            FlowField = flowField,
+            Heatmap = heatmap,
         });
 
         return JobHandle.CombineDependencies(initializeHeatmapJobHandle, updateAgentsTargetGoalJobHandle);
@@ -238,13 +239,13 @@ public class TileSystem : JobComponentSystem
         for (int i = m_PendingJobs.Count - 1; i >= 0; --i)
         {
             var pendingJob = m_PendingJobs[i];
-            if (pendingJob.jobHandle.IsCompleted)
+            if (pendingJob.JobHandle.IsCompleted)
             {
-                pendingJob.jobHandle.Complete();
+                pendingJob.JobHandle.Complete();
 
-                var queryHandle = pendingJob.queryHandle;
-                var flowField = pendingJob.flowField;
-                var heatmap = pendingJob.heatmap;
+                var queryHandle = pendingJob.QueryHandle;
+                var flowField = pendingJob.FlowField;
+                var heatmap = pendingJob.Heatmap;
 
                 var offset = flowField.Length * queryHandle;
                 CachedFlowFields.Slice(offset, flowField.Length).CopyFrom(flowField);
@@ -255,7 +256,7 @@ public class TileSystem : JobComponentSystem
 
                 LastGeneratedHeatmap = heatmap;
 				newHeatMap = true;
-				availableGoals[numAvailableGoals++] = pendingJob.queryHandle;
+				availableGoals[numAvailableGoals++] = pendingJob.QueryHandle;
 
                 LastGeneratedQueryHandle = queryHandle;
                 m_PendingJobs.RemoveAt(i);
@@ -372,11 +373,13 @@ public class TileSystem : JobComponentSystem
     struct UpdateAgentsTargetGoalJob : IJobProcessComponentData<Selection, Goal>
     {
         public int NewGoal;
+        public int2 NewPos;
 
         //-----------------------------------------------------------------------------
         public void Execute([ReadOnly] ref Selection selectionFlag, ref Goal goal)
         {
             goal.Target = math.select(NewGoal, goal.Target, selectionFlag.Value == 0);
+            goal.Position = NewPos;
         }
     }
 

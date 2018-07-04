@@ -1,6 +1,8 @@
-﻿using Agent;
+﻿using System;
+using Agent;
 using Samples.Common;
 using Tile;
+using TMPro;
 using Unity.Burst;
 using UnityEngine;
 using Unity.Mathematics;
@@ -351,7 +353,7 @@ public class AgentSystem : JobComponentSystem
 	}
 	
 	//-----------------------------------------------------------------------------
-	//[BurstCompile]
+	[BurstCompile]
 	struct Steer : IJobParallelFor
 	{
 		[ReadOnly] public GridSettings Settings;
@@ -441,10 +443,11 @@ public class AgentSystem : JobComponentSystem
 		{
 			var velocity = Velocities[index].Value;
 			var position = Positions[index].Value;
-            var goal = Goals[index].Current;
+			var goal = Goals[index];
+			var currentGoal = goal.Current;
 
-			if (TargetReached[index].CurrentGoal != goal)
-				TargetReached[index] = new TargetReached {Value = 0, CurrentGoal = goal};
+			if (TargetReached[index].CurrentGoal != currentGoal && currentGoal!=TileSystem.k_InvalidHandle)
+				TargetReached[index] = new TargetReached {Value = 0, CurrentGoal = currentGoal};
 				
             var targetFlowFieldContribution = new float3(0, 0, 0);
             var terrainFlowFieldContribution = new float3(0, 0, 0);
@@ -455,13 +458,13 @@ public class AgentSystem : JobComponentSystem
             if (gridIndex != -1)
             {
                 terrainFlowFieldContribution = FlowField(velocity, TerrainFlowfield[gridIndex], SteerParams.TerrainFieldWeight);
-                if (goal != TileSystem.k_InvalidHandle && FlowFields.Length > 0 && TargetReached[index].Value == 0)
+                if (currentGoal != TileSystem.k_InvalidHandle && FlowFields.Length > 0 && TargetReached[index].Value == 0)
                 {
-                    var flowFieldValue = FlowFields[FlowFieldLength * goal + gridIndex];
-	                if (math.lengthSquared(flowFieldValue) < float.Epsilon)
-		                TargetReached[index] = new TargetReached {Value = 1, CurrentGoal = goal };
-					else
-						targetFlowFieldContribution = FlowField(velocity, flowFieldValue, SteerParams.TargetFieldWeight);
+	                var flowFieldValue = FlowFields[FlowFieldLength * currentGoal + gridIndex];
+					if (IsCloseToTarget(goal, position))	                
+		                TargetReached[index] = new TargetReached {Value = 1, CurrentGoal = currentGoal };
+	                else
+		                targetFlowFieldContribution = FlowField(velocity, flowFieldValue, SteerParams.TargetFieldWeight);
                 }
             }
 
@@ -476,6 +479,13 @@ public class AgentSystem : JobComponentSystem
 
 			var newVelocity = Velocity(velocity, normalizedForces);
 			Velocities[index] = new Velocity { Value = newVelocity};
+		}
+
+		//-----------------------------------------------------------------------------
+		private bool IsCloseToTarget(Goal _goal, float3 _position)
+		{
+			var gridPos = GridUtilties.World2Grid(Settings, _position);
+			return math.abs(gridPos.x - _goal.Position.x) <= 2 && math.abs(gridPos.y - _goal.Position.y) <= 2;
 		}
 	}
 
