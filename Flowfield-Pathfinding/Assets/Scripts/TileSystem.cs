@@ -91,7 +91,6 @@ public class TileSystem : JobComponentSystem
             CachedFlowFields.Dispose();
     }
 
-
     //-----------------------------------------------------------------------------
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
@@ -145,36 +144,14 @@ public class TileSystem : JobComponentSystem
             heatmap = heatmap
         }.Schedule(this, 64, inputDeps);
 
-        // Compute heatmap from goals
-        var numAgents = m_AgentSystem.NumAgents;
-        var radius = (int)( math.log(numAgents) * Main.ActiveInitParams.m_goalAgentFactor);
-        var goalMin = math.max(new int2(m_Goal.x - radius, m_Goal.y - radius), new int2(0, 0));
-        var goalMax = math.min(new int2(m_Goal.x + radius, m_Goal.y + radius), gridSettings.cellCount - new int2(1, 1));
-        var dims = goalMax - goalMin;
-        var maxNumGoals = math.max(1, dims.x * dims.y);
-        var goals = new NativeArray<int2>(maxNumGoals, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
-        var goalIndex = 0;
-        var radiusAsFloat = (float)radius;
-        for (int x = goalMin.x; x < goalMax.x; ++x)
-        {
-            for (int y = goalMin.y; y < goalMax.y; ++y)
-            {
-                var p = new int2(x, y);
-                if (math.distance(p, m_Goal) <= radiusAsFloat)
-                    goals[goalIndex++] = p;
-            }
-        }
-
-        if (goalIndex == 0)
-            goals[goalIndex++] = m_Goal;
-
+        var goals = CalculateGoals(gridSettings, out int numGoals);
         var floodQueue = new NativeArray<int>(heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         var computeHeatmapJobHandle = new ComputeHeatmapJob()
         {
             settings = gridSettings,
             goals = goals,
-            numGoals = goalIndex,
+            numGoals = numGoals,
             heatmap = heatmap,
             offsets = m_Offsets,
             floodQueue = floodQueue
@@ -220,6 +197,38 @@ public class TileSystem : JobComponentSystem
         return JobHandle.CombineDependencies(initializeHeatmapJobHandle, updateAgentsTargetGoalJobHandle);
     }
 
+    //-----------------------------------------------------------------------------
+    private NativeArray<int2> CalculateGoals(GridSettings _settings, out int _length)
+    {
+        // Compute heatmap from goals
+        var numAgents = m_AgentSystem.NumAgents;
+        var radius = (int)( math.log(numAgents) * Main.ActiveInitParams.m_goalAgentFactor);
+        var goalMin = math.max(new int2(m_Goal.x - radius, m_Goal.y - radius), new int2(0, 0));
+        var goalMax = math.min(new int2(m_Goal.x + radius, m_Goal.y + radius), _settings.cellCount - new int2(1, 1));
+        var dims = goalMax - goalMin;
+        var maxNumGoals = math.max(1, dims.x * dims.y);
+        var goals = new NativeArray<int2>(maxNumGoals, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+
+        var goalIndex = 0;
+        var radiusAsFloat = (float)radius;
+        for (int x = goalMin.x; x < goalMax.x; ++x)
+        {
+            for (int y = goalMin.y; y < goalMax.y; ++y)
+            {
+                var p = new int2(x, y);
+                if (math.distance(p, m_Goal) <= radiusAsFloat)
+                    goals[goalIndex++] = p;
+            }
+        }
+
+        if (goalIndex == 0)
+            goals[goalIndex++] = m_Goal;
+
+        _length = goalIndex;
+        
+        return goals;
+    }
+    
     //-----------------------------------------------------------------------------
     private bool ProcessPendingJobs(JobHandle inputDeps, out JobHandle updateAgentsJobHandle)
     {
@@ -292,8 +301,7 @@ public class TileSystem : JobComponentSystem
         public NativeArray<int> floodQueue;
         public void Execute()
         {
-            // This page intentionally left blank.
-            // is this just for deallocating floodqueue 
+            // stub job for deallocating floodqueue :/ 
         }
     }
 

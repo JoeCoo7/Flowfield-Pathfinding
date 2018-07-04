@@ -32,7 +32,7 @@ public class PlayerSelectionSystem : JobComponentSystem
 
             var result = math.all(Start <= screenPoint) && math.all(screenPoint <= Stop);
             var selectionValue = math.select(0, 1, result);
-            AgentSelection.selection[index] = new Agent.Selection { Value = (byte)selectionValue };
+            AgentSelection.selection[index] = new Selection { Value = (byte)selectionValue };
         }
     }
 
@@ -45,7 +45,7 @@ public class PlayerSelectionSystem : JobComponentSystem
         //-----------------------------------------------------------------------------
         public void Execute(int index)
         {
-            AgentSelection.selection[index] = new Agent.Selection { Value = 1 };
+            AgentSelection.selection[index] = new Selection { Value = 1 };
         }
     }
 

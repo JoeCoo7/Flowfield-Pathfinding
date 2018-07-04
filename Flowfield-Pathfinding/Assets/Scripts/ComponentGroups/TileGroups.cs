@@ -19,10 +19,10 @@ namespace Tile
     
     public struct AllTiles
     {
-        [ReadOnly] public ComponentDataArray<Tile.Position> position;
+        [ReadOnly] public ComponentDataArray<Position> position;
         [ReadOnly] public SharedComponentDataArray<GridSettings> settings;
         public ComponentDataArray<TransformMatrix> transforms;
-        public ComponentDataArray<Tile.FlowFieldHandle> handles;
+        public ComponentDataArray<FlowFieldHandle> handles;
     }
     
     

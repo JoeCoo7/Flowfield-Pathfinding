@@ -30,6 +30,7 @@ public static class Archetypes
             ComponentType.Create<Velocity>(),
             ComponentType.Create<Selection>(),
             ComponentType.Create<Goal>(),
+            ComponentType.Create<TargetReached>(),
             ComponentType.Create<Tile.GridSettings>());
 
 
@@ -54,10 +55,11 @@ public static class Archetypes
     public static void CreateAgent(EntityCommandBuffer ecb, float3 pos, Mesh mesh, Material mat, Tile.GridSettings settings)
     {
         ecb.CreateEntity(Agent);
-        ecb.SetComponent(new Unity.Transforms.Position { Value = pos });
-        ecb.SetSharedComponent(new Agent.AgentMeshInstanceRenderer { mesh = mesh, material = mat, castShadows = UnityEngine.Rendering.ShadowCastingMode.On });
+        ecb.SetComponent(new Position { Value = pos });
+        ecb.SetSharedComponent(new AgentMeshInstanceRenderer { mesh = mesh, material = mat, castShadows = UnityEngine.Rendering.ShadowCastingMode.On });
         ecb.SetSharedComponent(settings);
-        ecb.SetComponent(new Agent.Goal { Current = TileSystem.k_InvalidHandle, Target = TileSystem.k_InvalidHandle });
+        ecb.SetComponent(new Goal { Current = TileSystem.k_InvalidHandle, Target = TileSystem.k_InvalidHandle });
+        ecb.SetComponent(new TargetReached { Value = 0, CurrentGoal = TileSystem.k_InvalidHandle });
     }
 
     //-----------------------------------------------------------------------------

@@ -11,8 +11,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2613051fc61152c4fbcce528d29d3e25, type: 3}
   m_Name: InitDataObstacles
   m_EditorClassIdentifier: 
-  m_worldWidth: 1024
-  m_worldHeight: 1024
+  m_worldWidth: 2048
+  m_worldHeight: 2048
   m_cellSize: 4
   m_heightScale: 100
   m_noiseScale: 10

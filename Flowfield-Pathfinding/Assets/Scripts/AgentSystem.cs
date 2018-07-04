@@ -25,6 +25,7 @@ public class AgentSystem : JobComponentSystem
 		public NativeArray<Rotation> Rotations;
 		public NativeArray<Velocity> Velocities;
 		public NativeArray<Goal> Goals;
+		public NativeArray<TargetReached> TargetReached;
 		public NativeMultiHashMap<int, int> NeighborHashMap;
 		public bool IsValid;
 		public int Length;
@@ -67,10 +68,11 @@ public class AgentSystem : JobComponentSystem
         if (m_PreviousJobData.IsValid)
         {
             m_PreviousJobData.JobHandle.Complete();
-            m_PreviousJobData.Goals.Dispose();
             m_PreviousJobData.Positions.Dispose();
             m_PreviousJobData.Rotations.Dispose();
             m_PreviousJobData.Velocities.Dispose();
+	        m_PreviousJobData.Goals.Dispose();
+	        m_PreviousJobData.TargetReached.Dispose();
             m_PreviousJobData.NeighborHashMap.Dispose();
         }
         m_AllFlowFields.Dispose();
@@ -104,23 +106,24 @@ public class AgentSystem : JobComponentSystem
             // copy data back to the components
             var copyPrevJobHandle = new CopyPreviousResultsToAgentsJob
             {
-                positions = m_PreviousJobData.Positions,
-                rotations = m_PreviousJobData.Rotations,
-                velocities = m_PreviousJobData.Velocities,
+                Positions = m_PreviousJobData.Positions,
+                Rotations = m_PreviousJobData.Rotations,
+                Velocities = m_PreviousJobData.Velocities,
+	            TargetReached = m_PreviousJobData.TargetReached,
 
-                outputPositions = m_Agents.Positions,
-                outputRotations = m_Agents.Rotations,
-                outputVelocities = m_Agents.Velocities
+                OutputPositions = m_Agents.Positions,
+                OutputRotations = m_Agents.Rotations,
+                OutputVelocities = m_Agents.Velocities,
+	            OutputTargetReached = m_Agents.TargetReached,
             }.Schedule(m_PreviousJobData.Length, 64, inputDeps);
 
             copyPrevJobHandle.Complete();
-            m_PreviousJobData.Goals.Dispose();
+	        m_PreviousJobData.Goals.Dispose();
             m_PreviousJobData.NeighborHashMap.Dispose();
+
         }
         else if (m_PreviousJobData.IsValid && !m_PreviousJobData.JobHandle.IsCompleted)
-        {
             return inputDeps;
-        }
 
         var positions = new NativeArray<Position>(agentCount, Allocator.TempJob);
         var copyPositions = new CopyComponentData<Position>
@@ -150,7 +153,15 @@ public class AgentSystem : JobComponentSystem
             Results = goals
         }.Schedule(agentCount, 64, inputDeps);
 
-        var copyJobs = JobHandle.CombineDependencies(JobHandle.CombineDependencies(copyPositions, copyRotation, copyVelocities), copyGoals);
+		var targetReached = new NativeArray<TargetReached>(agentCount, Allocator.TempJob);
+		var copyTargetReached = new CopyComponentData<TargetReached>
+		{
+			Source = m_Agents.TargetReached,
+			Results = targetReached
+		}.Schedule(agentCount, 64, inputDeps);
+		
+		
+        var copyJobs = JobHandle.CombineDependencies(JobHandle.CombineDependencies(copyPositions, copyRotation, copyVelocities), copyGoals, copyTargetReached);
         CopyFlowField();
 
         var neighborHashMap = new NativeMultiHashMap<int, int>(agentCount, Allocator.TempJob);
@@ -196,18 +207,19 @@ public class AgentSystem : JobComponentSystem
 
 		var steerJob = new Steer
 		{
-			settings = settings,
-			avgVelocities = avgNeighborVelocities,
-			avgPositions = avgNeighborPositions,
-			deltaTime = Time.deltaTime,
-			vecFromNearestNeighbor = vecFromNearestNeighbor,
-			positions = positions,
-			velocities = velocities,
-			terrainFlowfield = Main.TerrainFlow,
-            goals = goals,
-            flowFields = m_AllFlowFields,
-            flowFieldLength = m_AllFlowFields.Length / TileSystem.k_MaxNumFlowFields,
-			steerParams = steerParams
+			Settings = settings,
+			AvgVelocities = avgNeighborVelocities,
+			AvgPositions = avgNeighborPositions,
+			DeltaTime = Time.deltaTime,
+			VecFromNearestNeighbor = vecFromNearestNeighbor,
+			Positions = positions,
+			Velocities = velocities,
+			TerrainFlowfield = Main.TerrainFlow,
+            Goals = goals,
+			TargetReached = targetReached,
+            FlowFields = m_AllFlowFields,
+            FlowFieldLength = m_AllFlowFields.Length / TileSystem.k_MaxNumFlowFields,
+			SteerParams = steerParams
 		};
 
         var speedJob = new PositionRotationJob
@@ -216,8 +228,8 @@ public class AgentSystem : JobComponentSystem
             Positions = positions,
             Rotations = rotations,
 			TimeDelta = Time.deltaTime,
-			steerParams = steerParams,
-			grid = settings,
+			SteerParams = steerParams,
+			GridSettings = settings,
 			Heights = Main.TerrainHeight,
 	        Normals = Main.TerrainNormals
 		};
@@ -232,7 +244,8 @@ public class AgentSystem : JobComponentSystem
             Positions = positions,
             Rotations = rotations,
             Velocities = velocities,
-            Goals = goals,
+	        Goals = goals,
+            TargetReached = targetReached,
             NeighborHashMap = neighborHashMap,
             Length = agentCount,
         };
@@ -244,18 +257,21 @@ public class AgentSystem : JobComponentSystem
 	[BurstCompile]
 	private struct CopyPreviousResultsToAgentsJob : IJobParallelFor
 	{
-		[ReadOnly, DeallocateOnJobCompletion] public NativeArray<Position> positions;
-		[ReadOnly, DeallocateOnJobCompletion] public NativeArray<Rotation> rotations;
-		[ReadOnly, DeallocateOnJobCompletion] public NativeArray<Velocity> velocities;
-		[WriteOnly] public ComponentDataArray<Position> outputPositions;
-		[WriteOnly] public ComponentDataArray<Rotation> outputRotations;
-		[WriteOnly] public ComponentDataArray<Velocity> outputVelocities;
+		[ReadOnly, DeallocateOnJobCompletion] public NativeArray<Position> Positions;
+		[ReadOnly, DeallocateOnJobCompletion] public NativeArray<Rotation> Rotations;
+		[ReadOnly, DeallocateOnJobCompletion] public NativeArray<Velocity> Velocities;
+		[ReadOnly, DeallocateOnJobCompletion] public NativeArray<TargetReached> TargetReached;
+		[WriteOnly] public ComponentDataArray<Position> OutputPositions;
+		[WriteOnly] public ComponentDataArray<Rotation> OutputRotations;
+		[WriteOnly] public ComponentDataArray<Velocity> OutputVelocities;
+		[WriteOnly] public ComponentDataArray<TargetReached> OutputTargetReached;
 
 		public void Execute(int index)
 		{
-			outputPositions[index] = new Position { Value = positions[index].Value };
-			outputRotations[index] = new Rotation { Value = rotations[index].Value };
-			outputVelocities[index] = new Velocity { Value = velocities[index].Value };
+			OutputPositions[index] = new Position { Value = Positions[index].Value };
+			OutputRotations[index] = new Rotation { Value = Rotations[index].Value };
+			OutputVelocities[index] = new Velocity { Value = Velocities[index].Value };
+			OutputTargetReached[index] = new TargetReached { Value = TargetReached[index].Value, CurrentGoal =  TargetReached[index].CurrentGoal};
 		}
 	}
 	
@@ -335,58 +351,60 @@ public class AgentSystem : JobComponentSystem
 	}
 	
 	//-----------------------------------------------------------------------------
-	[BurstCompile]
+	//[BurstCompile]
 	struct Steer : IJobParallelFor
 	{
-		[ReadOnly] public GridSettings settings;
-		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<float3> avgVelocities;
-		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<float3> avgPositions;
-		[DeallocateOnJobCompletion] [ReadOnly] public NativeArray<float3> vecFromNearestNeighbor;
-		[ReadOnly] public AgentSteerParams steerParams;
+		[ReadOnly] public GridSettings Settings;
+		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<float3> AvgVelocities;
+		[DeallocateOnJobCompletion][ReadOnly] public NativeArray<float3> AvgPositions;
+		[DeallocateOnJobCompletion] [ReadOnly] public NativeArray<float3> VecFromNearestNeighbor;
+		[ReadOnly] public AgentSteerParams SteerParams;
 
-        [ReadOnly] public NativeArray<Goal> goals;
-		[ReadOnly] public NativeArray<float3> terrainFlowfield;
-		[ReadOnly] public NativeArray<Position> positions;
-        [ReadOnly] public NativeArray<float3> flowFields;
-        public int flowFieldLength;
-		public float deltaTime;
-		public NativeArray<Velocity> velocities;
+		[ReadOnly] public NativeArray<float3> TerrainFlowfield;
+		[ReadOnly] public NativeArray<Position> Positions;
+        [ReadOnly] public NativeArray<float3> FlowFields;
+		[ReadOnly] public int FlowFieldLength;
+		[ReadOnly] public float DeltaTime;
+		[ReadOnly] public NativeArray<Goal> Goals;
+		
+		public NativeArray<TargetReached> TargetReached;
+		public NativeArray<Velocity> Velocities;
 
 		//-----------------------------------------------------------------------------
 		float3 Cohesion(int index, float3 position)
 		{
-			var avgPosition = avgPositions[index];
+			var avgPosition = AvgPositions[index];
 			var vecToCenter = avgPosition - position;
 			var distToCenter = math.length(vecToCenter);
-			var distFromOuter = distToCenter - steerParams.AlignmentRadius * .5f;
+			var distFromOuter = distToCenter - SteerParams.AlignmentRadius * .5f;
 			if (distFromOuter < 0)
 				return 0;
-			var strength = distFromOuter / (steerParams.AlignmentRadius * .5f);
-			return steerParams.CohesionWeight * (vecToCenter / distToCenter) * (strength * strength);
+			var strength = distFromOuter / (SteerParams.AlignmentRadius * .5f);
+			return SteerParams.CohesionWeight * (vecToCenter / distToCenter) * (strength * strength);
 		}
 
 		//-----------------------------------------------------------------------------
 		float3 Alignment(int index, float3 velocity)
 		{
-			var avgVelocity = avgVelocities[index];
+			var avgVelocity = AvgVelocities[index];
 			var velDiff = avgVelocity - velocity;
 			var diffLen = math.length(velDiff);
 			if (diffLen < .1f)
 				return 0;
-			var strength = diffLen / steerParams.MaxSpeed;
-			return steerParams.AlignmentWeight * (velDiff / diffLen) * strength * strength;
+			var strength = diffLen / SteerParams.MaxSpeed;
+			return SteerParams.AlignmentWeight * (velDiff / diffLen) * strength * strength;
 		}
 
 		//-----------------------------------------------------------------------------
 		float3 Separation(int index)
 		{
-			var nVec = vecFromNearestNeighbor[index];
+			var nVec = VecFromNearestNeighbor[index];
 			var nDist = math.length(nVec);
-			var diff =  steerParams.SeparationRadius - nDist;
+			var diff =  SteerParams.SeparationRadius - nDist;
 			if (diff < 0)
 				return 0;
-			var strength = diff / steerParams.SeparationRadius;
-			return steerParams.SeparationWeight * (nVec / nDist) * strength * strength;
+			var strength = diff / SteerParams.SeparationRadius;
+			return SteerParams.SeparationWeight * (nVec / nDist) * strength * strength;
 		}
 
 		//-----------------------------------------------------------------------------
@@ -396,49 +414,54 @@ public class AgentSystem : JobComponentSystem
 			var fieldLen = math.length(fieldVal);
 			if (fieldLen < .1f)
 				return 0;
-			var desiredVelocity = fieldVal * steerParams.MaxSpeed;
+			var desiredVelocity = fieldVal * SteerParams.MaxSpeed;
 			var velDiff = desiredVelocity - velocity;
 			var diffLen = math.length(velDiff);
-			var strength = diffLen / steerParams.MaxSpeed;
+			var strength = diffLen / SteerParams.MaxSpeed;
 			return weight * (velDiff / diffLen) * strength * strength;
 		}
 
 		//-----------------------------------------------------------------------------
 		float3 Velocity(float3 velocity, float3 forceDirection)
 		{
-			var desiredVelocity = forceDirection * steerParams.MaxSpeed;
-			var accelForce = (desiredVelocity - velocity) * math.min(deltaTime * steerParams.Acceleration, 1);
+			var desiredVelocity = forceDirection * SteerParams.MaxSpeed;
+			var accelForce = (desiredVelocity - velocity) * math.min(DeltaTime * SteerParams.Acceleration, 1);
 			var nextVelocity = velocity + accelForce;
 			nextVelocity.y = 0;
 
 			var speed = math.length(nextVelocity);
-			if (speed > steerParams.MaxSpeed)
-				nextVelocity = math.normalize(nextVelocity) * steerParams.MaxSpeed;
+			if (speed > SteerParams.MaxSpeed)
+				nextVelocity = math.normalize(nextVelocity) * SteerParams.MaxSpeed;
 
-			return nextVelocity - nextVelocity * deltaTime * steerParams.Drag;
+			return nextVelocity - nextVelocity * DeltaTime * SteerParams.Drag;
 		}
 
 		//-----------------------------------------------------------------------------
 		public void Execute(int index)
 		{
-			var velocity = velocities[index].Value;
-			var position = positions[index].Value;
-            var goal = goals[index].Current;
+			var velocity = Velocities[index].Value;
+			var position = Positions[index].Value;
+            var goal = Goals[index].Current;
 
+			if (TargetReached[index].CurrentGoal != goal)
+				TargetReached[index] = new TargetReached {Value = 0, CurrentGoal = goal};
+				
             var targetFlowFieldContribution = new float3(0, 0, 0);
             var terrainFlowFieldContribution = new float3(0, 0, 0);
 
             // This is what we want to do, but the targetFlowField is marked as [WriteOnly],
             // which feels like a bug in the JobSystem
-            var gridIndex = GridUtilties.WorldToIndex(settings, position);
+            var gridIndex = GridUtilties.WorldToIndex(Settings, position);
             if (gridIndex != -1)
             {
-                terrainFlowFieldContribution = FlowField(velocity, terrainFlowfield[gridIndex], steerParams.TerrainFieldWeight);
-                if (goal != TileSystem.k_InvalidHandle && flowFields.Length > 0)
+                terrainFlowFieldContribution = FlowField(velocity, TerrainFlowfield[gridIndex], SteerParams.TerrainFieldWeight);
+                if (goal != TileSystem.k_InvalidHandle && FlowFields.Length > 0 && TargetReached[index].Value == 0)
                 {
-                    var flowFieldValue = flowFields[flowFieldLength * goal + gridIndex];
-                    targetFlowFieldContribution =
-                        FlowField(velocity, flowFieldValue, steerParams.TargetFieldWeight);
+                    var flowFieldValue = FlowFields[FlowFieldLength * goal + gridIndex];
+	                if (math.lengthSquared(flowFieldValue) < float.Epsilon)
+		                TargetReached[index] = new TargetReached {Value = 1, CurrentGoal = goal };
+					else
+						targetFlowFieldContribution = FlowField(velocity, flowFieldValue, SteerParams.TargetFieldWeight);
                 }
             }
 
@@ -452,7 +475,7 @@ public class AgentSystem : JobComponentSystem
 			);
 
 			var newVelocity = Velocity(velocity, normalizedForces);
-			velocities[index] = new Velocity { Value = newVelocity};
+			Velocities[index] = new Velocity { Value = newVelocity};
 		}
 	}
 
@@ -466,8 +489,10 @@ public class AgentSystem : JobComponentSystem
 		public NativeArray<Rotation> Rotations;
 		[ReadOnly] public NativeArray<float> Heights;
 		[ReadOnly] public NativeArray<float3> Normals;
-		public AgentSteerParams steerParams;
-		public GridSettings grid;
+		public AgentSteerParams SteerParams;
+		public GridSettings GridSettings;
+		
+		//-----------------------------------------------------------------------------
 		public void Execute(int index)
 		{
 			var pos = Positions[index].Value;
@@ -476,15 +501,15 @@ public class AgentSystem : JobComponentSystem
 			var speed = math.length(vel);
 			pos += vel * TimeDelta;
 
-			var gridIndex = GridUtilties.WorldToIndex(grid, pos);
+			var gridIndex = GridUtilties.WorldToIndex(GridSettings, pos);
 			var terrainHeight = (gridIndex < 0 ? pos.y : Heights[gridIndex]);
 			var currUp = math.up(rot);
 			var normal = gridIndex < 0 ? currUp : Normals[gridIndex];
 
 			var targetHeight = terrainHeight + 3;
 			pos.y = pos.y + (targetHeight - pos.y) * math.min(TimeDelta * (speed + 1), 1);
-			if (pos.z < -grid.worldSize.y * .5f)
-				pos.z = grid.worldSize.y - grid.worldSize.y * .5f - 50;
+			if (pos.z < -GridSettings.worldSize.y * .5f)
+				pos.z = GridSettings.worldSize.y - GridSettings.worldSize.y * .5f - 50;
 
 			var currDir = math.forward(rot);
 			var normalDiff = normal - currUp;
@@ -492,10 +517,10 @@ public class AgentSystem : JobComponentSystem
 			var newDir = currDir;
 			if (speed > .1f)
 			{
-				var speedPer = speed / steerParams.MaxSpeed;
+				var speedPer = speed / SteerParams.MaxSpeed;
 				var desiredDir = math.normalize(vel);
 				var dirDiff = desiredDir - currDir;
-				newDir = math.normalize(currDir + dirDiff * math.min(TimeDelta * steerParams.RotationSpeed * (.5f + speedPer * .5f), 1));
+				newDir = math.normalize(currDir + dirDiff * math.min(TimeDelta * SteerParams.RotationSpeed * (.5f + speedPer * .5f), 1));
 			}
 			rot = quaternion.lookRotation(newDir, newUp);
 			Positions[index] = new Position(pos);

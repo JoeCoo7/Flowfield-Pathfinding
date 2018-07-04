@@ -20,6 +20,8 @@ namespace Agent
     {
         [ReadOnly] public SharedComponentDataArray<GridSettings> GridSettings;
         [ReadOnly] public ComponentDataArray<Goal> Goals;
+        
+        public ComponentDataArray<TargetReached> TargetReached;
         public ComponentDataArray<Velocity> Velocities;
         public ComponentDataArray<Position> Positions;
         public ComponentDataArray<Rotation> Rotations;

@@ -15,6 +15,12 @@ namespace Agent
         public byte Value;
     }
 
+    public struct TargetReached : IComponentData
+    {
+        public byte Value;
+        public int CurrentGoal;
+    }
+    
     public struct Goal : IComponentData
     {
         public int Current;
