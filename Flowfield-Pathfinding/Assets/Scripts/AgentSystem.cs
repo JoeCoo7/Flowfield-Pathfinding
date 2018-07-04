@@ -1,8 +1,6 @@
-﻿using System;
-using Agent;
+﻿using Agent;
 using Samples.Common;
 using Tile;
-using TMPro;
 using Unity.Burst;
 using UnityEngine;
 using Unity.Mathematics;
