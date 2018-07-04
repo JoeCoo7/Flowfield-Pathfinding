@@ -485,7 +485,7 @@ public class AgentSystem : JobComponentSystem
 		private bool IsCloseToTarget(Goal _goal, float3 _position)
 		{
 			var gridPos = GridUtilties.World2Grid(Settings, _position);
-			return math.abs(gridPos.x - _goal.Position.x) <= 2 && math.abs(gridPos.y - _goal.Position.y) <= 2;
+			return math.abs(gridPos.x - _goal.Position.x) <= _goal.Size && math.abs(gridPos.y - _goal.Position.y) <= _goal.Size;
 		}
 	}
 
@@ -518,8 +518,21 @@ public class AgentSystem : JobComponentSystem
 
 			var targetHeight = terrainHeight + 3;
 			pos.y = pos.y + (targetHeight - pos.y) * math.min(TimeDelta * (speed + 1), 1);
-			if (pos.z < -GridSettings.worldSize.y * .5f)
-				pos.z = GridSettings.worldSize.y - GridSettings.worldSize.y * .5f - 50;
+
+			// clamp position
+			float minWorldX = -GridSettings.worldSize.x * .5f;
+			float maxWorldX = -minWorldX;
+			float minWorldZ = -GridSettings.worldSize.y * .5f;
+			float maxWorldZ = -minWorldZ;
+			
+			if (pos.x < minWorldX)
+				pos.x = minWorldX + 1;
+			if (pos.x > maxWorldX)
+				pos.x = maxWorldX - 1;
+			if (pos.z < minWorldZ)
+				pos.z = minWorldZ + 1;
+			if (pos.z > maxWorldZ)
+				pos.z = maxWorldZ - 1;
 
 			var currDir = math.forward(rot);
 			var normalDiff = normal - currUp;
@@ -527,10 +540,10 @@ public class AgentSystem : JobComponentSystem
 			var newDir = currDir;
 			if (speed > .1f)
 			{
-				var speedPer = speed / SteerParams.MaxSpeed;
+				var speedPer = (speed / SteerParams.MaxSpeed) * 1.75f;
 				var desiredDir = math.normalize(vel);
 				var dirDiff = desiredDir - currDir;
-				newDir = math.normalize(currDir + dirDiff * math.min(TimeDelta * SteerParams.RotationSpeed * (.5f + speedPer * .5f), 1));
+				newDir = math.normalize(currDir + dirDiff * math.min(TimeDelta * SteerParams.RotationSpeed * speedPer, 1));
 			}
 			rot = quaternion.lookRotation(newDir, newUp);
 			Positions[index] = new Position(pos);

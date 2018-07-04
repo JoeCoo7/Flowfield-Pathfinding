@@ -126,14 +126,16 @@ public class TileSystem : JobComponentSystem
 
         // Ensure goal is on the map
         m_Goal = math.clamp(m_Goal, new int2(0, 0), gridSettings.cellCount - new int2(1, 1));
+        var goals = CalculateGoals(gridSettings, out int numGoals);
 
         int queryHandle = s_QueryHandle;
         s_QueryHandle = (s_QueryHandle + 1) % k_MaxNumFlowFields;
 
         var updateAgentsTargetGoalJobHandle = new UpdateAgentsTargetGoalJob
         {
-            NewGoal = queryHandle,
-            NewPos = m_Goal
+            Goal = queryHandle,
+            Position = m_Goal,
+            Size = numGoals/2
         }.Schedule(this, inputDeps);
 
         // Create & Initialize heatmap
@@ -146,7 +148,6 @@ public class TileSystem : JobComponentSystem
         }.Schedule(this, 64, inputDeps);
 
 
-        var goals = CalculateGoals(gridSettings, out int numGoals);
         var floodQueue = new NativeArray<int>(heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         var computeHeatmapJobHandle = new ComputeHeatmapJob()
         {
@@ -372,14 +373,16 @@ public class TileSystem : JobComponentSystem
     [BurstCompile]
     struct UpdateAgentsTargetGoalJob : IJobProcessComponentData<Selection, Goal>
     {
-        public int NewGoal;
-        public int2 NewPos;
+        public int Goal;
+        public int2 Position;
+        public int Size;
 
         //-----------------------------------------------------------------------------
         public void Execute([ReadOnly] ref Selection selectionFlag, ref Goal goal)
         {
-            goal.Target = math.select(NewGoal, goal.Target, selectionFlag.Value == 0);
-            goal.Position = NewPos;
+            goal.Target = math.select(Goal, goal.Target, selectionFlag.Value == 0);
+            goal.Position = Position;
+            goal.Size = Size;
         }
     }
 
