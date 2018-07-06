@@ -12,10 +12,11 @@ namespace Tile
     
     public struct AllTiles
     {
-        [ReadOnly] public ComponentDataArray<Position> position;
-        [ReadOnly] public SharedComponentDataArray<GridSettings> settings;
-        public ComponentDataArray<TransformMatrix> transforms;
-        public ComponentDataArray<FlowFieldHandle> handles;
+        [ReadOnly] public ComponentDataArray<Position> Position;
+        [ReadOnly] public ComponentDataArray<Cost> Cost;
+        [ReadOnly] public SharedComponentDataArray<GridSettings> Settings;
+        public ComponentDataArray<TransformMatrix> Transforms;
+        public ComponentDataArray<FlowFieldHandle> Handles;
     }
     
     

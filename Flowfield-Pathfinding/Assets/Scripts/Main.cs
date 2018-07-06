@@ -58,6 +58,10 @@ public class Main : MonoBehaviour
 
 	private void OnDisable()
 	{
+		if (World.Active == null)
+			return;
+		
+		World.Active.GetOrCreateManager<EntityManager>().CompleteAllJobs();
 		m_InitData.Shutdown();
 	}
 

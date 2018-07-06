@@ -9,7 +9,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3cdd9d14d7a7498494735bc15f0b3818, type: 3}
-  m_Name: AgentSteerFastClustered
+  m_Name: SteeringFastClustered
   m_EditorClassIdentifier: 
   m_Data:
     MaxSpeed: 85.4
@@ -19,7 +19,7 @@ MonoBehaviour:
     TerrainFieldWeight: 3
     TargetFieldWeight: 10
     SeparationRadius: 7.4
-    SeparationWeight: 44.4
+    SeparationWeight: 92.9
     CohesionWeight: 11
     AlignmentWeight: 34.4
     AlignmentRadius: 4.54

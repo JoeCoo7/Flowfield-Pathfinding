@@ -17,4 +17,3 @@ MonoBehaviour:
   AgentDistMaxTries: 30
   AgentDistCellSize: 1
   AgentDistNumPerClick: 100
-  AgentDistSpawningThreshold: 250

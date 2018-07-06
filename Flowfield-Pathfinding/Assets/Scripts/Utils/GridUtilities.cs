@@ -1,7 +1,11 @@
+using System;
+using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Entities;
 using Tile;
+using UnityEngine.Assertions;
 
 //-----------------------------------------------------------------------------
 public static class GridUtilties
@@ -69,6 +73,22 @@ public static class GridUtilties
     }
 
     //-----------------------------------------------------------------------------
+    public static int GetCardinalNeighborIndices(int gridSize, int currentIndex, ref NativeArray<int> neighbors)
+    {
+        var gridMaxIndex = gridSize * gridSize;
+        var validNeighbours = 0;
+        for (int neighbourIndex = 0; neighbourIndex < 4; neighbourIndex++)
+        {
+            var gridIndex = currentIndex + GetCardinalNeighborIndex(gridSize, neighbourIndex);
+            if (gridIndex < 0 || gridIndex >= gridMaxIndex)
+                continue;
+
+            neighbors[validNeighbours++] = gridIndex;
+        }
+        return validNeighbours;
+    }
+
+    //-----------------------------------------------------------------------------
     public static readonly int2[] Offset = new[] {
         new int2(0, -1),    // N,0
         new int2(0, 1),     // S,1
@@ -79,6 +99,19 @@ public static class GridUtilties
         new int2(-1, -1),   // NW,6
         new int2(-1, 1),    // SW,7
     };
+
+    public static int GetCardinalNeighborIndex(int gridSize, int neighborIndex)
+    {
+        switch (neighborIndex)
+        {
+            case 0: return -gridSize;
+            case 1: return gridSize;
+            case 2: return -1;
+            case 3: return 1;
+        }
+
+        throw new ApplicationException("this should never happen!");
+    }
 
     //-----------------------------------------------------------------------------
     public enum Direction

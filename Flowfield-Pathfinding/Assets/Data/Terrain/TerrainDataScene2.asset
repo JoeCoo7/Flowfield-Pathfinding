@@ -9,20 +9,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2613051fc61152c4fbcce528d29d3e25, type: 3}
-  m_Name: InitDataScene2
+  m_Name: TerrainDataScene2
   m_EditorClassIdentifier: 
-  m_textureResolution: 1024
   m_worldWidth: 1024
   m_worldHeight: 1024
-  m_heightScale: 100
   m_cellSize: 4
-  m_goalAgentFactor: 2
-  m_cellsPerBlock: 8
+  m_heightScale: 100
   m_noiseScale: 4
   m_noiseMultiplier: 20
   m_noiseShift: -10
-  m_gridPrefab: {fileID: 1095766587170428, guid: 244779e4b985c974abdcabc2aee9fa20,
-    type: 2}
+  m_goalAgentFactor: 2
+  m_drawFlowField: 0
+  m_drawHeatField: 0
+  m_smoothFlowField: 1
   m_terrainPrefab: {fileID: 1400044387025214, guid: 3013c661fc8de58448c6388baefaf95a,
     type: 2}
   m_cameraObject: {fileID: 1083118766984968, guid: a7b79582ae1595442a40029858f7555d,
@@ -30,10 +29,6 @@ MonoBehaviour:
   TileDirectionMesh: {fileID: 4300000, guid: 6138750424a81274ab6dcfc8a3f3d9d1, type: 3}
   TileDirectionMaterial: {fileID: 2100000, guid: e3c4f23818b6020418bf279d7e751149,
     type: 2}
-  m_drawFlowField: 0
-  m_drawHeatField: 0
-  m_smoothFlowField: 1
-  m_smoothAmount: 0.9
   terrainHeightCurve:
     serializedVersion: 2
     m_Curve:
@@ -96,3 +91,4 @@ MonoBehaviour:
     m_Mode: 0
     m_NumColorKeys: 5
     m_NumAlphaKeys: 2
+  m_smoothAmount: 0.9

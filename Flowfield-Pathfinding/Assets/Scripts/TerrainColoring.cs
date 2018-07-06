@@ -42,23 +42,22 @@ public class TerrainColoring : MonoBehaviour
     }
 
     //-----------------------------------------------------------------------------
-    private void OnNewHeatMap(NativeArray<int> map)
+    private void OnNewHeatMap(NativeArray<float> map)
     {
         if (Main.ActiveInitParams.m_drawHeatField)
         {
-            var scale = (1f / (Main.ActiveInitParams.m_grid.cellCount.x * 1.25f));
+            var scale = (1f / (Main.ActiveInitParams.m_grid.cellCount.x - 1));
             for (int index = 0; index < m_HeatmapColors.Length; index++)
             {
                 var c = 0f;
-                if (map[index] == int.MaxValue)
-                    m_HeatmapColors[index] = m_TerrainColors[index];
+                if (map[index] >= float.MaxValue)
+                    m_HeatmapColors[index] = new Color(0,0,0);
                 else
                 {
-                    var h = map[index] * scale;
-                    if (h < 1)
-                        c = (1 - h) * (1 - h) * (1 - h);
-                    
-                    m_HeatmapColors[index] = new Color(c, c, c) + m_TerrainColors[index];
+                    float h = map[index] * scale;
+                    if (h <= 1)
+                        c = (1 - h);
+                    m_HeatmapColors[index] = new Color(0, 0, c);
                 }
             }
             m_ColorTexture.SetPixels32(m_HeatmapColors);

@@ -9,17 +9,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2613051fc61152c4fbcce528d29d3e25, type: 3}
-  m_Name: InitDataObstacles
+  m_Name: TerrainDataObstacles
   m_EditorClassIdentifier: 
   m_worldWidth: 2048
   m_worldHeight: 2048
-  m_cellSize: 4
+  m_cellSize: 8
   m_heightScale: 100
   m_noiseScale: 10
   m_noiseMultiplier: 20
   m_noiseShift: -10
   m_goalAgentFactor: 0.25
-  m_drawFlowField: 0
+  m_drawFlowField: 1
   m_drawHeatField: 0
   m_smoothFlowField: 1
   m_terrainPrefab: {fileID: 1400044387025214, guid: 3013c661fc8de58448c6388baefaf95a,

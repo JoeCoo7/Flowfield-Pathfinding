@@ -84,7 +84,6 @@ public class TileMeshInstanceRendererSystem : ComponentSystem
 		            m_MatricesArray[j].m23 += Main.ActiveInitParams.m_cellSize / 2;
 	            }
                 Graphics.DrawMeshInstanced(renderer.Mesh, renderer.SubMesh, renderer.Material, m_MatricesArray, length, null, renderer.CastShadows, renderer.ReceiveShadows);
-
                 beginIndex += length;
             }
         }

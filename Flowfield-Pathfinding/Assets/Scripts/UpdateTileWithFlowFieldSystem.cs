@@ -27,24 +27,24 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
         //-----------------------------------------------------------------------------
         public void Execute(int index)
         {
-            
-            if (Tiles.handles[index].Handle == Handle)
+            if (Tiles.Handles[index].Handle == Handle)
                 return;
 
-            Tiles.handles[index] = new Tile.FlowFieldHandle { Handle = Handle };
+            Tiles.Handles[index] = new Tile.FlowFieldHandle { Handle = Handle };
 
-            var tileTransform = Tiles.transforms[index];
-            var position = Tiles.position[index];
+            var tileTransform = Tiles.Transforms[index];
+            var position = Tiles.Position[index];
             var tileIndex = GridUtilties.Grid2Index(Settings, position.Value);
             var flowDirection = FlowField[tileIndex];
             var height = TerrainHeight[tileIndex];
 
-            var scale = height < Settings.heightScale * 0.4f ? new float3(Settings.cellSize.x, Settings.cellSize.x, Settings.cellSize.x * 0.5f) : new float3(0);
+            var scale = Tiles.Cost[index].Value < byte.MaxValue ? new float3(Settings.cellSize.x, Settings.cellSize.x, Settings.cellSize.x * 0.5f) : new float3(0);
+            //var scale = new float3(Settings.cellSize.x, Settings.cellSize.x, Settings.cellSize.x * 0.5f);
             var pos = new float3(position.Value.x * Settings.cellSize.x - Settings.worldSize.x / 2.0f, height + 5.0f,
                 position.Value.y * Settings.cellSize.y - Settings.worldSize.y / 2.0f);
             
             tileTransform.Value = math.mul(float4x4.lookAt(pos, flowDirection, new float3(0.0f, 1.0f, 0.0f)), float4x4.scale(scale));
-            Tiles.transforms[index] = tileTransform;
+            Tiles.Transforms[index] = tileTransform;
         }
     }
 
@@ -65,12 +65,12 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
         var update = new UpdateJob
         {
             Tiles = m_Tiles,
-            Settings = m_Tiles.settings[0], 
+            Settings = m_Tiles.Settings[0], 
             Handle = tileSystem.LastGeneratedQueryHandle,
             FlowField = tileSystem.GetFlowFieldCopy(tileSystem.LastGeneratedQueryHandle, Allocator.TempJob),
             TerrainHeight = Main.TerrainHeight
         };
 
-        return update.Schedule(update.Tiles.transforms.Length, 64, inputDeps);
+        return update.Schedule(update.Tiles.Transforms.Length, 64, inputDeps);
     }
 }

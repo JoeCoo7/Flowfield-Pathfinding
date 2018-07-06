@@ -25,6 +25,7 @@
             <e p="AgentComponents.cs" t="Include" />
             <e p="TileComponents.cs" t="Include" />
           </e>
+          <e p="ComputeFastIterativeMethodJob.cs" t="Include" />
           <e p="ComputeFlowFieldJob.cs" t="Include" />
           <e p="Data" t="Include">
             <e p="AgentSpawnData.cs" t="Include" />
