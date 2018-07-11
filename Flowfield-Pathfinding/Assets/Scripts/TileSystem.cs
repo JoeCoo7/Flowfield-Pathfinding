@@ -9,6 +9,7 @@ using Unity.Burst;
 using Agent;
 using FlowField;
 using Tile;
+using Unity.Jobs.LowLevel.Unsafe;
 
 //-----------------------------------------------------------------------------
 [UpdateInGroup(typeof(ProcessGroup))]
@@ -21,7 +22,7 @@ public class TileSystem : JobComponentSystem
         public int QueryHandle;
         public JobHandle JobHandle;
         public NativeArray<float3> FlowField;
-        public NativeArray<float> Heatmap;
+        public NativeArray<float> DistanceMap;
     }
     
     //-----------------------------------------------------------------------------
@@ -52,12 +53,11 @@ public class TileSystem : JobComponentSystem
     public const int k_InvalidHandle = -1;
     public const int k_Obstacle = int.MaxValue;
     public const float k_ObstacleFloat = float.MaxValue;
-    private const int k_Unvisited = k_Obstacle - 1;
     
-	public Action<NativeArray<float>> OnNewHeatMap;
+	public Action<NativeArray<float>> OnNewDistanceMap;
     public NativeArray<float3> CachedFlowFields { get; private set; }
     public int LastGeneratedQueryHandle { get; private set; }
-    public NativeArray<float> LastGeneratedHeatmap { get; private set; }
+    public NativeArray<float> LastGeneratedDistanceMap { get; private set; }
 
     private static int s_QueryHandle = k_InvalidHandle;
     private int m_FlowFieldLength;
@@ -86,8 +86,8 @@ public class TileSystem : JobComponentSystem
     {
         m_Offsets.Dispose();
 
-        if (LastGeneratedHeatmap.IsCreated)
-            LastGeneratedHeatmap.Dispose();
+        if (LastGeneratedDistanceMap.IsCreated)
+            LastGeneratedDistanceMap.Dispose();
 
         if (CachedFlowFields.IsCreated)
             CachedFlowFields.Dispose();
@@ -137,57 +137,104 @@ public class TileSystem : JobComponentSystem
             Goal = queryHandle,
             Position = m_Goal,
             Size = numGoals/2
-        }.Schedule(this, inputDeps);
+        }.Schedule(this, inputDeps); 
 
-        // Create & Initialize heatmap
-        var heatmap = new NativeArray<float>(m_FlowFieldLength, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-        //var costs = new NativeArray<int>(m_FlowFieldLength, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+        // Create & Initialize distance map
+        var distanceMap = new NativeArray<float>(m_FlowFieldLength, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+        var costs = new NativeArray<int>(m_FlowFieldLength, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+        var floodQueue = new NativeArray<int>(distanceMap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        var flowField = new NativeArray<float3>(distanceMap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
-        var initializeHeatmapJobHandle = new InitializeHeatmapJob()
+        var initializeDistanceMapJobHandle = new InitializeHeatmapJob
         {
             Settings = gridSettings,
-            Heatmap = heatmap
+            Heatmap = distanceMap,
+            Costs = costs
         }.Schedule(this, 64, inputDeps);
 
-
-        var floodQueue = new NativeArray<int>(heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        var computeHeatmapJobHandle = new ComputeHeatmapJob()
+        JobHandle computeFlowFieldJobHandle;
+        if (Main.Instance.m_InitData.m_eikonalFim)
         {
-            NumGoals = numGoals,
-            Heatmap = heatmap,
-            FloodQueue = floodQueue,
-            Goals = goals,
-            Settings = gridSettings,
-            Offsets = m_Offsets
+            var computeDistanceMap = new ComputeEikonalFimDistanceJob
+            {
+                Settings = gridSettings,
+                Goals = goals,
+                NumGoals = numGoals,
+                Costs = costs,
+                StateMap = new NativeArray<ComputeEikonalFimDistanceJob.States>(distanceMap.Length, Allocator.TempJob),
+                Neighbours = new NativeArray<int>(8, Allocator.TempJob),
+                EikonalNeighbours = new NativeArray<float>(4, Allocator.TempJob),
+                FloodQueue = floodQueue,
+                DistanceMap = distanceMap,
+
+            }.Schedule(initializeDistanceMapJobHandle);
             
-        }.Schedule(initializeHeatmapJobHandle);
-        
-        
-        var flowField = new NativeArray<float3>(heatmap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        var computeFlowFieldJobHandle = new ComputeFlowFieldJob
+            computeFlowFieldJobHandle = new ComputeFimEikonalFlowFieldJob
+            {
+                Settings = gridSettings,
+                DistanceMap = distanceMap,
+                Flowfield = flowField,
+                Offsets = m_Offsets
+            }.Schedule(distanceMap.Length, 64, computeDistanceMap);
+        }
+        else
         {
-            settings = gridSettings,
-            heatmap = heatmap,
-            flowfield = flowField,
-            offsets = m_Offsets
-        }.Schedule(heatmap.Length, 64, computeHeatmapJobHandle);
+            var computeDistanceMap = new ComputeDijkstraDistanceJob
+            {
+                NumGoals = numGoals,
+                DistanceMap = distanceMap,
+                FloodQueue = floodQueue,
+                Goals = goals,
+                Settings = gridSettings,
+                Offsets = m_Offsets,
+           }.Schedule(initializeDistanceMapJobHandle);
+            
+            computeFlowFieldJobHandle = new ComputeDijkstraFlowFieldJob
+            {
+                Settings = gridSettings,
+                DistanceMap = distanceMap,
+                Flowfield = flowField,
+                Offsets = m_Offsets
+            }.Schedule(distanceMap.Length, 64, computeDistanceMap);
+        }
 
-
+        JobHandle smoothFlowFieldJobHandle;
+        if (Main.Instance.m_InitData.m_smoothFlowField)
+        {
+            smoothFlowFieldJobHandle = new SmoothFlowFieldJob
+            {
+                Settings = gridSettings,
+                Offsets = m_Offsets,
+                FloodQueue = floodQueue,
+                DistanceMap = distanceMap,
+                Flowfield = flowField,
+                Costs = costs,
+            }.Schedule(distanceMap.Length, 64, computeFlowFieldJobHandle);
+        }
+        else
+        {
+            smoothFlowFieldJobHandle = new SmoothFlowFieldJob.SmoothFlowFieldDeallocationJob
+            {
+                FloodQueue = floodQueue,
+                Costs = costs,
+                
+            }.Schedule(computeFlowFieldJobHandle);
+        }
+            
         m_PendingJobs.Add(new PendingJob
         {
             QueryHandle = queryHandle,
-            JobHandle = computeFlowFieldJobHandle,
+            JobHandle = smoothFlowFieldJobHandle,
             FlowField = flowField,
-            Heatmap = heatmap,
+            DistanceMap = distanceMap,
         });
 
-        return JobHandle.CombineDependencies(initializeHeatmapJobHandle, updateAgentsTargetGoalJobHandle);
+        return JobHandle.CombineDependencies(initializeDistanceMapJobHandle, updateAgentsTargetGoalJobHandle);
     }
 
     //-----------------------------------------------------------------------------
     private NativeArray<int2> CalculateGoals(GridSettings _settings, out int _length)
     {
-        // Compute heatmap from goals
         var numAgents = m_AgentSystem.NumAgents;
         var radius = (int)( math.log(numAgents) * Main.ActiveInitParams.m_goalAgentFactor);
         var goalMin = math.max(new int2(m_Goal.x - radius, m_Goal.y - radius), new int2(0, 0));
@@ -231,16 +278,16 @@ public class TileSystem : JobComponentSystem
 
                 var queryHandle = pendingJob.QueryHandle;
                 var flowField = pendingJob.FlowField;
-                var heatmap = pendingJob.Heatmap;
+                var heatmap = pendingJob.DistanceMap;
 
                 var offset = flowField.Length * queryHandle;
                 CachedFlowFields.Slice(offset, flowField.Length).CopyFrom(flowField);
                 flowField.Dispose();
 
-                if (LastGeneratedHeatmap.IsCreated)
-                    LastGeneratedHeatmap.Dispose();
+                if (LastGeneratedDistanceMap.IsCreated)
+                    LastGeneratedDistanceMap.Dispose();
 
-                LastGeneratedHeatmap = heatmap;
+                LastGeneratedDistanceMap = heatmap;
 				newHeatMap = true;
 				availableGoals[numAvailableGoals++] = pendingJob.QueryHandle;
 
@@ -256,8 +303,8 @@ public class TileSystem : JobComponentSystem
             return false;
         }
 
-		if (newHeatMap && OnNewHeatMap != null)
-			OnNewHeatMap(LastGeneratedHeatmap);
+		if (newHeatMap && OnNewDistanceMap != null)
+			OnNewDistanceMap(LastGeneratedDistanceMap);
 
 
 		updateAgentsJobHandle = new UpdateAgentsCurrentGoalJob
@@ -282,78 +329,20 @@ public class TileSystem : JobComponentSystem
     
     //-----------------------------------------------------------------------------
     [BurstCompile]
-    private struct DeallocFloodQueue : IJob
-    {
-        [ReadOnly, DeallocateOnJobCompletion]
-        public NativeArray<int> floodQueue;
-        public void Execute()
-        {
-            // stub job for deallocating floodqueue :/ 
-        }
-    }
-
-    //-----------------------------------------------------------------------------
-    [BurstCompile]
     private  struct InitializeHeatmapJob : IJobProcessComponentData<Cost, Position>
     {
         [ReadOnly] public GridSettings Settings;
         [WriteOnly] public NativeArray<float> Heatmap;
+        [WriteOnly] public NativeArray<int> Costs;
 
         public void Execute([ReadOnly] ref Cost cost, [ReadOnly] ref Position position)
         {
             var outputIndex = GridUtilties.Grid2Index(Settings, position.Value);
             Heatmap[outputIndex] = math.select(k_Obstacle, k_ObstacleFloat, cost.Value==byte.MaxValue);
+            Costs[outputIndex] = cost.Value;
         }
     }
 
-    //-----------------------------------------------------------------------------
-    //[BurstCompile]
-    private struct ComputeHeatmapJob : IJob
-    {
-        [ReadOnly] public GridSettings Settings;
-        [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int2> Goals;
-        [ReadOnly] public NativeArray<int2> Offsets;
-        [DeallocateOnJobCompletion] public NativeArray<int> FloodQueue;
-
-        public int NumGoals;
-        public NativeArray<float> Heatmap;
-
-        //-----------------------------------------------------------------------------
-        public void Execute()
-        {
-            BurstQueue queue = new BurstQueue(FloodQueue);
-            for (int index = 0; index < NumGoals; ++index)
-            {
-                var tileIndex = GridUtilties.Grid2Index(Settings, Goals[index]);
-                if (Heatmap[tileIndex] < k_ObstacleFloat)
-                {
-                    Heatmap[tileIndex] = 0;
-                    queue.Enqueue(tileIndex);
-                }
-            }
-
-            // Search!
-            while (queue.Length > 0)
-            {
-                var index = queue.Dequeue();
-                var newDistance = Heatmap[index] + 1;
-                var grid = GridUtilties.Index2Grid(Settings, index);
-
-                for (GridUtilties.Direction dir = GridUtilties.Direction.N; dir <= GridUtilties.Direction.W; ++dir)
-                {
-                    var neighborGrid = grid + Offsets[(int)dir];
-                    var neighborIndex = GridUtilties.Grid2Index(Settings, neighborGrid);
-
-                    if (neighborIndex != -1 && Heatmap[neighborIndex] < k_ObstacleFloat && newDistance < Heatmap[neighborIndex])
-                    {
-                        Heatmap[neighborIndex] = newDistance;
-                        queue.Enqueue(neighborIndex);
-                    }
-                }
-            }
-        }
-    }
-    
     //-----------------------------------------------------------------------------
     [BurstCompile]
     struct UpdateAgentsTargetGoalJob : IJobProcessComponentData<Selection, Goal>

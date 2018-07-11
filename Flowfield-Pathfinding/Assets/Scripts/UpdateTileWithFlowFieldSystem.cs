@@ -38,7 +38,7 @@ public class UpdateTileWithFlowFieldSystem : JobComponentSystem
             var flowDirection = FlowField[tileIndex];
             var height = TerrainHeight[tileIndex];
 
-            var scale = Tiles.Cost[index].Value < byte.MaxValue ? new float3(Settings.cellSize.x, Settings.cellSize.x, Settings.cellSize.x * 0.5f) : new float3(0);
+            var scale = Tiles.Cost[index].Value < byte.MaxValue && !FlowField[tileIndex].Equals(new float3(0)) ? new float3(Settings.cellSize.x, Settings.cellSize.x, Settings.cellSize.x * 0.5f) : new float3(0);
             //var scale = new float3(Settings.cellSize.x, Settings.cellSize.x, Settings.cellSize.x * 0.5f);
             var pos = new float3(position.Value.x * Settings.cellSize.x - Settings.worldSize.x / 2.0f, height + 5.0f,
                 position.Value.y * Settings.cellSize.y - Settings.worldSize.y / 2.0f);

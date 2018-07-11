@@ -22,9 +22,12 @@ MonoBehaviour:
   m_drawFlowField: 0
   m_drawHeatField: 0
   m_smoothFlowField: 1
+  m_eikonalFim: 0
   m_terrainPrefab: {fileID: 1400044387025214, guid: 3013c661fc8de58448c6388baefaf95a,
     type: 2}
   m_cameraObject: {fileID: 1083118766984968, guid: a7b79582ae1595442a40029858f7555d,
+    type: 2}
+  m_tileInfoPrefab: {fileID: 1625975332311300, guid: 7c88d97ad8730ac4e9e28a0148aca846,
     type: 2}
   TileDirectionMesh: {fileID: 4300000, guid: 6138750424a81274ab6dcfc8a3f3d9d1, type: 3}
   TileDirectionMaterial: {fileID: 2100000, guid: e3c4f23818b6020418bf279d7e751149,

@@ -38,7 +38,7 @@ public class TerrainColoring : MonoBehaviour
         GetComponent<MeshRenderer>().receiveShadows = true;
         GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.On;
 
-        World.Active.GetOrCreateManager<TileSystem>().OnNewHeatMap += OnNewHeatMap;
+        World.Active.GetOrCreateManager<TileSystem>().OnNewDistanceMap += OnNewHeatMap;
     }
 
     //-----------------------------------------------------------------------------

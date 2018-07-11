@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ContentModelStore">
-    <e p="C:\Users\JoeCool\.Rider2018.1\system\resharper-host\Local\Transient\ReSharperHost\v12\SolutionCaches\_Flowfield-Pathfinding.-1546292023.00" t="ExcludeRecursive" />
-    <e p="G:\GameDev\Flowfield-Pathfinding\Flowfield-Pathfinding" t="IncludeRecursive">
+    <e p="C:\Users\JoeCool\.Rider2018.1\system\resharper-host\Local\Transient\ReSharperHost\v12\SolutionCaches\_Flowfield-Pathfinding.-1382748944.00" t="ExcludeRecursive" />
+    <e p="G:\GameDev\Flowfield-Pathfinding\Flowfield-Pathfinding\Flowfield-Pathfinding" t="IncludeRecursive">
       <e p="Assembly-CSharp-Editor.csproj" t="IncludeRecursive" />
       <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
       <e p="Assets" t="Include">
@@ -16,7 +16,6 @@
             <e p="RTSCamera.cs" t="Include" />
             <e p="RTSCameraSettings.cs" t="Include" />
           </e>
-          <e p="CombineHeatmapsJob.cs" t="Include" />
           <e p="ComponentGroups" t="Include">
             <e p="AgentGroups.cs" t="Include" />
             <e p="TileGroups.cs" t="Include" />
@@ -25,6 +24,8 @@
             <e p="AgentComponents.cs" t="Include" />
             <e p="TileComponents.cs" t="Include" />
           </e>
+          <e p="ComputeDijkstraDistanceJob.cs" t="Include" />
+          <e p="ComputeEikonalFimDistanceJob.cs" t="Include" />
           <e p="ComputeFastIterativeMethodJob.cs" t="Include" />
           <e p="ComputeFlowFieldJob.cs" t="Include" />
           <e p="Data" t="Include">
@@ -55,7 +56,9 @@
           <e p="UI" t="Include">
             <e p="DisplayInfo.cs" t="Include" />
             <e p="FpsDisplay.cs" t="Include" />
+            <e p="GridDebugSystem.cs" t="Include" />
             <e p="SelectionRect.cs" t="Include" />
+            <e p="TileInfo.cs" t="Include" />
           </e>
           <e p="UpdateTileWithFlowFieldSystem.cs" t="Include" />
           <e p="Utils" t="Include">
@@ -63,6 +66,27 @@
             <e p="GeneralUtils.cs" t="Include" />
             <e p="GridUtilities.cs" t="Include" />
             <e p="HashUtility.cs" t="Include" />
+          </e>
+        </e>
+        <e p="TextMesh Pro" t="Include">
+          <e p="Resources" t="Include">
+            <e p="LineBreaking Following Characters.txt" t="Include" />
+            <e p="LineBreaking Leading Characters.txt" t="Include" />
+            <e p="Shaders" t="Include">
+              <e p="TMP_Bitmap-Mobile.shader" t="Include" />
+              <e p="TMP_Bitmap.shader" t="Include" />
+              <e p="TMP_SDF Overlay.shader" t="Include" />
+              <e p="TMP_SDF-Mobile Masking.shader" t="Include" />
+              <e p="TMP_SDF-Mobile Overlay.shader" t="Include" />
+              <e p="TMP_SDF-Mobile.shader" t="Include" />
+              <e p="TMP_SDF-Surface-Mobile.shader" t="Include" />
+              <e p="TMP_SDF-Surface.shader" t="Include" />
+              <e p="TMP_SDF.shader" t="Include" />
+              <e p="TMP_Sprite.shader" t="Include" />
+              <e p="TMPro.cginc" t="Include" />
+              <e p="TMPro_Properties.cginc" t="Include" />
+              <e p="TMPro_Surface.cginc" t="Include" />
+            </e>
           </e>
         </e>
       </e>

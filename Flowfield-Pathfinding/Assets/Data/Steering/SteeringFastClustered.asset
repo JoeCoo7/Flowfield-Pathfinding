@@ -17,7 +17,7 @@ MonoBehaviour:
     Drag: 0
     RotationSpeed: 4.2
     TerrainFieldWeight: 3
-    TargetFieldWeight: 10
+    TargetFieldWeight: 22
     SeparationRadius: 7.4
     SeparationWeight: 92.9
     CohesionWeight: 11

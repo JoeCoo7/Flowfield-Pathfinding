@@ -514,7 +514,7 @@ public class AgentSystem : JobComponentSystem
 			var currUp = math.up(rot);
 			var normal = gridIndex < 0 ? currUp : Normals[gridIndex];
 
-			var targetHeight = terrainHeight + 3;
+			var targetHeight = terrainHeight + 5;
 			pos.y = pos.y + (targetHeight - pos.y) * math.min(TimeDelta * (speed + 1), 1);
 
 			// clamp position

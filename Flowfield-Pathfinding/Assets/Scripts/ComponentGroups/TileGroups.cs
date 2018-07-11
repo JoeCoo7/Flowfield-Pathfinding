@@ -17,6 +17,7 @@ namespace Tile
         [ReadOnly] public SharedComponentDataArray<GridSettings> Settings;
         public ComponentDataArray<TransformMatrix> Transforms;
         public ComponentDataArray<FlowFieldHandle> Handles;
+        public readonly int Length;
     }
     
     

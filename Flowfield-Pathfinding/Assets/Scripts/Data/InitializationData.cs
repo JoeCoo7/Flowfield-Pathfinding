@@ -30,9 +30,11 @@ public class InitializationData : ScriptableObject
 	public bool m_drawFlowField = false;
 	public bool m_drawHeatField = false;
     public bool m_smoothFlowField = true;
+	public bool m_eikonalFim = false;
 	
 	public GameObject m_terrainPrefab;
 	public GameObject m_cameraObject;
+	public GameObject m_tileInfoPrefab;
 	public Mesh TileDirectionMesh;
 	public Material TileDirectionMaterial;
 	public AnimationCurve terrainHeightCurve;
