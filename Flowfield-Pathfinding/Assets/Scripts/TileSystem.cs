@@ -22,7 +22,7 @@ public class TileSystem : JobComponentSystem
         public int QueryHandle;
         public JobHandle JobHandle;
         public NativeArray<float3> FlowField;
-        public NativeArray<float> DistanceMap;
+        public NativeArray<double> DistanceMap;
     }
     
     //-----------------------------------------------------------------------------
@@ -54,10 +54,10 @@ public class TileSystem : JobComponentSystem
     public const int k_Obstacle = int.MaxValue;
     public const float k_ObstacleFloat = float.MaxValue;
     
-	public Action<NativeArray<float>> OnNewDistanceMap;
+	public Action<NativeArray<double>> OnNewDistanceMap;
     public NativeArray<float3> CachedFlowFields { get; private set; }
     public int LastGeneratedQueryHandle { get; private set; }
-    public NativeArray<float> LastGeneratedDistanceMap { get; private set; }
+    public NativeArray<double> LastGeneratedDistanceMap { get; private set; }
 
     private static int s_QueryHandle = k_InvalidHandle;
     private int m_FlowFieldLength;
@@ -140,7 +140,7 @@ public class TileSystem : JobComponentSystem
         }.Schedule(this, inputDeps); 
 
         // Create & Initialize distance map
-        var distanceMap = new NativeArray<float>(m_FlowFieldLength, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+        var distanceMap = new NativeArray<double>(m_FlowFieldLength, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
         var costs = new NativeArray<int>(m_FlowFieldLength, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
         var floodQueue = new NativeArray<int>(distanceMap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         var flowField = new NativeArray<float3>(distanceMap.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -148,7 +148,7 @@ public class TileSystem : JobComponentSystem
         var initializeDistanceMapJobHandle = new InitializeHeatmapJob
         {
             Settings = gridSettings,
-            Heatmap = distanceMap,
+            DistanceMap = distanceMap,
             Costs = costs
         }.Schedule(this, 64, inputDeps);
 
@@ -163,7 +163,7 @@ public class TileSystem : JobComponentSystem
                 Costs = costs,
                 StateMap = new NativeArray<ComputeEikonalFimDistanceJob.States>(distanceMap.Length, Allocator.TempJob),
                 Neighbours = new NativeArray<int>(8, Allocator.TempJob),
-                EikonalNeighbours = new NativeArray<float>(4, Allocator.TempJob),
+                EikonalNeighbours = new NativeArray<double>(4, Allocator.TempJob),
                 FloodQueue = floodQueue,
                 DistanceMap = distanceMap,
 
@@ -332,13 +332,13 @@ public class TileSystem : JobComponentSystem
     private  struct InitializeHeatmapJob : IJobProcessComponentData<Cost, Position>
     {
         [ReadOnly] public GridSettings Settings;
-        [WriteOnly] public NativeArray<float> Heatmap;
+        [WriteOnly] public NativeArray<double> DistanceMap;
         [WriteOnly] public NativeArray<int> Costs;
 
         public void Execute([ReadOnly] ref Cost cost, [ReadOnly] ref Position position)
         {
             var outputIndex = GridUtilties.Grid2Index(Settings, position.Value);
-            Heatmap[outputIndex] = math.select(k_Obstacle, k_ObstacleFloat, cost.Value==byte.MaxValue);
+            DistanceMap[outputIndex] = math.select(k_Obstacle, k_ObstacleFloat, cost.Value==byte.MaxValue);
             Costs[outputIndex] = cost.Value;
         }
     }

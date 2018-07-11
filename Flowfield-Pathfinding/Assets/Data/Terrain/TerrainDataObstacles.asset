@@ -19,8 +19,8 @@ MonoBehaviour:
   m_noiseMultiplier: 20
   m_noiseShift: -10
   m_goalAgentFactor: 0.25
-  m_drawFlowField: 0
-  m_drawHeatField: 0
+  m_drawFlowField: 1
+  m_drawHeatField: 1
   m_smoothFlowField: 1
   m_eikonalFim: 1
   m_terrainPrefab: {fileID: 1400044387025214, guid: 3013c661fc8de58448c6388baefaf95a,

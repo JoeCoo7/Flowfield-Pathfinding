@@ -16,7 +16,7 @@ namespace FlowField
 		public NativeArray<int> FloodQueue;
 		
 		public int NumGoals;
-		public NativeArray<float> DistanceMap;
+		public NativeArray<double> DistanceMap;
 
 		//-----------------------------------------------------------------------------
 		public void Execute()

@@ -14,7 +14,7 @@ namespace FlowField
         [ReadOnly] public NativeArray<int2> Offsets;
         [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int> FloodQueue;
         [ReadOnly, DeallocateOnJobCompletion] public NativeArray<int> Costs;
-        [ReadOnly] public NativeArray<float> DistanceMap;
+        [ReadOnly] public NativeArray<double> DistanceMap;
         public NativeArray<float3> Flowfield;
         
         //-----------------------------------------------------------------------------
@@ -39,21 +39,21 @@ namespace FlowField
 
             int2 gridPos = GridUtilties.Index2Grid(Settings, index);
             Flowfield[index] = new float3(0);
-            float distance = DistanceMap[index];
+            double distance = DistanceMap[index];
 
             int neigborIndex = GridUtilties.Grid2Index(Settings, gridPos + Offsets[(int) GridUtilties.Direction.E]);
-            float ax = (neigborIndex != -1 && DistanceMap[neigborIndex] < TileSystem.k_ObstacleFloat ? DistanceMap[neigborIndex] : distance);
+            double ax = (neigborIndex != -1 && DistanceMap[neigborIndex] < TileSystem.k_ObstacleFloat ? DistanceMap[neigborIndex] : distance);
 
             neigborIndex = GridUtilties.Grid2Index(Settings, gridPos + Offsets[(int) GridUtilties.Direction.W]);
-            float bx = (neigborIndex != -1 && DistanceMap[neigborIndex] < TileSystem.k_ObstacleFloat ? DistanceMap[neigborIndex] : distance);
+            double bx = (neigborIndex != -1 && DistanceMap[neigborIndex] < TileSystem.k_ObstacleFloat ? DistanceMap[neigborIndex] : distance);
 
             neigborIndex = GridUtilties.Grid2Index(Settings, gridPos + Offsets[(int) GridUtilties.Direction.N]);
-            float ay = (neigborIndex != -1 && DistanceMap[neigborIndex] < TileSystem.k_ObstacleFloat ? DistanceMap[neigborIndex] : distance);
+            double ay = (neigborIndex != -1 && DistanceMap[neigborIndex] < TileSystem.k_ObstacleFloat ? DistanceMap[neigborIndex] : distance);
 
             neigborIndex = GridUtilties.Grid2Index(Settings, gridPos + Offsets[(int) GridUtilties.Direction.S]);
-            float by = (neigborIndex != -1 && DistanceMap[neigborIndex] < TileSystem.k_ObstacleFloat ? DistanceMap[neigborIndex] : distance);
+            double by = (neigborIndex != -1 && DistanceMap[neigborIndex] < TileSystem.k_ObstacleFloat ? DistanceMap[neigborIndex] : distance);
 
-            Flowfield[index] = math_experimental.normalizeSafe(new float3(ax - bx, 0, ay - by) * math.max((byte.MaxValue - Costs[index]), 1));
+            Flowfield[index] = math_experimental.normalizeSafe(new float3((float)(ax - bx), 0, (float)(ay - by)) * math.max((byte.MaxValue - Costs[index]), 1));
         }
         
         //-----------------------------------------------------------------------------

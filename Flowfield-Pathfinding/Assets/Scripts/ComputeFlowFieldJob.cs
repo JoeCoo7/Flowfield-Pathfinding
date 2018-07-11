@@ -11,7 +11,7 @@ namespace FlowField
     public struct ComputeFimEikonalFlowFieldJob : IJobParallelFor
     {
         [ReadOnly] public GridSettings Settings;
-        [ReadOnly] public NativeArray<float> DistanceMap;
+        [ReadOnly] public NativeArray<double> DistanceMap;
         [ReadOnly] public NativeArray<int2> Offsets;
         public NativeArray<float3> Flowfield;
 
@@ -19,7 +19,7 @@ namespace FlowField
         public void Execute(int index)
         {
             int2 grid = GridUtilties.Index2Grid(Settings, index);
-            float weight = DistanceMap[index];
+            double weight = DistanceMap[index];
             Flowfield[index] = new float3(0);
 
             for (GridUtilties.Direction dir = 0; dir < GridUtilties.Direction.MAX; ++dir)
@@ -29,7 +29,7 @@ namespace FlowField
                 if (neigborIdx == -1)
                     continue;
 
-                float neighborWeight = DistanceMap[neigborIdx];
+                double neighborWeight = DistanceMap[neigborIdx];
                 if (weight <= neighborWeight)
                     continue;
 
@@ -44,7 +44,7 @@ namespace FlowField
     public struct ComputeDijkstraFlowFieldJob : IJobParallelFor
     {
         [ReadOnly] public GridSettings Settings;
-        [ReadOnly] public NativeArray<float> DistanceMap;
+        [ReadOnly] public NativeArray<double> DistanceMap;
         [ReadOnly] public NativeArray<int2> Offsets;
         public NativeArray<float3> Flowfield;
 
@@ -52,7 +52,7 @@ namespace FlowField
         public void Execute(int index)
         {
             int2 gridPos = GridUtilties.Index2Grid(Settings, index);
-            float weight = DistanceMap[index];
+            double weight = DistanceMap[index];
             Flowfield[index] = new float3(0);
 
             for (GridUtilties.Direction dir = 0; dir < GridUtilties.Direction.MAX; ++dir)
@@ -62,7 +62,7 @@ namespace FlowField
                 if (neigborIdx == -1)
                     continue;
 
-                float neighborWeight = DistanceMap[neigborIdx];
+                double neighborWeight = DistanceMap[neigborIdx];
                 if (weight <= neighborWeight)
                     continue;
 

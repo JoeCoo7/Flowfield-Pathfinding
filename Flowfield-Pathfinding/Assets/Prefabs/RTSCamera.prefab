@@ -167,11 +167,11 @@ MonoBehaviour:
   TiltStart: 400
   TiltAngle: 80
   PanBuffer: 0.1
-  PanSpeed: 1
-  PanningMinX: -600
-  PanningMinZ: -600
-  PanningMaxX: 600
-  PanningMaxZ: 600
+  PanSpeed: 10
+  PanningMinX: -1000
+  PanningMinZ: -1000
+  PanningMaxX: 1000
+  PanningMaxZ: 1000
   PanSmoothing: 200
   FollowSmoothing: 8
   MoveToTargetTime: 0.5

@@ -42,7 +42,7 @@ public class TerrainColoring : MonoBehaviour
     }
 
     //-----------------------------------------------------------------------------
-    private void OnNewHeatMap(NativeArray<float> map)
+    private void OnNewHeatMap(NativeArray<double> map)
     {
         if (Main.ActiveInitParams.m_drawHeatField)
         {
@@ -54,9 +54,9 @@ public class TerrainColoring : MonoBehaviour
                     m_HeatmapColors[index] = new Color(0,0,0);
                 else
                 {
-                    float h = map[index] * scale;
+                    double h = map[index] * scale;
                     if (h <= 1)
-                        c = (1 - h);
+                        c = (1 - (float)h);
                     m_HeatmapColors[index] = new Color(0, 0, c);
                 }
             }

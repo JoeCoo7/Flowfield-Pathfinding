@@ -53,7 +53,7 @@ namespace FlowField.UI
 			for (int index = 0; index < count; index++)
 			{
 				var label = m_labelList[index];
-				label.SetText(m_tileSystem.LastGeneratedDistanceMap[index]);
+				label.SetText((float)m_tileSystem.LastGeneratedDistanceMap[index]);
 				if (!m_visible)
 					label.gameObject.SetActive(true);
 			}

@@ -1,6 +1,8 @@
-﻿using Tile;
+﻿using System;
+using Tile;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 
@@ -11,7 +13,7 @@ namespace FlowField
 		public struct ComputeEikonalFimDistanceJob : IJob
 		{
 			public enum States { Open = 0, Narrow, Frozen }
-			private const float k_MinimumChange = 0.01f;
+			private const double k_MinimumChange = 1e-4f;
 			private const int k_Dimensions = 2;
 			
 			[ReadOnly] public GridSettings Settings;
@@ -20,9 +22,10 @@ namespace FlowField
 			[ReadOnly] public NativeArray<int> Costs;
 			[DeallocateOnJobCompletion] public NativeArray<States> StateMap;
 			[DeallocateOnJobCompletion] public NativeArray<int> Neighbours;
-			[DeallocateOnJobCompletion] public NativeArray<float> EikonalNeighbours;
+			[DeallocateOnJobCompletion] public NativeArray<double> EikonalNeighbours;
+			
 			public NativeArray<int> FloodQueue;
-			public NativeArray<float> DistanceMap;
+			public NativeArray<double> DistanceMap;
 			
 			//-----------------------------------------------------------------------------
 			public void Execute()
@@ -31,8 +34,8 @@ namespace FlowField
 
 				int gridLength = DistanceMap.Length;
 				for (int index = 0; index < gridLength; index++)
-					DistanceMap[index] = float.PositiveInfinity;
-					
+					DistanceMap[index] = double.PositiveInfinity;
+
 				for (int index = 0; index < NumGoals; ++index)
 				{
 					var tileIndex = GridUtilties.Grid2Index(Settings, Goals[index]);
@@ -58,11 +61,12 @@ namespace FlowField
 							
 					var arrivalTime = DistanceMap[index];
 					var improvedArrivalTime = SolveEikonal(index);
-					if (float.IsInfinity(improvedArrivalTime))
+					if (double.IsInfinity(improvedArrivalTime))
 						continue;
 					
 					DistanceMap[index] = improvedArrivalTime;
-					if (math.abs(improvedArrivalTime - arrivalTime) <= k_MinimumChange)
+					
+					if (Math.Abs(improvedArrivalTime - arrivalTime) <= k_MinimumChange)
 					{
 						int numNeighbours = GridUtilties.GetCardinalNeighborIndices(Settings.cellCount.x, index, ref Neighbours);
 						for (int neighbourIndex = 0; neighbourIndex < numNeighbours; ++neighbourIndex)
@@ -76,7 +80,7 @@ namespace FlowField
 							
 							arrivalTime = DistanceMap[neighbour];
 							improvedArrivalTime = SolveEikonal(neighbour);
-							if (TimeBetterThan(improvedArrivalTime,arrivalTime))
+							if (TimeBetterThan(arrivalTime, improvedArrivalTime))
 							{
 								StateMap[neighbour] = States.Narrow;
 								DistanceMap[neighbour] = improvedArrivalTime;
@@ -91,38 +95,39 @@ namespace FlowField
 			}
 
 			//-----------------------------------------------------------------------------
-			private bool TimeBetterThan(float oldTime, float newTime)
+			private bool TimeBetterThan(double oldTime, double newTime)
 			{
-				if (float.IsInfinity(newTime) && float.IsInfinity(oldTime))
+				if (double.IsInfinity(newTime) && double.IsInfinity(oldTime))
 					return false;
-				return oldTime + k_MinimumChange < newTime;
+				return newTime + k_MinimumChange < oldTime;
 			}
 
 			
 			//-----------------------------------------------------------------------------
-			float SolveEikonal(int index)
+			double SolveEikonal(int index, bool force1D = false)
 			{
-				int validDimensionCount = k_Dimensions;
+				int numDimension = force1D ? 1 : k_Dimensions;
+				int validDimensionCount = numDimension;
 				var time = DistanceMap[index];
 
 				int count = 0;
-				for (int dimension = 0; dimension < k_Dimensions; ++dimension) {
+				for (int dimension = 0; dimension < numDimension; ++dimension) {
 					var neighbor0 = GetEikonalNeighbour(dimension, 0, index);
 					var neighbor1 = GetEikonalNeighbour(dimension, 1, index);
-					float minTimeInDim = math.min(neighbor0, neighbor1);
-					if (!float.IsInfinity(minTimeInDim) && minTimeInDim < time)
+					double minTimeInDim = Math.Min(neighbor0, neighbor1);
+					if (!double.IsInfinity(minTimeInDim) && minTimeInDim < time)
 						EikonalNeighbours[count++] = minTimeInDim;
 					else
 						validDimensionCount -=1;
 				}
 
 				if (validDimensionCount == 0)
-					return float.PositiveInfinity;
+					return double.PositiveInfinity;
 
 				if (count > 1)
 					EikonalNeighbours.Sort();
 				
-				float newTime = 0;
+				double newTime = 0;
 				for (int dimension = 1; dimension <= validDimensionCount; ++dimension) 
 				{
 					newTime = SolveEikonalInDimension(index, dimension);
@@ -133,9 +138,9 @@ namespace FlowField
 			}
 
 			//-----------------------------------------------------------------------------
-			private float SolveEikonalInDimension(int index, int dim)
+			private double SolveEikonalInDimension(int index, int dim)
 			{
-				float velocity = byte.MaxValue - Costs[index] + 1;
+				double velocity = byte.MaxValue - Costs[index] + 1;
 				
 				// Solve for x dimension.
 				if (dim == 1)
@@ -143,38 +148,38 @@ namespace FlowField
 
 				var time0 = EikonalNeighbours[0];
 				var time1 = EikonalNeighbours[1];
-				float timeB =  time0 + time1;
-				float timeC = time0 * time0 + time1 * time1;
+				double timeB =  time0 + time1;
+				double timeC = time0 * time0 + time1 * time1;
 				
-//				float timeB = 0;
-//				float timeC = 0;
+//				double timeB = 0;
+//				double timeC = 0;
 //				for (int i = 0; i < dim; ++i) {
 //					timeB += EikonalNeighbours[i];
 //					timeC += EikonalNeighbours[i]*EikonalNeighbours[i];
 //				}				
 				
-				float a = dim;
-				float b = -2*timeB;
-				float c = timeC - 1 / (velocity * velocity);
-				float quadTerm = b*b - 4*a*c;
+				double a = dim;
+				double b = -2*timeB;
+				double c = timeC - 1 / (velocity * velocity);
+				double quadTerm = b*b - 4*a*c;
 
 				if (quadTerm < 0)
-					return float.PositiveInfinity;
-				return (-b + math.sqrt(quadTerm))/(2*a);
+					return double.PositiveInfinity;
+				return (-b + Math.Sqrt(quadTerm))/(2*a);
 			}
 				
 			//-----------------------------------------------------------------------------
-			private float GetEikonalNeighbour(int  dim, int neighbour, int index)
+			private double GetEikonalNeighbour(int  dim, int neighbour, int index)
 			{
 				if (dim == 0)
 				{
 					var neighbourIndex = neighbour == 0 ? index - 1 : index + 1;
-					return neighbourIndex >= Settings.cellCount.x * Settings.cellCount.x || neighbourIndex < 0 ? float.PositiveInfinity : DistanceMap[neighbourIndex];
+					return neighbourIndex >= Settings.cellCount.x * Settings.cellCount.x || neighbourIndex < 0 ? double.PositiveInfinity : DistanceMap[neighbourIndex];
 				}
 				else
 				{
 					var neighbourIndex = neighbour == 0 ? index - Settings.cellCount.x : index + Settings.cellCount.x;
-					return neighbourIndex >= Settings.cellCount.x * Settings.cellCount.x || neighbourIndex < 0 ? float.PositiveInfinity : DistanceMap[neighbourIndex];
+					return neighbourIndex >= Settings.cellCount.x * Settings.cellCount.x || neighbourIndex < 0 ? double.PositiveInfinity : DistanceMap[neighbourIndex];
 				}
 			}
 		}
