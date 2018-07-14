@@ -19,10 +19,10 @@ MonoBehaviour:
   m_noiseMultiplier: 0
   m_noiseShift: 0
   m_goalAgentFactor: 0.31
-  m_drawFlowField: 0
-  m_drawHeatField: 0
+  m_drawFlowField: 1
+  m_drawHeatField: 1
   m_smoothFlowField: 1
-  m_eikonalFim: 0
+  m_eikonalFim: 1
   m_terrainPrefab: {fileID: 1400044387025214, guid: 3013c661fc8de58448c6388baefaf95a,
     type: 2}
   m_cameraObject: {fileID: 1083118766984968, guid: a7b79582ae1595442a40029858f7555d,

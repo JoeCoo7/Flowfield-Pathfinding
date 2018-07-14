@@ -104,14 +104,13 @@ namespace FlowField
 
 			
 			//-----------------------------------------------------------------------------
-			double SolveEikonal(int index, bool force1D = false)
+			double SolveEikonal(int index)
 			{
-				int numDimension = force1D ? 1 : k_Dimensions;
-				int validDimensionCount = numDimension;
+				int validDimensionCount = k_Dimensions;
 				var time = DistanceMap[index];
 
 				int count = 0;
-				for (int dimension = 0; dimension < numDimension; ++dimension) {
+				for (int dimension = 0; dimension < k_Dimensions; ++dimension) {
 					var neighbor0 = GetEikonalNeighbour(dimension, 0, index);
 					var neighbor1 = GetEikonalNeighbour(dimension, 1, index);
 					double minTimeInDim = Math.Min(neighbor0, neighbor1);
@@ -168,6 +167,9 @@ namespace FlowField
 				return (-b + Math.Sqrt(quadTerm))/(2*a);
 			}
 				
+
+			
+			
 			//-----------------------------------------------------------------------------
 			private double GetEikonalNeighbour(int  dim, int neighbour, int index)
 			{
