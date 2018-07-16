@@ -152,11 +152,11 @@ namespace FlowField
 			if (newTime - m_neighbourTime2 < k_MinimumChange)
 				return newTime;
 
-			return Solve2DEikonal(velocity, time);
+			return Solve2DEikonal(velocity);
 		}
 
 		//-----------------------------------------------------------------------------
-		private double Solve2DEikonal(double velocity, double time)
+		private double Solve2DEikonal(double velocity)
 		{
 			double b = -2 * (m_neighbourTime1 + m_neighbourTime2);
 			double c = (m_neighbourTime1 * m_neighbourTime1 + m_neighbourTime2 * m_neighbourTime2) - 1 / (velocity * velocity);
