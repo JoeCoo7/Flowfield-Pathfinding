@@ -163,7 +163,6 @@ public class TileSystem : JobComponentSystem
                 Costs = costs,
                 StateMap = new NativeArray<ComputeEikonalFimDistanceJob.States>(distanceMap.Length, Allocator.TempJob),
                 Neighbours = new NativeArray<int>(8, Allocator.TempJob),
-                EikonalNeighbours = new NativeArray<double>(4, Allocator.TempJob),
                 FloodQueue = floodQueue,
                 DistanceMap = distanceMap,
 

@@ -116,11 +116,11 @@ public static class GridUtilties
     }
     
     //-----------------------------------------------------------------------------
-    public static readonly int2[] Offset = new[] {
+    public static readonly int2[] Offset = {
         new int2(0, -1),    // N,0
         new int2(0, 1),     // S,1
-        new int2(-1, 0),    // E,3
-        new int2(1, 0),     // W,2
+        new int2(-1, 0),    // E,2
+        new int2(1, 0),     // W,3
         new int2(1, -1),    // NE,4
         new int2(1, 1),     // SE,5
         new int2(-1, -1),   // NW,6
@@ -145,10 +145,11 @@ public static class GridUtilties
     {
         switch (neighborIndex)
         {
-            case 0: return -gridSize;
-            case 1: return gridSize;
-            case 2: return -1;
-            case 3: return 1;
+            case 0: 
+            case 1: 
+            case 2: 
+            case 3: return GetCardinalNeighborIndex(gridSize, neighborIndex);
+            
             case 4: return -gridSize + 1;
             case 5: return gridSize + 1;
             case 6: return -gridSize - 1;
