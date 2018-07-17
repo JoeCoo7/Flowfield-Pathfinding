@@ -29,39 +29,38 @@ public static class GridUtilties
     //-----------------------------------------------------------------------------
     public static int2 World2Grid(GridSettings settings, float3 pos)
     {
-        var newPos = new float2(pos.x, pos.z) + settings.worldSize * .5f;
+        var newPos = new float2(pos.x, pos.z) + settings.worldSize * 0.5f;
         return (int2)(newPos / settings.cellSize);
     }
 
     //-----------------------------------------------------------------------------
-    //size is in blocks, c is absolute pos
     public static int Grid2Index(GridSettings grid, int2 cell)
     {
         return Grid2Index(grid.cellCount, cell);
     }
 
     //-----------------------------------------------------------------------------
-    public static int Grid2Index(int2 setttings, int2 cell)
+    public static int Grid2Index(int2 settings, int2 cell)
     {
-        if (cell.x < 0 || cell.y < 0 || cell.x > setttings.x - 1 || cell.y > setttings.y - 1)
+        if (cell.x < 0 || cell.y < 0 || cell.x >= settings.x || cell.y >= settings.y)
             return -1;
 
-        return setttings.x * cell.y + cell.x;
+        return settings.x * cell.y + cell.x;
     }
 
     //-----------------------------------------------------------------------------
     public static int2 Index2Grid(int2 grid, int index)
     {
-        if (index < 0 || index > (grid.x * grid.y - 1))
+        if (index < 0 || index >= grid.x * grid.y)
             return new int2(-1, -1);
 
         return new int2(index % grid.x, index / grid.x);
     }
 
     //-----------------------------------------------------------------------------
-    public static int2 Index2Grid(GridSettings setttings, int index)
+    public static int2 Index2Grid(GridSettings settings, int index)
     {
-        return Index2Grid(setttings.cellCount, index);
+        return Index2Grid(settings.cellCount, index);
     }
     
     //-----------------------------------------------------------------------------
@@ -83,13 +82,13 @@ public static class GridUtilties
     }
 
     //-----------------------------------------------------------------------------
-    public static int GetCardinalNeighborIndices(int gridSize, int currentIndex, ref NativeArray<int> neighbors)
+    public static int GetCardinalNeighborIndices(int gridWidth, int currentIndex, ref NativeArray<int> neighbors)
     {
-        var gridMaxIndex = gridSize * gridSize;
+        var gridMaxIndex = gridWidth * gridWidth;
         var validNeighbours = 0;
         for (int neighbourIndex = 0; neighbourIndex < 4; neighbourIndex++)
         {
-            var gridIndex = currentIndex + GetCardinalNeighborIndex(gridSize, neighbourIndex);
+            var gridIndex = currentIndex + GetCardinalNeighborIndex(gridWidth, neighbourIndex);
             if (gridIndex < 0 || gridIndex >= gridMaxIndex)
                 continue;
 

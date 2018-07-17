@@ -210,7 +210,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_activeSteerData: 4
-  m_InitData: {fileID: 11400000, guid: e43e754e5c55a8549aa9f4adf662362d, type: 2}
+  m_InitData: {fileID: 11400000, guid: e2ba9ae507219b04bb78e0c06b247954, type: 2}
   m_AgentSpawnData: {fileID: 11400000, guid: 7fdce35a09511fd469f1f778437f070f, type: 2}
   m_AgentSteerData:
   - {fileID: 11400000, guid: 0a93aa877a56406429b23395f89177ce, type: 2}

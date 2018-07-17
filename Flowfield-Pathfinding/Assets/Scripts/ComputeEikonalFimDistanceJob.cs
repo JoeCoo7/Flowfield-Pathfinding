@@ -2,7 +2,6 @@
 using Tile;
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 
@@ -94,7 +93,6 @@ namespace FlowField
 							queue.Enqueue(neighbour);
 						}
 					}
-
 					StateMap[index] = States.Frozen;
 				}
 				else
@@ -110,12 +108,11 @@ namespace FlowField
 			return newTime + k_MinimumChange < oldTime;
 		}
 
-
 		//-----------------------------------------------------------------------------
 		double SolveEikonal(int index)
 		{
 			var time = DistanceMap[index];
-			double velocity = byte.MaxValue - Costs[index] + 1;
+			double velocity = Math.Max(byte.MaxValue - Costs[index], 1);
 
 			m_neighbourTime1 = double.PositiveInfinity;
 			m_neighbourTime2 = double.PositiveInfinity;
@@ -182,7 +179,7 @@ namespace FlowField
 			else
 			{
 				var neighbourIndex = neighbour == 0 ? index - Settings.cellCount.x : index + Settings.cellCount.x;
-				return neighbourIndex >= Settings.cellCount.x * Settings.cellCount.x || neighbourIndex < 0 ? double.PositiveInfinity : DistanceMap[neighbourIndex];
+				return neighbourIndex >= Settings.cellCount.x * Settings.cellCount.y || neighbourIndex < 0 ? double.PositiveInfinity : DistanceMap[neighbourIndex];
 			}
 		}
 	}
